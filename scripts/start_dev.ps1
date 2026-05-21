@@ -11,6 +11,21 @@ $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $WebRoot = Join-Path $RepoRoot "web"
 $BackendProcess = $null
 $FrontendProcess = $null
+$PythonExe = $null
+
+function Resolve-PythonCommand {
+    $VenvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
+    if (Test-Path $VenvPython) {
+        return $VenvPython
+    }
+
+    $PythonCommand = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -ne $PythonCommand) {
+        return $PythonCommand.Source
+    }
+
+    throw "Python was not found. Create .venv or install Python and add it to PATH."
+}
 
 function Stop-ChildProcess {
     param([System.Diagnostics.Process]$Process)
@@ -22,6 +37,7 @@ function Stop-ChildProcess {
 
 try {
     Set-Location $RepoRoot
+    $PythonExe = Resolve-PythonCommand
 
     if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
         Write-Host "Installing frontend dependencies..."
@@ -32,7 +48,7 @@ try {
 
     Write-Host "Starting backend on http://$BackendHost`:$BackendPort"
     $BackendProcess = Start-Process `
-        -FilePath "python" `
+        -FilePath $PythonExe `
         -ArgumentList @("start.py", "--host", $BackendHost, "--port", $BackendPort, "--strict-port") `
         -WorkingDirectory $RepoRoot `
         -PassThru `
