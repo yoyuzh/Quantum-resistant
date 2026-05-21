@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
@@ -291,6 +292,77 @@ def knowledge_graph() -> dict[str, list[dict[str, str]]]:
         {"source": "protocol:jwt-ssh", "target": "algorithm:ECDSA", "label": "可识别"},
     ]
     return {"nodes": nodes, "edges": edges}
+
+
+class PopularScanRequest(BaseModel):
+    top: int = Field(default=20, ge=1, le=100)
+
+
+@app.post("/api/popular/scan")
+def trigger_popular_scan(payload: PopularScanRequest = PopularScanRequest()) -> Response:
+    """触发热门仓库批量扫描，完成后写入 popular.json 并返回结果。"""
+    import os
+    import tempfile
+
+    from backend.popular import FetchError, fetch_popular_repos, run_batch_scan
+
+    try:
+        repos = fetch_popular_repos(top=payload.top)
+    except FetchError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=str(exc),
+        ) from exc
+
+    batch_result = run_batch_scan(repos)
+
+    output_path = WEB_DIR / "data" / "popular.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    data = {
+        "scanned_at": batch_result.scanned_at,
+        "repos": batch_result.repos,
+        "meta": batch_result.meta,
+    }
+    json_content = json.dumps(data, indent=2, ensure_ascii=False)
+
+    try:
+        tmp_fd, tmp_path = tempfile.mkstemp(
+            dir=str(output_path.parent), suffix=".tmp", prefix=".popular_"
+        )
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            f.write(json_content)
+        os.replace(tmp_path, str(output_path))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"写入结果文件失败：{exc}") from exc
+
+    return Response(content=json_content, media_type="application/json; charset=utf-8")
+
+
+@app.get("/api/popular/results")
+def get_popular_results() -> Response:
+    """读取 web/data/popular.json 并返回其内容。"""
+    popular_file = WEB_DIR / "data" / "popular.json"
+    if not popular_file.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="热门仓库扫描数据尚未生成，请先运行批量扫描脚本",
+        )
+    try:
+        file_content = popular_file.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="读取热门仓库数据文件失败",
+        ) from exc
+    try:
+        json.loads(file_content)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="热门仓库数据文件损坏，请重新运行批量扫描脚本",
+        ) from exc
+    return Response(content=file_content, media_type="application/json; charset=utf-8")
 
 
 @app.post("/api/report/markdown")

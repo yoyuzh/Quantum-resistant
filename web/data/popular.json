@@ -1,0 +1,218 @@
+{
+  "scanned_at": "2026-05-21T16:58:54+08:00",
+  "repos": [
+    {
+      "full_name": "EbookFoundation/free-programming-books",
+      "star_count": 388669,
+      "url": "https://github.com/EbookFoundation/free-programming-books",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "donnemartin/system-design-primer",
+      "star_count": 349630,
+      "url": "https://github.com/donnemartin/system-design-primer",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "vinta/awesome-python",
+      "star_count": 298798,
+      "url": "https://github.com/vinta/awesome-python",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "TheAlgorithms/Python",
+      "star_count": 221273,
+      "url": "https://github.com/TheAlgorithms/Python",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "Significant-Gravitas/AutoGPT",
+      "star_count": 184443,
+      "url": "https://github.com/Significant-Gravitas/AutoGPT",
+      "migration_score": 45,
+      "finding_count": 1,
+      "algorithms": [
+        "ECDSA"
+      ],
+      "findings": [
+        {
+          "line": 15,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "算法标识: ES256",
+          "source_id": "Significant-Gravitas/AutoGPT",
+          "file_name": "autogpt_platform/autogpt_libs/autogpt_libs/auth/config.py",
+          "source_type": "github_repository"
+        }
+      ]
+    },
+    {
+      "full_name": "yt-dlp/yt-dlp",
+      "star_count": 163474,
+      "url": "https://github.com/yt-dlp/yt-dlp",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "AUTOMATIC1111/stable-diffusion-webui",
+      "star_count": 163184,
+      "url": "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "huggingface/transformers",
+      "star_count": 160829,
+      "url": "https://github.com/huggingface/transformers",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "NousResearch/hermes-agent",
+      "star_count": 160440,
+      "url": "https://github.com/NousResearch/hermes-agent",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "521xueweihan/HelloGitHub",
+      "star_count": 157938,
+      "url": "https://github.com/521xueweihan/HelloGitHub",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "langflow-ai/langflow",
+      "star_count": 148589,
+      "url": "https://github.com/langflow-ai/langflow",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "ytdl-org/youtube-dl",
+      "star_count": 140344,
+      "url": "https://github.com/ytdl-org/youtube-dl",
+      "migration_score": 45,
+      "finding_count": 1,
+      "algorithms": [
+        "RSA"
+      ],
+      "findings": [
+        {
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "PEM RSA key header",
+          "source_id": "ytdl-org/youtube-dl",
+          "file_name": "test/testcert.pem",
+          "source_type": "github_repository"
+        }
+      ]
+    },
+    {
+      "full_name": "anthropics/skills",
+      "star_count": 138522,
+      "url": "https://github.com/anthropics/skills",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "langchain-ai/langchain",
+      "star_count": 137267,
+      "url": "https://github.com/langchain-ai/langchain",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "microsoft/markitdown",
+      "star_count": 124247,
+      "url": "https://github.com/microsoft/markitdown",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "Comfy-Org/ComfyUI",
+      "star_count": 113792,
+      "url": "https://github.com/Comfy-Org/ComfyUI",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "Shubhamsaboo/awesome-llm-apps",
+      "star_count": 111312,
+      "url": "https://github.com/Shubhamsaboo/awesome-llm-apps",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "github/spec-kit",
+      "star_count": 104272,
+      "url": "https://github.com/github/spec-kit",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "deepseek-ai/DeepSeek-V3",
+      "star_count": 103573,
+      "url": "https://github.com/deepseek-ai/DeepSeek-V3",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    },
+    {
+      "full_name": "pytorch/pytorch",
+      "star_count": 100044,
+      "url": "https://github.com/pytorch/pytorch",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": []
+    }
+  ],
+  "meta": {
+    "total_repos": 20,
+    "requested_count": 20,
+    "query": "language:python sort:stars"
+  }
+}

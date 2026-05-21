@@ -1,4 +1,6 @@
+import json
 import unittest
+import unittest.mock
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -168,6 +170,88 @@ class BackendApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("风险发现总数：0", response.text)
         self.assertIn("未发现已知量子脆弱公钥算法用法", response.text)
+
+
+class PopularResultsApiTests(unittest.TestCase):
+    """Tests for GET /api/popular/results endpoint.
+
+    Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
+    """
+
+    def setUp(self) -> None:
+        self.client = TestClient(app)
+        self.sample_data = {
+            "scanned_at": "2024-01-15T14:30:00+08:00",
+            "repos": [
+                {
+                    "full_name": "pallets/flask",
+                    "star_count": 68000,
+                    "url": "https://github.com/pallets/flask",
+                    "migration_score": 45,
+                    "finding_count": 3,
+                    "algorithms": ["RSA", "ECDSA"],
+                    "findings": [
+                        {
+                            "line": 42,
+                            "file_name": "src/crypto.py",
+                            "algorithm": "RSA",
+                            "risk_level": "高风险",
+                            "evidence": "rsa.generate_private_key",
+                        }
+                    ],
+                }
+            ],
+            "meta": {
+                "total_repos": 1,
+                "requested_count": 20,
+                "query": "language:python sort:stars",
+            },
+        }
+        self.sample_json = json.dumps(self.sample_data, ensure_ascii=False, indent=2)
+
+    @patch("backend.main.Path.exists", return_value=True)
+    @patch("backend.main.Path.read_text")
+    def test_returns_200_with_file_content(self, mock_read: unittest.mock.MagicMock, mock_exists: unittest.mock.MagicMock) -> None:
+        """Requirement 4.1, 4.4: File exists → 200 with JSON content."""
+        mock_read.return_value = self.sample_json
+
+        response = self.client.get("/api/popular/results")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), self.sample_data)
+        self.assertIn("application/json", response.headers["content-type"])
+
+    @patch("backend.main.Path.exists", return_value=False)
+    def test_returns_404_when_file_not_found(self, mock_exists: unittest.mock.MagicMock) -> None:
+        """Requirement 4.2: File not found → 404 with correct message."""
+        response = self.client.get("/api/popular/results")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.json()["detail"],
+            "热门仓库扫描数据尚未生成，请先运行批量扫描脚本",
+        )
+
+    @patch("backend.main.Path.exists", return_value=True)
+    @patch("backend.main.Path.read_text")
+    def test_returns_502_when_invalid_json(self, mock_read: unittest.mock.MagicMock, mock_exists: unittest.mock.MagicMock) -> None:
+        """Requirement 4.3: Invalid JSON → 502 with corrupted data detail."""
+        mock_read.return_value = "{invalid json content!!!"
+
+        response = self.client.get("/api/popular/results")
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("损坏", response.json()["detail"])
+
+    @patch("backend.main.Path.exists", return_value=True)
+    @patch("backend.main.Path.read_text", side_effect=OSError("Permission denied"))
+    def test_returns_500_on_io_error(self, mock_read: unittest.mock.MagicMock, mock_exists: unittest.mock.MagicMock) -> None:
+        """Requirement 4.5: I/O error → 500 with read failure detail."""
+        response = self.client.get("/api/popular/results")
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("读取", response.json()["detail"])
+        self.assertIn("失败", response.json()["detail"])
 
 
 if __name__ == "__main__":

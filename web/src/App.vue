@@ -54,6 +54,13 @@ const scanProgress = ref(0);
 const errorMsg = ref('');
 const expandedFindings = ref(new Set());
 
+// --- 热门榜单 ---
+const popularData = ref(null);
+const popularLoading = ref(false);
+const popularScanning = ref(false);
+const popularError = ref('');
+const expandedPopularRepo = ref(null);
+
 // 动画计数器
 const animatedSourceCount = ref(0);
 const animatedFindingCount = ref(0);
@@ -136,7 +143,74 @@ const readJsonResponse = async (response, fallbackMessage) => {
   catch { throw new Error(fallbackMessage || '服务返回了非 JSON 内容'); }
 };
 
-const toggleMode = (mode) => { scanMode.value = mode; errorMsg.value = ''; };
+const toggleMode = (mode) => {
+  scanMode.value = mode;
+  errorMsg.value = '';
+  if (mode === 'popular') {
+    loadPopularData();
+  }
+};
+
+const loadPopularData = async () => {
+  popularLoading.value = true;
+  popularError.value = '';
+  popularData.value = null;
+  expandedPopularRepo.value = null;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch('/api/popular/results', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (response.status === 404) {
+      popularError.value = '';
+      return;
+    }
+    if (!response.ok) {
+      popularError.value = '加载热门仓库数据失败';
+      return;
+    }
+    const data = await response.json();
+    if (!data.repos || data.repos.length === 0) {
+      popularError.value = '';
+      return;
+    }
+    popularData.value = data;
+  } catch (err) {
+    popularError.value = '加载热门仓库数据失败';
+  } finally {
+    clearTimeout(timeoutId);
+    popularLoading.value = false;
+  }
+};
+
+const triggerPopularScan = async () => {
+  popularScanning.value = true;
+  popularError.value = '';
+  popularData.value = null;
+  expandedPopularRepo.value = null;
+  try {
+    const response = await fetch('/api/popular/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ top: 20 })
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      popularError.value = err.detail || '扫描热门仓库失败';
+      return;
+    }
+    const data = await response.json();
+    if (!data.repos || data.repos.length === 0) {
+      popularError.value = '扫描完成但未获取到仓库数据';
+      return;
+    }
+    popularData.value = data;
+  } catch (err) {
+    popularError.value = '扫描热门仓库失败，请检查网络连接';
+  } finally {
+    popularScanning.value = false;
+  }
+};
 
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
@@ -289,6 +363,41 @@ const formatTime = (isoStr) => {
   return isoStr.replace('T', ' ').split('.')[0];
 };
 
+const formatStarCount = (count) => {
+  if (count >= 1000) return (count / 1000).toFixed(1) + 'k';
+  return String(count);
+};
+
+const formatScannedAt = (isoStr) => {
+  if (!isoStr) return '';
+  return isoStr.replace('T', ' ').replace(/\+.*$/, '');
+};
+
+const getScoreColor = (score) => {
+  if (score >= 40) return 'var(--danger)';
+  if (score > 0) return 'var(--warning)';
+  return 'var(--accent)';
+};
+
+const getScoreClass = (score) => {
+  if (score >= 40) return 'high';
+  if (score > 0) return 'medium';
+  return 'low';
+};
+
+const sortedPopularRepos = computed(() => {
+  if (!popularData.value || !popularData.value.repos) return [];
+  return [...popularData.value.repos].sort((a, b) => b.star_count - a.star_count);
+});
+
+const toggleRepoDetail = (idx) => {
+  if (expandedPopularRepo.value === idx) {
+    expandedPopularRepo.value = null;
+  } else {
+    expandedPopularRepo.value = idx;
+  }
+};
+
 const riskBadgeClass = (level) => {
   if (level.includes('高') || /high|critical/i.test(level)) return 'high';
   if (level.includes('中') || /medium/i.test(level)) return 'medium';
@@ -337,6 +446,10 @@ const riskBadgeClass = (level) => {
             <button :class="{ active: scanMode === 'pypi' }" @click="toggleMode('pypi')">
               <span class="tab-icon">◇</span>
               <span>PyPI</span>
+            </button>
+            <button :class="{ active: scanMode === 'popular' }" @click="toggleMode('popular')">
+              <span class="tab-icon">★</span>
+              <span>热门榜单</span>
             </button>
           </div>
 
@@ -403,7 +516,7 @@ const riskBadgeClass = (level) => {
               </div>
             </div>
 
-            <div v-else class="remote-scan-area">
+            <div v-else-if="scanMode === 'pypi'" class="remote-scan-area">
               <div class="form-group">
                 <label>PyPI 包名</label>
                 <input
@@ -418,7 +531,72 @@ const riskBadgeClass = (level) => {
               </div>
             </div>
 
-            <div class="actions">
+            <div v-else-if="scanMode === 'popular'" class="popular-area">
+              <div v-if="popularScanning" class="popular-loading">
+                <span class="btn-spinner"></span> 正在扫描热门仓库，预计需要几分钟…
+              </div>
+              <div v-else-if="popularLoading" class="popular-loading">
+                <span class="btn-spinner"></span> 正在加载热门仓库数据…
+              </div>
+              <div v-else-if="popularError" class="popular-error">
+                <span class="err-prefix">✕</span> {{ popularError }}
+                <button @click="triggerPopularScan" class="btn btn-outline popular-scan-btn">重新扫描</button>
+              </div>
+              <div v-else-if="popularData" class="popular-results">
+                <div class="popular-header">
+                  <span class="popular-title">热门 Python 仓库量子风险概览</span>
+                  <span class="popular-time">{{ formatScannedAt(popularData.scanned_at) }}</span>
+                  <button @click="triggerPopularScan" :disabled="popularScanning" class="btn btn-outline popular-scan-btn">
+                    ↻ 重新扫描
+                  </button>
+                </div>
+                <div class="popular-list">
+                  <template v-for="(repo, idx) in sortedPopularRepos" :key="repo.full_name">
+                    <div class="popular-repo-row" :class="{ expanded: expandedPopularRepo === idx }" @click="toggleRepoDetail(idx)">
+                      <div class="repo-rank">{{ idx + 1 }}</div>
+                      <div class="repo-info">
+                        <span class="repo-name">{{ repo.full_name }}</span>
+                        <span class="repo-stars">★ {{ formatStarCount(repo.star_count) }}</span>
+                      </div>
+                      <div class="repo-score" :class="getScoreClass(repo.migration_score)">
+                        {{ repo.migration_score }}
+                      </div>
+                      <div class="repo-findings">
+                        {{ repo.finding_count }} 项风险
+                      </div>
+                      <div class="repo-algos">
+                        <span v-for="algo in repo.algorithms.slice(0, 4)" :key="algo" class="algo-pill small">{{ algo }}</span>
+                      </div>
+                      <span class="btn-arrow" :class="{ open: expandedPopularRepo === idx }">▸</span>
+                    </div>
+                    <transition name="expand">
+                      <div v-if="expandedPopularRepo === idx" class="popular-detail">
+                        <div v-if="!repo.findings || repo.findings.length === 0" class="popular-detail-empty">
+                          该仓库未发现量子脆弱性问题
+                        </div>
+                        <div v-else class="popular-detail-list">
+                          <div v-for="(f, fIdx) in repo.findings.slice(0, 20)" :key="fIdx" class="popular-finding-row">
+                            <span class="line-badge">L{{ f.line }}</span>
+                            <span class="popular-finding-file">{{ f.file_name }}</span>
+                            <span class="algo-tag">{{ f.algorithm }}</span>
+                            <span class="risk-badge" :class="riskBadgeClass(f.risk_level)">{{ f.risk_level }}</span>
+                            <span class="popular-finding-evidence">{{ f.evidence }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </transition>
+                  </template>
+                </div>
+              </div>
+              <div v-else class="popular-empty">
+                <p>尚未扫描热门仓库，点击下方按钮开始</p>
+                <button @click="triggerPopularScan" :disabled="popularScanning" class="btn btn-primary">
+                  <span class="btn-scan-icon">▶</span> 扫描热门仓库
+                </button>
+              </div>
+            </div>
+
+            <div v-if="scanMode !== 'popular'" class="actions">
               <button @click="startScan" :disabled="isScanning" class="btn btn-primary" :class="{ scanning: isScanning }">
                 <span v-if="isScanning" class="btn-spinner"></span>
                 <span v-if="!isScanning" class="btn-scan-icon">▶</span>
@@ -1816,6 +1994,127 @@ body {
 }
 
 .detail-value { color: var(--text-secondary); word-break: break-word; }
+
+/* ============================================
+   Popular Tab
+   ============================================ */
+.popular-area {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.popular-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+.popular-empty p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0 0 1rem;
+}
+
+.popular-scan-btn {
+  font-size: 0.72rem;
+  padding: 0.3rem 0.6rem;
+  margin-left: auto;
+}
+
+.popular-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  padding: 2rem 0;
+}
+
+.popular-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(229, 69, 69, 0.18);
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.popular-results { display: flex; flex-direction: column; gap: 0.6rem; }
+.popular-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.popular-title { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+.popular-time { font-size: 0.75rem; color: var(--text-muted); }
+.popular-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.popular-repo-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.popular-repo-row:hover { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.repo-rank { font-weight: 700; font-size: 0.8rem; color: var(--text-muted); min-width: 1.5rem; text-align: center; }
+.repo-info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.repo-name { font-weight: 600; font-size: 0.84rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.repo-stars { font-size: 0.72rem; color: var(--text-muted); }
+.repo-score { font-weight: 700; font-size: 0.9rem; min-width: 2.2rem; text-align: center; }
+.repo-score.high { color: var(--danger); }
+.repo-score.medium { color: var(--warning); }
+.repo-score.low { color: var(--accent); }
+.repo-findings { font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; }
+.repo-algos { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.algo-pill.small { font-size: 0.65rem; padding: 0.1rem 0.35rem; }
+
+.popular-repo-row.expanded { border-color: var(--accent); background: var(--bg-card); }
+.popular-detail {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 0.6rem 0.7rem;
+  margin-top: -0.35rem;
+  margin-bottom: 0.35rem;
+}
+.popular-detail-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+.popular-detail-list { display: flex; flex-direction: column; gap: 0.3rem; }
+.popular-finding-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+.popular-finding-row:hover { background: var(--bg-elevated); }
+.popular-finding-file {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.popular-finding-evidence {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ============================================
    Transitions
