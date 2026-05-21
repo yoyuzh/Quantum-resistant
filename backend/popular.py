@@ -61,8 +61,9 @@ class FetchError(RuntimeError):
 
 
 def fetch_popular_repos(top: int = 20, token: str | None = None) -> list[RepoInfo]:
-    """从 GitHub Search API 获取 star 数最高的 Python 仓库列表。
+    """从 GitHub Search API 获取使用密码学相关库的热门 Python 仓库。
 
+    搜索关键词聚焦于加密/密码学相关仓库，避免拉取无关项目。
     内置重试机制（最多 3 次），应对间歇性 SSL/网络错误。
 
     Args:
@@ -83,8 +84,11 @@ def fetch_popular_repos(top: int = 20, token: str | None = None) -> list[RepoInf
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
+    # 搜索密码学相关的 Python 仓库（使用 topic 标签精准匹配）
+    search_query = "topic:cryptography language:python"
+
     params = {
-        "q": "language:python",
+        "q": search_query,
         "sort": "stars",
         "order": "desc",
         "per_page": str(top),
@@ -262,7 +266,7 @@ def run_batch_scan(repos: list[RepoInfo]) -> BatchResult:
     meta = {
         "total_repos": len(successful_repos),
         "requested_count": total,
-        "query": "language:python sort:stars",
+        "query": "topic:cryptography language:python sort:stars",
     }
 
     return BatchResult(

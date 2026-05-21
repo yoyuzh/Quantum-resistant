@@ -60,6 +60,7 @@ const popularLoading = ref(false);
 const popularScanning = ref(false);
 const popularError = ref('');
 const expandedPopularRepo = ref(null);
+const popularTopN = ref(20);
 
 // 动画计数器
 const animatedSourceCount = ref(0);
@@ -192,7 +193,7 @@ const triggerPopularScan = async () => {
     const response = await fetch('/api/popular/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ top: 20 })
+      body: JSON.stringify({ top: popularTopN.value })
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
@@ -589,9 +590,15 @@ const riskBadgeClass = (level) => {
                 </div>
               </div>
               <div v-else class="popular-empty">
-                <p>尚未扫描热门仓库，点击下方按钮开始</p>
-                <button @click="triggerPopularScan" :disabled="popularScanning" class="btn btn-primary">
-                  <span class="btn-scan-icon">▶</span> 扫描热门仓库
+                <div class="form-group">
+                  <label>扫描数量</label>
+                  <input v-model.number="popularTopN" type="number" min="1" max="100" class="input-field popular-top-input" placeholder="20" />
+                </div>
+                <div class="source-hint">
+                  自动搜索 GitHub 上与密码学/加密相关的热门 Python 仓库并扫描量子脆弱性。
+                </div>
+                <button @click="triggerPopularScan" :disabled="popularScanning" class="btn btn-primary" style="margin-top: 0.8rem; width: 100%;">
+                  <span class="btn-scan-icon">▶</span> 扫描 Top {{ popularTopN }} 热门仓库
                 </button>
               </div>
             </div>
@@ -615,8 +622,66 @@ const riskBadgeClass = (level) => {
 
       <!-- 右侧结果区 -->
       <section class="results-area">
+        <!-- 热门榜单结果 -->
+        <div v-if="scanMode === 'popular' && popularData && popularData.repos.length > 0" class="popular-right-results">
+          <div class="popular-right-header">
+            <h3>发现量子脆弱性的仓库</h3>
+            <span class="popular-right-meta">{{ popularData.repos.filter(r => r.finding_count > 0).length }} / {{ popularData.repos.length }} 个仓库存在风险</span>
+          </div>
+          <div v-for="repo in popularData.repos.filter(r => r.finding_count > 0)" :key="repo.full_name" class="popular-right-repo">
+            <div class="popular-right-repo-header">
+              <span class="repo-name">{{ repo.full_name }}</span>
+              <span class="repo-stars">★ {{ formatStarCount(repo.star_count) }}</span>
+              <div class="repo-score" :class="getScoreClass(repo.migration_score)">{{ repo.migration_score }}/100</div>
+            </div>
+            <div class="popular-right-algos">
+              <span v-for="algo in repo.algorithms" :key="algo" class="algo-pill small">{{ algo }}</span>
+            </div>
+            <div class="popular-right-findings">
+              <div v-for="(f, fIdx) in repo.findings" :key="fIdx" class="popular-right-finding">
+                <span class="line-badge">L{{ f.line }}</span>
+                <span class="popular-finding-file">{{ f.file_name }}</span>
+                <span class="algo-tag">{{ f.algorithm }}</span>
+                <span class="risk-badge" :class="riskBadgeClass(f.risk_level)">{{ f.risk_level }}</span>
+                <span class="popular-finding-evidence">{{ f.evidence }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-if="popularData.repos.filter(r => r.finding_count > 0).length === 0" class="no-risk-banner">
+            <span class="ok-marker">✓</span>
+            所有仓库均未发现量子脆弱性问题
+          </div>
+        </div>
+
+        <!-- 热门榜单扫描中 -->
+        <div v-else-if="scanMode === 'popular' && popularScanning" class="scanning-state">
+          <div class="scan-progress">
+            <div class="scan-ring">
+              <svg viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="42" />
+                <circle class="ring-fg" cx="50" cy="50" r="42" />
+              </svg>
+              <span class="scan-ring-text">⚡</span>
+            </div>
+          </div>
+          <p class="scan-label">⌁ 正在扫描热门仓库，请耐心等待…</p>
+          <div class="scan-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- 热门榜单空状态 -->
+        <div v-else-if="scanMode === 'popular'" class="empty-state">
+          <div class="empty-icon-wrapper">
+            <span class="empty-icon">★</span>
+            <span class="empty-icon-shadow">★</span>
+          </div>
+          <h2>热门仓库扫描</h2>
+          <p>扫描 GitHub 上密码学相关热门仓库，检测量子脆弱算法的使用情况</p>
+        </div>
+
         <!-- 等待状态 -->
-        <div v-if="!scanResult && !isScanning && !errorMsg" class="empty-state">
+        <div v-else-if="!scanResult && !isScanning && !errorMsg" class="empty-state">
           <div class="empty-icon-wrapper">
             <span class="empty-icon">&lt;/&gt;</span>
             <span class="empty-icon-shadow">&lt;/&gt;</span>
@@ -2019,6 +2084,40 @@ body {
   font-size: 0.72rem;
   padding: 0.3rem 0.6rem;
   margin-left: auto;
+}
+
+.popular-top-input {
+  width: 80px;
+  text-align: center;
+}
+
+/* Right-side popular results */
+.popular-right-results { display: flex; flex-direction: column; gap: 1rem; }
+.popular-right-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.popular-right-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+.popular-right-meta { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
+.popular-right-repo {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.popular-right-repo-header { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.popular-right-repo-header .repo-name { font-weight: 700; font-size: 0.9rem; }
+.popular-right-repo-header .repo-stars { font-size: 0.75rem; color: var(--text-muted); }
+.popular-right-repo-header .repo-score { margin-left: auto; font-weight: 700; font-size: 0.82rem; }
+.popular-right-algos { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.popular-right-findings { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.3rem; border-top: 1px solid var(--border-light); padding-top: 0.4rem; }
+.popular-right-finding {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+  padding: 0.2rem 0;
 }
 
 .popular-loading {
