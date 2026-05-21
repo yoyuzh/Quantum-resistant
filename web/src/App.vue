@@ -30,15 +30,26 @@ if __name__ == "__main__":
 const theme = ref(localStorage.getItem('app-theme') || 'light');
 const toggleTheme = () => { theme.value = theme.value === 'light' ? 'dark' : 'light'; };
 watch(theme, (val) => { localStorage.setItem('app-theme', val); document.documentElement.setAttribute('data-theme', val); });
-onMounted(() => { document.documentElement.setAttribute('data-theme', theme.value); });
+onMounted(async () => {
+  document.documentElement.setAttribute('data-theme', theme.value);
+  try {
+    const response = await fetch('/api/knowledge/graph');
+    if (response.ok) knowledgeGraph.value = await response.json();
+  } catch {
+    knowledgeGraph.value = { nodes: [], edges: [] };
+  }
+});
 
 // --- 状态 ---
 const scanMode = ref('snippet');
 const snippetFilename = ref('snippet.py');
 const snippetContent = ref(DEFAULT_RSA_CODE);
 const selectedFiles = ref([]);
+const githubRepositoryUrl = ref('https://github.com/pyca/cryptography');
+const pypiPackageName = ref('cryptography');
 const isScanning = ref(false);
 const scanResult = ref(null);
+const knowledgeGraph = ref({ nodes: [], edges: [] });
 const scanProgress = ref(0);
 const errorMsg = ref('');
 const expandedFindings = ref(new Set());
@@ -76,6 +87,31 @@ const findingsByFile = computed(() => {
 const algoCount = computed(() =>
   scanResult.value ? Object.keys(scanResult.value.summary.algorithm_counts).length : 0
 );
+const migrationScore = computed(() => scanResult.value?.summary?.migration_score || null);
+const sourceTypeLabel = computed(() => {
+  const labels = {
+    snippet: '代码片段',
+    manual_upload: '本地文件',
+    github_repository: 'GitHub 仓库',
+    pypi_package: 'PyPI 包',
+  };
+  return labels[scanResult.value?.source_type] || '未知来源';
+});
+const topAlgorithms = computed(() => {
+  if (!scanResult.value) return [];
+  return Object.entries(scanResult.value.summary.algorithm_counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([name, count]) => ({ name, count }));
+});
+const graphColumns = computed(() => {
+  const groups = {};
+  knowledgeGraph.value.nodes.forEach(node => {
+    if (!groups[node.type]) groups[node.type] = [];
+    groups[node.type].push(node);
+  });
+  return groups;
+});
 
 // 风险等级配色
 const riskColors = computed(() => ({
@@ -104,8 +140,8 @@ const toggleMode = (mode) => { scanMode.value = mode; errorMsg.value = ''; };
 
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
-  const filtered = files.filter(f => /\.(py|pyw|txt)$/i.test(f.name));
-  if (filtered.length < files.length) alert('部分文件格式不支持，仅限 .py, .pyw, .txt');
+  const filtered = files.filter(f => /\.(py|pyw|txt|pem|ya?ml|json|cfg|ini|toml)$/i.test(f.name));
+  if (filtered.length < files.length) alert('部分文件格式不支持，仅限代码、配置和密钥材料文本文件');
   // 合并去重
   const existing = new Set(selectedFiles.value.map(f => f.name));
   const merged = [...selectedFiles.value];
@@ -157,11 +193,25 @@ const startScan = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: snippetFilename.value, content: snippetContent.value })
       });
-    } else {
+    } else if (scanMode.value === 'files') {
       if (selectedFiles.value.length === 0) throw new Error('请先选择文件');
       const formData = new FormData();
       selectedFiles.value.forEach(file => formData.append('files', file));
       response = await fetch('/api/scan/files', { method: 'POST', body: formData });
+    } else if (scanMode.value === 'github') {
+      response = await fetch('/api/scan/github', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repository_url: githubRepositoryUrl.value })
+      });
+    } else if (scanMode.value === 'pypi') {
+      response = await fetch('/api/scan/pypi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ package_name: pypiPackageName.value })
+      });
+    } else {
+      throw new Error('未知扫描模式');
     }
 
     const elapsed = Date.now() - startTime;
@@ -280,6 +330,14 @@ const riskBadgeClass = (level) => {
               <span class="tab-icon">⊞</span>
               <span>文件上传</span>
             </button>
+            <button :class="{ active: scanMode === 'github' }" @click="toggleMode('github')">
+              <span class="tab-icon">⌘</span>
+              <span>GitHub</span>
+            </button>
+            <button :class="{ active: scanMode === 'pypi' }" @click="toggleMode('pypi')">
+              <span class="tab-icon">◇</span>
+              <span>PyPI</span>
+            </button>
           </div>
 
           <div class="tab-content">
@@ -306,13 +364,13 @@ const riskBadgeClass = (level) => {
             </div>
 
             <!-- 文件上传模式 -->
-            <div v-else class="upload-area">
+            <div v-else-if="scanMode === 'files'" class="upload-area">
               <div class="upload-dropzone" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent @drop="(e) => { const dt = e.dataTransfer; if (dt.files.length) { const input = $refs.fileInput; const fake = new DataTransfer(); Array.from(dt.files).forEach(f => fake.items.add(f)); input.files = fake.files; input.dispatchEvent(new Event('change')); } }">
-                <input type="file" ref="fileInput" multiple @change="handleFileSelect" hidden accept=".py,.pyw,.txt" />
+                <input type="file" ref="fileInput" multiple @change="handleFileSelect" hidden accept=".py,.pyw,.txt,.pem,.yml,.yaml,.json,.cfg,.ini,.toml" />
                 <div class="dropzone-hint">
                   <span class="upload-icon">⬆</span>
                   <p>拖放或点击选择文件</p>
-                  <small>.py · .pyw · .txt &nbsp; 单文件 ≤ 2MB</small>
+                  <small>.py · .pem · .yml · .json &nbsp; 单文件 ≤ 2MB</small>
                 </div>
               </div>
 
@@ -328,6 +386,36 @@ const riskBadgeClass = (level) => {
                   <button @click="removeFile(idx)" class="file-chip-remove" title="移除">×</button>
                 </div>
               </transition-group>
+            </div>
+
+            <div v-else-if="scanMode === 'github'" class="remote-scan-area">
+              <div class="form-group">
+                <label>GitHub 仓库地址</label>
+                <input
+                  v-model="githubRepositoryUrl"
+                  type="url"
+                  placeholder="https://github.com/owner/repo"
+                  class="input-field"
+                />
+              </div>
+              <div class="source-hint">
+                将下载 main/master 分支源码压缩包，扫描 Python、配置和密钥材料文件。
+              </div>
+            </div>
+
+            <div v-else class="remote-scan-area">
+              <div class="form-group">
+                <label>PyPI 包名</label>
+                <input
+                  v-model="pypiPackageName"
+                  type="text"
+                  placeholder="cryptography"
+                  class="input-field"
+                />
+              </div>
+              <div class="source-hint">
+                优先下载源码包，提取可扫描文件并生成量子脆弱算法迁移建议。
+              </div>
             </div>
 
             <div class="actions">
@@ -402,6 +490,43 @@ const riskBadgeClass = (level) => {
               <div class="summary-card">
                 <span class="label">扫描时间</span>
                 <span class="value small">{{ formatTime(scanResult.scanned_at) }}</span>
+              </div>
+            </div>
+
+            <div v-if="migrationScore" class="migration-overview">
+              <div class="migration-score" :class="riskBadgeClass(migrationScore.risk_level)">
+                <span class="score-label">迁移评分</span>
+                <strong>{{ migrationScore.score }}</strong>
+                <span>/100</span>
+              </div>
+              <div class="migration-copy">
+                <div class="migration-title">
+                  {{ sourceTypeLabel }} · {{ migrationScore.priority }}
+                </div>
+                <p>
+                  高风险 {{ migrationScore.high_risk_findings }} 项，影响 {{ migrationScore.affected_files }} 个文件，
+                  涉及 {{ migrationScore.algorithm_variety }} 类传统公钥算法。
+                </p>
+              </div>
+              <div class="top-algorithms" v-if="topAlgorithms.length">
+                <span v-for="item in topAlgorithms" :key="item.name" class="algo-pill">
+                  {{ item.name }} × {{ item.count }}
+                </span>
+              </div>
+            </div>
+
+            <div v-if="knowledgeGraph.nodes.length" class="knowledge-panel">
+              <div class="panel-heading">
+                <h3>抗量子迁移知识图谱</h3>
+                <span>{{ knowledgeGraph.nodes.length }} 节点 · {{ knowledgeGraph.edges.length }} 关系</span>
+              </div>
+              <div class="graph-columns">
+                <div v-for="(nodes, type) in graphColumns" :key="type" class="graph-column">
+                  <span class="graph-type">{{ type }}</span>
+                  <span v-for="node in nodes.slice(0, 5)" :key="node.id" class="graph-node">
+                    {{ node.label }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -768,6 +893,23 @@ body {
 }
 
 .input-field::placeholder { color: var(--text-muted); font-size: 0.84rem; }
+
+.source-hint {
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.remote-scan-area {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
 /* 编辑器 + 行号 */
 .editor-wrap {
@@ -1312,6 +1454,165 @@ body {
   transition: background 0.3s;
 }
 .summary-card.accent-danger.has-findings::before { background: var(--danger); }
+
+.migration-overview {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .migration-overview { grid-template-columns: 1fr; }
+}
+
+.migration-score {
+  min-width: 86px;
+  height: 72px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.12rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(15, 155, 142, 0.16);
+  position: relative;
+  font-family: var(--font-mono);
+}
+
+.migration-score.high {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: rgba(229, 69, 69, 0.2);
+}
+
+.migration-score.medium {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: rgba(212, 121, 10, 0.2);
+}
+
+.score-label {
+  position: absolute;
+  top: 0.45rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.migration-score strong {
+  font-size: 1.65rem;
+  line-height: 1;
+  margin-top: 1rem;
+}
+
+.migration-copy {
+  min-width: 0;
+}
+
+.migration-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.migration-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.top-algorithms {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  max-width: 220px;
+}
+
+.algo-pill {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.knowledge-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.panel-heading h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.panel-heading span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+
+.graph-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.5rem;
+}
+
+.graph-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.graph-type {
+  color: var(--accent-dim);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.graph-node {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.28rem 0.42rem;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ============================================
    No Risk

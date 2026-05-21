@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from scan_quantum_vuln import (
+    build_migration_score,
     format_findings,
     scan_code_for_crypto,
     scan_source_for_crypto,
@@ -109,6 +110,31 @@ class QuantumScannerTests(unittest.TestCase):
         )
         self.assertTrue(all("PEM" in finding["evidence"] for finding in findings))
 
+    def test_migration_score_prioritizes_high_risk_multi_file_findings(self) -> None:
+        sources = [
+            {"file_name": "rsa_demo.py"},
+            {"file_name": "ecdsa_demo.py"},
+        ]
+        findings = [
+            {"file_name": "rsa_demo.py", "algorithm": "RSA", "risk_level": "高风险"},
+            {"file_name": "ecdsa_demo.py", "algorithm": "ECDSA", "risk_level": "高风险"},
+        ]
+
+        score = build_migration_score(sources, findings)
+
+        self.assertEqual(score["risk_level"], "高")
+        self.assertEqual(score["priority"], "立即规划迁移")
+        self.assertEqual(score["high_risk_findings"], 2)
+        self.assertEqual(score["affected_files"], 2)
+        self.assertEqual(score["algorithm_variety"], 2)
+
+    def test_migration_score_marks_clean_sources_low_priority(self) -> None:
+        score = build_migration_score([{"file_name": "clean.py"}], [])
+
+        self.assertEqual(score["score"], 0)
+        self.assertEqual(score["risk_level"], "低")
+        self.assertEqual(score["priority"], "持续观察")
+
     def test_human_explanation_does_not_trigger_protocol_identifier_scan(self) -> None:
         source = "\n".join(
             [
@@ -120,6 +146,21 @@ class QuantumScannerTests(unittest.TestCase):
         findings = scan_source_for_crypto(source, filename="notes.py")
 
         self.assertEqual(findings, [])
+
+    def test_non_python_yaml_like_text_does_not_crash_and_can_still_match_algorithms(self) -> None:
+        source = "\n".join(
+            [
+                "metadata:",
+                "  id: coverage-uuid",
+                "  ssh_algorithm: ssh-rsa",
+            ]
+        )
+
+        findings = scan_source_for_crypto(source, filename="workflow.yml")
+
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["algorithm"], "RSA")
+        self.assertEqual(findings[0]["file_name"], "workflow.yml")
 
     def test_missing_file_returns_non_zero_exit_code(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

@@ -444,7 +444,7 @@ def strip_strings_and_comments(source: str) -> str:
                 for col in range(from_col, min(to_col, len(line))):
                     if line[col] != "\n":
                         line[col] = " "
-    except tokenize.TokenError:
+    except (tokenize.TokenError, IndentationError, SyntaxError):
         pass
     return "".join("".join(line) for line in lines)
 
@@ -533,6 +533,27 @@ def scan_with_regex(source: str, aliases: dict[str, str] | None = None) -> list[
                 findings.append(finding)
                 seen_keys.add(key)
 
+        context_match = re.match(r"\s*['\"]?([A-Za-z0-9_.-]+)['\"]?\s*[:=]", raw_line)
+        context_key = context_match.group(1) if context_match else ""
+        if context_key and SENSITIVE_STRING_CONTEXT_RE.search(context_key):
+            for algorithm_key, pattern, evidence_prefix in STRING_IDENTIFIER_RULES:
+                match = pattern.search(raw_line)
+                if not match:
+                    continue
+                profile = VULNERABLE_ALGOS[algorithm_key]
+                finding = Finding(
+                    line=line_number,
+                    algorithm=profile.name,
+                    risk_level=profile.risk_level,
+                    reason=profile.reason,
+                    recommendation=profile.recommendation,
+                    evidence=f"{evidence_prefix}: {match.group(0)}",
+                )
+                key = (finding.line, finding.algorithm)
+                if key not in seen_keys:
+                    findings.append(finding)
+                    seen_keys.add(key)
+
         for alias, base_algorithm in effective_aliases.items():
             for reported_algorithm, pattern_template, evidence_template in ALIAS_REGEX_RULES.get(
                 base_algorithm, ()
@@ -573,6 +594,48 @@ def make_source_id(filename: str, source: str) -> str:
     return f"src_{digest[:12]}"
 
 
+def build_migration_score(
+    sources: list[dict[str, object]],
+    findings: list[dict[str, object]],
+) -> dict[str, int | str]:
+    high_risk_findings = sum(1 for finding in findings if "高" in str(finding.get("risk_level", "")))
+    affected_files = len(
+        {
+            str(finding.get("file_name", ""))
+            for finding in findings
+            if finding.get("file_name")
+        }
+    )
+    algorithm_variety = len(
+        {
+            str(finding.get("algorithm", ""))
+            for finding in findings
+            if finding.get("algorithm")
+        }
+    )
+    score = min(100, high_risk_findings * 25 + affected_files * 10 + algorithm_variety * 10)
+
+    if score >= 40:
+        risk_level = "高"
+        priority = "立即规划迁移"
+    elif score > 0:
+        risk_level = "中"
+        priority = "纳入迁移排期"
+    else:
+        risk_level = "低"
+        priority = "持续观察"
+
+    return {
+        "score": score,
+        "risk_level": risk_level,
+        "priority": priority,
+        "high_risk_findings": high_risk_findings,
+        "affected_files": affected_files,
+        "algorithm_variety": algorithm_variety,
+        "source_count": len(sources),
+    }
+
+
 def scan_source_for_crypto(
     source: str,
     filename: str = "snippet.py",
@@ -583,7 +646,7 @@ def scan_source_for_crypto(
         visitor = analyze_with_ast(source)
         ast_findings = sorted(visitor.findings, key=lambda item: (item.line, item.algorithm))
         aliases = visitor.aliases
-    except SyntaxError:
+    except (SyntaxError, IndentationError):
         ast_findings = []
         aliases = extract_aliases_from_source(strip_strings_and_comments(source))
 

@@ -8,6 +8,11 @@ BACKEND_HOST="${BACKEND_HOST:-127.0.0.1}"
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_HOST="${FRONTEND_HOST:-127.0.0.1}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+
+if [[ -x "${REPO_ROOT}/.venv/bin/python" ]]; then
+  PYTHON_BIN="${REPO_ROOT}/.venv/bin/python"
+fi
 
 BACKEND_PID=""
 FRONTEND_PID=""
@@ -31,7 +36,7 @@ if [[ ! -d "web/node_modules" ]]; then
 fi
 
 echo "Starting backend on http://${BACKEND_HOST}:${BACKEND_PORT}"
-python3 start.py --host "${BACKEND_HOST}" --port "${BACKEND_PORT}" --strict-port &
+"${PYTHON_BIN}" start.py --host "${BACKEND_HOST}" --port "${BACKEND_PORT}" --strict-port &
 BACKEND_PID="$!"
 
 echo "Starting frontend on http://${FRONTEND_HOST}:${FRONTEND_PORT}/static/"
@@ -47,4 +52,14 @@ Development services are starting:
 Press Ctrl+C to stop both services.
 EOF
 
-wait -n "${BACKEND_PID}" "${FRONTEND_PID}"
+while true; do
+  if ! kill -0 "${BACKEND_PID}" 2>/dev/null; then
+    wait "${BACKEND_PID}" 2>/dev/null || true
+    exit 1
+  fi
+  if ! kill -0 "${FRONTEND_PID}" 2>/dev/null; then
+    wait "${FRONTEND_PID}" 2>/dev/null || true
+    exit 1
+  fi
+  sleep 1
+done

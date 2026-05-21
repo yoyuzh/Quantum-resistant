@@ -4,6 +4,8 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+from scan_quantum_vuln import build_migration_score
+
 BEIJING_TZ = timezone(timedelta(hours=8))
 
 
@@ -17,6 +19,7 @@ def build_summary(sources: list[dict[str, Any]], findings: list[dict[str, Any]])
         "source_count": len(sources),
         "finding_count": len(findings),
         "algorithm_counts": dict(sorted(algorithm_counts.items())),
+        "migration_score": build_migration_score(sources, findings),
     }
 
 
@@ -41,6 +44,8 @@ def build_markdown_report(
         f"- 输入来源：{source_type}",
         f"- 文件数量：{summary['source_count']}",
         f"- 风险发现总数：{summary['finding_count']}",
+        f"- 迁移评分：{summary['migration_score']['score']}/100",
+        f"- 迁移优先级：{summary['migration_score']['priority']}",
         "",
         "## 算法统计",
         "",

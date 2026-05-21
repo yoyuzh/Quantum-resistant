@@ -6,8 +6,11 @@
 
 - 支持粘贴代码片段扫描。
 - 支持多文件上传扫描。
+- 支持输入 GitHub 仓库地址，下载源码包后批量扫描。
+- 支持输入 PyPI 包名，下载源码包或 wheel 后批量扫描。
 - 支持识别 Python 加密 API、协议算法字符串和 PEM 密钥头。
 - 展示文件名、行号、算法、风险等级、证据、原因和迁移建议。
+- 展示迁移评分、迁移优先级和抗量子知识图谱。
 - 支持点击结果查看对应行附近代码。
 - 支持导出 Markdown 扫描报告。
 - 扫描时间和报告时间使用北京时间 `UTC+08:00`。
@@ -147,7 +150,12 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 - `GET /api/health`：服务健康检查。
 - `POST /api/scan/snippet`：扫描粘贴的代码片段。
 - `POST /api/scan/files`：扫描上传的多个代码文件。
+- `POST /api/scan/github`：扫描 GitHub 仓库源码，参数为 `repository_url`。
+- `POST /api/scan/pypi`：扫描 PyPI 包源码，参数为 `package_name`。
+- `GET /api/knowledge/graph`：返回算法、数学难题、量子威胁和 PQC 迁移建议的图谱数据。
 - `POST /api/report/markdown`：根据扫描结果生成 Markdown 报告。
+
+远程采集会提取 `.py`、`.pyw`、`.txt`、`.pem`、`.yml`、`.yaml`、`.json`、`.cfg`、`.ini`、`.toml` 文件。单文件限制 2 MB，单次远程采集最多扫描 80 个文件。
 
 ## 命令行扫描
 
@@ -223,7 +231,7 @@ npm run build
 
 ## 后续扩展方向
 
-- 支持输入 GitHub 仓库地址，拉取项目后批量扫描。
+- 支持更完整的 GitHub 分支选择和私有仓库 token。
 - 增加异步任务、扫描进度和历史记录。
 - 支持 CSV、JSON、PDF 等更多导出格式。
 - 扩展 Java、Go、JavaScript 等语言的算法识别规则。

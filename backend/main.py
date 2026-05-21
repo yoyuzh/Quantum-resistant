@@ -11,6 +11,13 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from backend.collectors import (
+    CollectionError,
+    collect_github_sources,
+    collect_pypi_sources,
+    validate_github_repository_url,
+    validate_pypi_package_name,
+)
 from backend.reporting import beijing_now_iso, build_markdown_report, build_summary
 from scan_quantum_vuln import make_source_id, scan_source_for_crypto
 
@@ -18,12 +25,28 @@ MAX_SOURCE_BYTES = 2 * 1024 * 1024
 MAX_TOTAL_UPLOAD_BYTES = 10 * 1024 * 1024
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
-SourceType = Literal["snippet", "manual_upload", "github_repository"]
+SourceType = Literal["snippet", "manual_upload", "github_repository", "pypi_package"]
 
 
 class SnippetScanRequest(BaseModel):
     filename: str = Field(default="snippet.py", min_length=1, max_length=240)
     content: str = Field(default="", max_length=MAX_SOURCE_BYTES)
+
+
+class GitHubScanRequest(BaseModel):
+    repository_url: str = Field(min_length=1, max_length=500)
+
+    def __init__(self, **data: Any) -> None:
+        super().__init__(**data)
+        self.repository_url = validate_github_repository_url(self.repository_url)
+
+
+class PyPIScanRequest(BaseModel):
+    package_name: str = Field(min_length=1, max_length=214)
+
+    def __init__(self, **data: Any) -> None:
+        super().__init__(**data)
+        self.package_name = validate_pypi_package_name(self.package_name)
 
 
 class SourceRecord(BaseModel):
@@ -33,6 +56,7 @@ class SourceRecord(BaseModel):
     content: str
     line_count: int
     char_count: int
+    origin: Optional[str] = None
 
 
 class FindingRecord(BaseModel):
@@ -51,6 +75,7 @@ class ScanSummary(BaseModel):
     source_count: int
     finding_count: int
     algorithm_counts: dict[str, int]
+    migration_score: dict[str, int | str]
 
 
 class ScanResponse(BaseModel):
@@ -80,14 +105,19 @@ def normalize_filename(filename: str, fallback: str = "snippet.py") -> str:
 
 
 def build_scan_response(
-    documents: list[tuple[str, str]],
+    documents: list[tuple[str, str] | tuple[str, str, str]],
     source_type: SourceType,
 ) -> ScanResponse:
     scanned_at = beijing_now_iso()
     sources: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
 
-    for index, (filename, content) in enumerate(documents):
+    for index, document in enumerate(documents):
+        if len(document) == 3:
+            origin, filename, content = document
+        else:
+            filename, content = document
+            origin = None
         if len(content.encode("utf-8")) > MAX_SOURCE_BYTES:
             raise HTTPException(status_code=413, detail=f"{filename} exceeds the 2 MB limit")
 
@@ -99,6 +129,7 @@ def build_scan_response(
             "content": content,
             "line_count": len(content.splitlines()),
             "char_count": len(content),
+            "origin": origin,
         }
         sources.append(source_record)
         findings.extend(
@@ -186,6 +217,80 @@ async def scan_files(request: Request) -> ScanResponse:
     body = await request.body()
     documents = parse_multipart_files(content_type, body)
     return build_scan_response(documents, source_type="manual_upload")
+
+
+@app.post("/api/scan/github", response_model=ScanResponse)
+def scan_github(payload: GitHubScanRequest) -> ScanResponse:
+    try:
+        documents = collect_github_sources(payload.repository_url)
+    except CollectionError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if not documents:
+        raise HTTPException(status_code=404, detail="未找到可扫描的仓库源码文件")
+    return build_scan_response(documents, source_type="github_repository")
+
+
+@app.post("/api/scan/pypi", response_model=ScanResponse)
+def scan_pypi(payload: PyPIScanRequest) -> ScanResponse:
+    try:
+        documents = collect_pypi_sources(payload.package_name)
+    except CollectionError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if not documents:
+        raise HTTPException(status_code=404, detail="未找到可扫描的 PyPI 包源码文件")
+    return build_scan_response(documents, source_type="pypi_package")
+
+
+@app.get("/api/knowledge/graph")
+def knowledge_graph() -> dict[str, list[dict[str, str]]]:
+    nodes = [
+        {"id": "algorithm:RSA", "label": "RSA", "type": "Algorithm"},
+        {"id": "algorithm:DSA", "label": "DSA", "type": "Algorithm"},
+        {"id": "algorithm:DH", "label": "DH", "type": "Algorithm"},
+        {"id": "algorithm:ECDH", "label": "ECDH", "type": "Algorithm"},
+        {"id": "algorithm:ECDSA", "label": "ECDSA", "type": "Algorithm"},
+        {"id": "algorithm:ECC", "label": "ECC", "type": "Algorithm"},
+        {"id": "algorithm:X25519", "label": "X25519", "type": "Algorithm"},
+        {"id": "algorithm:Ed25519", "label": "Ed25519", "type": "Algorithm"},
+        {"id": "math:integer-factorization", "label": "大整数分解", "type": "MathProblem"},
+        {"id": "math:discrete-log", "label": "离散对数", "type": "MathProblem"},
+        {"id": "math:elliptic-curve-dlog", "label": "椭圆曲线离散对数", "type": "MathProblem"},
+        {"id": "risk:shor", "label": "Shor 算法量子威胁", "type": "Risk"},
+        {"id": "pqc:ML-KEM", "label": "ML-KEM / FIPS 203", "type": "PQCRecommendation"},
+        {"id": "pqc:ML-DSA", "label": "ML-DSA / FIPS 204", "type": "PQCRecommendation"},
+        {"id": "pqc:SLH-DSA", "label": "SLH-DSA / FIPS 205", "type": "PQCRecommendation"},
+        {"id": "api:cryptography", "label": "cryptography API", "type": "LibraryAPI"},
+        {"id": "api:pycryptodome", "label": "PyCryptodome API", "type": "LibraryAPI"},
+        {"id": "protocol:jwt-ssh", "label": "JWT / SSH 算法标识", "type": "ProtocolIdentifier"},
+    ]
+    edges = [
+        {"source": "algorithm:RSA", "target": "math:integer-factorization", "label": "依赖"},
+        {"source": "algorithm:DSA", "target": "math:discrete-log", "label": "依赖"},
+        {"source": "algorithm:DH", "target": "math:discrete-log", "label": "依赖"},
+        {"source": "algorithm:ECDH", "target": "math:elliptic-curve-dlog", "label": "依赖"},
+        {"source": "algorithm:ECDSA", "target": "math:elliptic-curve-dlog", "label": "依赖"},
+        {"source": "algorithm:ECC", "target": "math:elliptic-curve-dlog", "label": "依赖"},
+        {"source": "algorithm:X25519", "target": "math:elliptic-curve-dlog", "label": "依赖"},
+        {"source": "algorithm:Ed25519", "target": "math:elliptic-curve-dlog", "label": "依赖"},
+        {"source": "math:integer-factorization", "target": "risk:shor", "label": "受影响"},
+        {"source": "math:discrete-log", "target": "risk:shor", "label": "受影响"},
+        {"source": "math:elliptic-curve-dlog", "target": "risk:shor", "label": "受影响"},
+        {"source": "algorithm:RSA", "target": "pqc:ML-KEM", "label": "密钥建立迁移"},
+        {"source": "algorithm:RSA", "target": "pqc:ML-DSA", "label": "签名迁移"},
+        {"source": "algorithm:DH", "target": "pqc:ML-KEM", "label": "密钥交换迁移"},
+        {"source": "algorithm:ECDH", "target": "pqc:ML-KEM", "label": "密钥交换迁移"},
+        {"source": "algorithm:X25519", "target": "pqc:ML-KEM", "label": "密钥交换迁移"},
+        {"source": "algorithm:DSA", "target": "pqc:ML-DSA", "label": "签名迁移"},
+        {"source": "algorithm:ECDSA", "target": "pqc:ML-DSA", "label": "签名迁移"},
+        {"source": "algorithm:Ed25519", "target": "pqc:ML-DSA", "label": "签名迁移"},
+        {"source": "algorithm:Ed25519", "target": "pqc:SLH-DSA", "label": "长期归档可评估"},
+        {"source": "api:cryptography", "target": "algorithm:RSA", "label": "可识别"},
+        {"source": "api:cryptography", "target": "algorithm:ECDSA", "label": "可识别"},
+        {"source": "api:pycryptodome", "target": "algorithm:RSA", "label": "可识别"},
+        {"source": "protocol:jwt-ssh", "target": "algorithm:RSA", "label": "可识别"},
+        {"source": "protocol:jwt-ssh", "target": "algorithm:ECDSA", "label": "可识别"},
+    ]
+    return {"nodes": nodes, "edges": edges}
 
 
 @app.post("/api/report/markdown")
