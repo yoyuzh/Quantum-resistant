@@ -12,6 +12,7 @@ import re
 import sys
 import tokenize
 from dataclasses import asdict, dataclass
+from itertools import zip_longest
 from pathlib import Path
 from typing import Iterable
 
@@ -345,6 +346,18 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
         self.scan_string_value(node.value, context=context, line=getattr(node.value, "lineno", 0))
         self.generic_visit(node)
 
+    def visit_Dict(self, node: ast.Dict) -> None:
+        for key_node, value_node in zip(node.keys, node.values):
+            if key_node is None:
+                continue
+            context = ""
+            if isinstance(key_node, ast.Constant) and isinstance(key_node.value, str):
+                context = key_node.value
+            elif isinstance(key_node, ast.Name):
+                context = key_node.id
+            self.scan_string_value(value_node, context=context, line=getattr(value_node, "lineno", 0))
+        self.generic_visit(node)
+
     def scan_string_value(self, node: ast.AST, context: str, line: int) -> None:
         if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
             return
@@ -444,7 +457,7 @@ def strip_strings_and_comments(source: str) -> str:
                 for col in range(from_col, min(to_col, len(line))):
                     if line[col] != "\n":
                         line[col] = " "
-    except (tokenize.TokenError, IndentationError, SyntaxError):
+    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError, TypeError):
         pass
     return "".join("".join(line) for line in lines)
 
@@ -491,7 +504,7 @@ def scan_with_regex(source: str, aliases: dict[str, str] | None = None) -> list[
     findings: list[Finding] = []
     seen_keys: set[tuple[int, str]] = set()
     for line_number, (line, raw_line) in enumerate(
-        zip(sanitized_source.splitlines(), source.splitlines()),
+        zip_longest(sanitized_source.splitlines(), source.splitlines(), fillvalue=""),
         start=1,
     ):
         stripped = line.strip()
@@ -646,7 +659,7 @@ def scan_source_for_crypto(
         visitor = analyze_with_ast(source)
         ast_findings = sorted(visitor.findings, key=lambda item: (item.line, item.algorithm))
         aliases = visitor.aliases
-    except (SyntaxError, IndentationError):
+    except (SyntaxError, IndentationError, ValueError, TypeError):
         ast_findings = []
         aliases = extract_aliases_from_source(strip_strings_and_comments(source))
 

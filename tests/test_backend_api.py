@@ -125,6 +125,15 @@ class BackendApiTests(unittest.TestCase):
         self.assertEqual(payload["sources"][0]["origin"], "pypi:demo-package")
         self.assertEqual(payload["findings"][0]["algorithm"], "RSA")
 
+    def test_sample_sources_returns_importable_examples(self) -> None:
+        response = self.client.get("/api/samples")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertGreaterEqual(len(payload), 1)
+        self.assertIn("file_name", payload[0])
+        self.assertIn("content", payload[0])
+
     def test_knowledge_graph_returns_algorithm_recommendation_edges(self) -> None:
         response = self.client.get("/api/knowledge/graph")
 

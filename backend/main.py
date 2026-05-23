@@ -16,6 +16,7 @@ from backend.collectors import (
     CollectionError,
     collect_github_sources,
     collect_pypi_sources,
+    is_supported_source_path,
     validate_github_repository_url,
     validate_pypi_package_name,
 )
@@ -26,6 +27,7 @@ MAX_SOURCE_BYTES = 2 * 1024 * 1024
 MAX_TOTAL_UPLOAD_BYTES = 10 * 1024 * 1024
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
+SAMPLE_INPUTS_DIR = PROJECT_ROOT / "sample_inputs"
 SourceType = Literal["snippet", "manual_upload", "github_repository", "pypi_package"]
 
 
@@ -92,6 +94,13 @@ class ReportRequest(BaseModel):
     source_type: SourceType = "manual_upload"
     sources: list[SourceRecord] = Field(default_factory=list)
     findings: list[FindingRecord] = Field(default_factory=list)
+
+
+class SampleSourceRecord(BaseModel):
+    file_name: str
+    content: str
+    line_count: int
+    char_count: int
 
 
 app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.1.0")
@@ -170,6 +179,12 @@ def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str
         filename = part.get_filename()
         if not filename:
             continue
+        normalized_filename = normalize_filename(filename, "uploaded.py")
+        if not is_supported_source_path(normalized_filename):
+            raise HTTPException(
+                status_code=400,
+                detail=f"{normalized_filename} is not a supported text source file",
+            )
 
         payload = part.get_payload(decode=True) or b""
         if len(payload) > MAX_SOURCE_BYTES:
@@ -183,7 +198,7 @@ def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str
                 detail=f"{filename} is not valid UTF-8 text",
             ) from exc
 
-        documents.append((normalize_filename(filename, "uploaded.py"), content))
+        documents.append((normalized_filename, content))
 
     if not documents:
         raise HTTPException(status_code=400, detail="No files were uploaded")
@@ -199,6 +214,31 @@ def model_to_dict(model: BaseModel) -> dict[str, Any]:
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/samples", response_model=list[SampleSourceRecord])
+def list_sample_sources() -> list[SampleSourceRecord]:
+    samples: list[SampleSourceRecord] = []
+    if not SAMPLE_INPUTS_DIR.exists():
+        return samples
+    for path in sorted(SAMPLE_INPUTS_DIR.iterdir()):
+        if not path.is_file() or not is_supported_source_path(path):
+            continue
+        if path.stat().st_size > MAX_SOURCE_BYTES:
+            continue
+        try:
+            content = path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError:
+            continue
+        samples.append(
+            SampleSourceRecord(
+                file_name=path.name,
+                content=content,
+                line_count=len(content.splitlines()),
+                char_count=len(content),
+            )
+        )
+    return samples
 
 
 @app.get("/", include_in_schema=False)

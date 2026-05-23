@@ -93,6 +93,13 @@ class QuantumScannerTests(unittest.TestCase):
         )
         self.assertTrue(all("算法标识" in finding["evidence"] for finding in findings))
 
+    def test_detects_protocol_identifier_in_dict_config(self) -> None:
+        source = 'config = {"jwt_algorithm": "RS256", "ssh_host_key": "ssh-ed25519"}'
+
+        findings = scan_source_for_crypto(source, filename="dict_config.py")
+
+        self.assertEqual([finding["algorithm"] for finding in findings], ["Ed25519", "RSA"])
+
     def test_detects_pem_key_material_headers(self) -> None:
         source = "\n".join(
             [
@@ -161,6 +168,14 @@ class QuantumScannerTests(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["algorithm"], "RSA")
         self.assertEqual(findings[0]["file_name"], "workflow.yml")
+
+    def test_null_byte_source_falls_back_without_crashing(self) -> None:
+        findings = scan_source_for_crypto(
+            "from Crypto.PublicKey import RSA\nRSA.generate(2048)\x00",
+            filename="null_byte.py",
+        )
+
+        self.assertEqual([finding["algorithm"] for finding in findings], ["RSA"])
 
     def test_missing_file_returns_non_zero_exit_code(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

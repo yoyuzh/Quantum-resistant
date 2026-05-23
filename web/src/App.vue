@@ -53,6 +53,15 @@ const knowledgeGraph = ref({ nodes: [], edges: [] });
 const scanProgress = ref(0);
 const errorMsg = ref('');
 const expandedFindings = ref(new Set());
+const isLoadingSamples = ref(false);
+const helpTooltip = ref({
+  visible: false,
+  text: '',
+  left: 0,
+  top: 0,
+  width: 320,
+  placement: 'top',
+});
 
 // --- 热门榜单 ---
 const popularData = ref(null);
@@ -61,19 +70,59 @@ const popularScanning = ref(false);
 const popularError = ref('');
 const expandedPopularRepo = ref(null);
 const popularTopN = ref(20);
+const popularProgress = ref(0);
+const popularScanStep = ref(0);
+let popularProgressTimer = null;
 
 // 动画计数器
 const animatedSourceCount = ref(0);
 const animatedFindingCount = ref(0);
 const animatedAlgoCount = ref(0);
 
-// 扫描文本轮播
-const scanMessages = [
-  '⌁ 正在解析语法树…',
-  '⌁ 识别加密算法调用…',
-  '⌁ 评估量子脆弱性…',
-  '⌁ 生成风险分析报告…'
+const SCAN_STAGES = {
+  snippet: [
+    { label: '读取代码片段', detail: '正在准备待扫描源码内容' },
+    { label: '解析 Python AST', detail: '提取 import、调用、参数和配置字符串' },
+    { label: '匹配风险算法', detail: '识别 RSA、DSA、ECDSA、DH 等传统公钥算法' },
+    { label: '生成迁移建议', detail: '计算迁移评分并整理报告' },
+  ],
+  files: [
+    { label: '校验上传文件', detail: '检查扩展名、大小和 UTF-8 文本编码' },
+    { label: '读取多文件内容', detail: '保留文件来源并建立扫描任务' },
+    { label: '并发扫描源码', detail: '逐文件识别风险算法和 PEM 密钥材料' },
+    { label: '汇总文件风险', detail: '合并发现、统计算法并生成迁移评分' },
+  ],
+  github: [
+    { label: '校验仓库地址', detail: '确认 GitHub owner/repo 并准备采集' },
+    { label: '读取分支文件树', detail: '优先获取默认分支，筛选源码和配置文件' },
+    { label: '下载候选源码', detail: '并发下载文本文件，必要时回退分支 zip' },
+    { label: '扫描仓库风险', detail: '分析传统公钥算法用法并生成建议' },
+  ],
+  pypi: [
+    { label: '读取 PyPI 元数据', detail: '查询包版本和可下载发行文件' },
+    { label: '选择源码归档', detail: '优先 sdist，必要时回退 wheel' },
+    { label: '下载并解包文本', detail: '仅提取源码、配置和密钥材料，不安装不执行' },
+    { label: '扫描包内风险', detail: '识别量子脆弱算法并汇总迁移建议' },
+  ],
+};
+const POPULAR_SCAN_STAGES = [
+  { label: '检索热门仓库', detail: '按关键词读取 GitHub 公开仓库列表，筛选 Python 项目' },
+  { label: '采集候选源码', detail: '优先读取仓库文件树，并跳过超大或非文本文件' },
+  { label: '批量风险扫描', detail: '逐仓库识别 RSA、DSA、DH、ECDSA 等量子脆弱算法' },
+  { label: '生成榜单结果', detail: '按迁移评分、风险数量和受影响文件整理展示' },
 ];
+const SCAN_PROGRESS_FLOORS = [8, 30, 58, 88];
+const SCAN_PROGRESS_CAPS = [24, 52, 78, 94];
+const HELP_TEXT = Object.freeze({
+  scannedFiles: '实际进入扫描管线的源码、配置或密钥材料文件数量；超出大小限制或格式不支持的文件不会计入。',
+  findings: '扫描器识别出的风险使用点，包括传统公钥算法 API、协议算法标识或 PEM 密钥材料。每项会给出位置、原因和迁移建议。',
+  algorithms: '本次扫描命中的不同算法类型数量，例如 RSA、DSA、DH、ECDSA、ECC、X25519/X448 等。',
+  migrationScore: '迁移评分表示抗量子迁移的优先级，范围 0-100。当前按“高风险项×25 + 受影响文件×10 + 算法种类×10”估算并封顶 100；40 分及以上建议优先规划迁移。',
+  knowledgeGraph: '知识图谱把传统算法、依赖的数学难题、量子风险和推荐的后量子标准关联起来，帮助判断迁移方向。',
+  github: 'GitHub 扫描会读取公开仓库源码和配置文件；优先使用文件树并发采集，必要时回退 main/master 分支 zip，不执行仓库代码。',
+  pypi: 'PyPI 扫描会读取包元数据，优先下载 sdist，必要时回退 wheel；只提取文本源码、配置和密钥材料，不安装也不执行包代码。',
+  popular: '热门榜单会批量扫描密码学/加密相关热门 Python 仓库，用迁移评分和风险数量展示生态项目的优先级概览。',
+});
 const scanMsgIndex = ref(0);
 let scanMsgTimer = null;
 
@@ -96,6 +145,14 @@ const algoCount = computed(() =>
   scanResult.value ? Object.keys(scanResult.value.summary.algorithm_counts).length : 0
 );
 const migrationScore = computed(() => scanResult.value?.summary?.migration_score || null);
+const activeScanStages = computed(() => SCAN_STAGES[scanMode.value] || SCAN_STAGES.snippet);
+const currentScanStage = computed(() => activeScanStages.value[scanMsgIndex.value] || activeScanStages.value[0]);
+const currentPopularScanStage = computed(() => POPULAR_SCAN_STAGES[popularScanStep.value] || POPULAR_SCAN_STAGES[0]);
+const helpTooltipStyle = computed(() => ({
+  left: `${helpTooltip.value.left}px`,
+  top: `${helpTooltip.value.top}px`,
+  width: `${helpTooltip.value.width}px`,
+}));
 const sourceTypeLabel = computed(() => {
   const labels = {
     snippet: '代码片段',
@@ -134,6 +191,68 @@ const getRiskStyle = (level) => {
 };
 
 // --- 方法 ---
+const HELP_TOOLTIP_MARGIN = 12;
+const HELP_TOOLTIP_MAX_WIDTH = 320;
+let activeHelpTarget = null;
+
+const findHelpTarget = (target) => {
+  if (!(target instanceof Element)) return null;
+  return target.closest('.info-tooltip');
+};
+
+const hideHelpTooltip = () => {
+  if (activeHelpTarget) activeHelpTarget.classList.remove('floating-active');
+  activeHelpTarget = null;
+  helpTooltip.value = { ...helpTooltip.value, visible: false };
+};
+
+const showHelpTooltip = (target) => {
+  const text = target.getAttribute('data-tip') || target.getAttribute('aria-label') || '';
+  if (!text) return;
+
+  const rect = target.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+  const tooltipWidth = Math.min(HELP_TOOLTIP_MAX_WIDTH, viewportWidth - HELP_TOOLTIP_MARGIN * 2);
+  const left = Math.min(
+    viewportWidth - HELP_TOOLTIP_MARGIN - tooltipWidth / 2,
+    Math.max(HELP_TOOLTIP_MARGIN + tooltipWidth / 2, rect.left + rect.width / 2),
+  );
+  const placement = rect.top < 150 ? 'bottom' : 'top';
+  const top = placement === 'bottom' ? rect.bottom + 10 : rect.top - 10;
+
+  if (activeHelpTarget && activeHelpTarget !== target) {
+    activeHelpTarget.classList.remove('floating-active');
+  }
+  activeHelpTarget = target;
+  activeHelpTarget.classList.add('floating-active');
+
+  helpTooltip.value = {
+    visible: true,
+    text,
+    left,
+    top,
+    width: tooltipWidth,
+    placement,
+  };
+};
+
+const handleHelpPointerOver = (event) => {
+  const target = findHelpTarget(event.target);
+  if (target) showHelpTooltip(target);
+};
+
+const handleHelpPointerOut = (event) => {
+  const target = findHelpTarget(event.target);
+  if (!target) return;
+  if (event.relatedTarget instanceof Node && target.contains(event.relatedTarget)) return;
+  hideHelpTooltip();
+};
+
+const handleHelpFocusIn = (event) => {
+  const target = findHelpTarget(event.target);
+  if (target) showHelpTooltip(target);
+};
+
 const readJsonResponse = async (response, fallbackMessage) => {
   const text = await response.text();
   if (!text) {
@@ -148,6 +267,8 @@ const toggleMode = (mode) => {
   scanMode.value = mode;
   errorMsg.value = '';
   if (mode === 'popular') {
+    scanResult.value = null;
+    expandedFindings.value = new Set();
     loadPopularData();
   }
 };
@@ -189,6 +310,17 @@ const triggerPopularScan = async () => {
   popularError.value = '';
   popularData.value = null;
   expandedPopularRepo.value = null;
+  popularProgress.value = 8;
+  popularScanStep.value = 0;
+  clearInterval(popularProgressTimer);
+  popularProgressTimer = setInterval(() => {
+    const nextStep = Math.min(Math.floor(popularProgress.value / 28), POPULAR_SCAN_STAGES.length - 1);
+    popularScanStep.value = Math.max(popularScanStep.value, nextStep);
+    const cap = [26, 54, 82, 94][popularScanStep.value] || 94;
+    const gap = cap - popularProgress.value;
+    const step = gap > 18 ? 2.2 : gap > 6 ? 1.1 : 0.35;
+    popularProgress.value = Math.min(cap, popularProgress.value + step);
+  }, 220);
   try {
     const response = await fetch('/api/popular/scan', {
       method: 'POST',
@@ -205,10 +337,14 @@ const triggerPopularScan = async () => {
       popularError.value = '扫描完成但未获取到仓库数据';
       return;
     }
+    popularScanStep.value = POPULAR_SCAN_STAGES.length - 1;
+    popularProgress.value = 100;
     popularData.value = data;
   } catch (err) {
     popularError.value = '扫描热门仓库失败，请检查网络连接';
   } finally {
+    clearInterval(popularProgressTimer);
+    popularProgressTimer = null;
     popularScanning.value = false;
   }
 };
@@ -230,6 +366,26 @@ const removeFile = (index) => {
   selectedFiles.value.splice(index, 1);
 };
 
+const loadSampleFiles = async () => {
+  isLoadingSamples.value = true;
+  errorMsg.value = '';
+  try {
+    const response = await fetch('/api/samples');
+    if (!response.ok) throw new Error('读取示例代码失败');
+    const samples = await response.json();
+    if (!samples.length) throw new Error('未找到可导入的示例代码');
+    const existing = new Set(selectedFiles.value.map(file => file.name));
+    const sampleFiles = samples
+      .filter(sample => !existing.has(sample.file_name))
+      .map(sample => new File([sample.content], sample.file_name, { type: 'text/x-python' }));
+    selectedFiles.value = [...selectedFiles.value, ...sampleFiles];
+  } catch (err) {
+    errorMsg.value = err.message || '读取示例代码失败';
+  } finally {
+    isLoadingSamples.value = false;
+  }
+};
+
 const animateCount = (refVar, target, duration = 700) => {
   const start = refVar.value;
   const startTime = performance.now();
@@ -242,27 +398,38 @@ const animateCount = (refVar, target, duration = 700) => {
   requestAnimationFrame(step);
 };
 
+const setScanPhase = (index, floor) => {
+  const lastIndex = activeScanStages.value.length - 1;
+  const nextIndex = Math.max(0, Math.min(index, lastIndex));
+  scanMsgIndex.value = nextIndex;
+  const nextFloor = floor ?? SCAN_PROGRESS_FLOORS[nextIndex] ?? scanProgress.value;
+  scanProgress.value = Math.max(scanProgress.value, nextFloor);
+};
+
 const startScan = async () => {
   isScanning.value = true;
   errorMsg.value = '';
   scanResult.value = null;
-  scanProgress.value = 0;
+  scanProgress.value = 8;
   expandedFindings.value = new Set();
 
   scanMsgIndex.value = 0;
   scanMsgTimer = setInterval(() => {
-    scanMsgIndex.value = (scanMsgIndex.value + 1) % scanMessages.length;
-  }, 1500);
+    setScanPhase(scanMsgIndex.value + 1);
+  }, 1600);
 
-  // 进度条动画
   const progressInterval = setInterval(() => {
-    scanProgress.value = Math.min(scanProgress.value + 4, 90);
-  }, 120);
+    const stageCap = SCAN_PROGRESS_CAPS[scanMsgIndex.value] || 94;
+    const gap = stageCap - scanProgress.value;
+    const step = gap > 20 ? 2.6 : gap > 8 ? 1.15 : 0.35;
+    scanProgress.value = Math.min(stageCap, scanProgress.value + step);
+  }, 180);
 
   try {
     const startTime = Date.now();
     let response;
     if (scanMode.value === 'snippet') {
+      setScanPhase(1, 30);
       response = await fetch('/api/scan/snippet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -270,16 +437,20 @@ const startScan = async () => {
       });
     } else if (scanMode.value === 'files') {
       if (selectedFiles.value.length === 0) throw new Error('请先选择文件');
+      setScanPhase(1, 30);
       const formData = new FormData();
       selectedFiles.value.forEach(file => formData.append('files', file));
+      setScanPhase(2, 58);
       response = await fetch('/api/scan/files', { method: 'POST', body: formData });
     } else if (scanMode.value === 'github') {
+      setScanPhase(1, 30);
       response = await fetch('/api/scan/github', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repository_url: githubRepositoryUrl.value })
       });
     } else if (scanMode.value === 'pypi') {
+      setScanPhase(1, 30);
       response = await fetch('/api/scan/pypi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -288,6 +459,8 @@ const startScan = async () => {
     } else {
       throw new Error('未知扫描模式');
     }
+    setScanPhase(activeScanStages.value.length - 1, 88);
+    scanProgress.value = Math.max(scanProgress.value, 92);
 
     const elapsed = Date.now() - startTime;
     const remaining = Math.max(0, MIN_SCAN_DURATION - elapsed);
@@ -407,7 +580,14 @@ const riskBadgeClass = (level) => {
 </script>
 
 <template>
-  <div class="app-container">
+  <div
+    class="app-container"
+    @mouseover="handleHelpPointerOver"
+    @mouseout="handleHelpPointerOut"
+    @focusin="handleHelpFocusIn"
+    @focusout="hideHelpTooltip"
+    @scroll.capture="hideHelpTooltip"
+  >
     <div class="bg-grid"></div>
 
     <header class="main-header">
@@ -421,7 +601,7 @@ const riskBadgeClass = (level) => {
         <button @click="toggleTheme" class="btn btn-icon" :title="theme === 'light' ? '切换深色模式' : '切换浅色模式'">
           <span class="theme-icon">{{ theme === 'light' ? '☀' : '☾' }}</span>
         </button>
-        <button v-if="scanResult" @click="exportMarkdown" class="btn btn-outline">
+        <button v-if="scanMode !== 'popular' && scanResult" @click="exportMarkdown" class="btn btn-outline">
           <span class="btn-icon-text">⇩</span> 导出报告
         </button>
       </div>
@@ -487,6 +667,16 @@ const riskBadgeClass = (level) => {
                   <small>.py · .pem · .yml · .json &nbsp; 单文件 ≤ 2MB</small>
                 </div>
               </div>
+              <div class="sample-import-row">
+                <div>
+                  <strong>没有现成文件？</strong>
+                  <span>导入内置风险样例，快速查看扫描效果。</span>
+                </div>
+                <button @click="loadSampleFiles" :disabled="isLoadingSamples" class="btn btn-outline sample-import-btn">
+                  <span v-if="isLoadingSamples" class="btn-spinner"></span>
+                  {{ isLoadingSamples ? '导入中…' : '导入示例代码' }}
+                </button>
+              </div>
 
               <transition-group name="file-list-enter" tag="div" class="file-list-area">
                 <div v-if="selectedFiles.length > 0" key="header" class="file-list-header">
@@ -504,7 +694,10 @@ const riskBadgeClass = (level) => {
 
             <div v-else-if="scanMode === 'github'" class="remote-scan-area">
               <div class="form-group">
-                <label>GitHub 仓库地址</label>
+                <label class="label-with-help">
+                  <span>GitHub 仓库地址</span>
+                  <span class="info-tooltip" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.github" :data-tip="HELP_TEXT.github">?</span>
+                </label>
                 <input
                   v-model="githubRepositoryUrl"
                   type="url"
@@ -519,7 +712,10 @@ const riskBadgeClass = (level) => {
 
             <div v-else-if="scanMode === 'pypi'" class="remote-scan-area">
               <div class="form-group">
-                <label>PyPI 包名</label>
+                <label class="label-with-help">
+                  <span>PyPI 包名</span>
+                  <span class="info-tooltip" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.pypi" :data-tip="HELP_TEXT.pypi">?</span>
+                </label>
                 <input
                   v-model="pypiPackageName"
                   type="text"
@@ -528,7 +724,7 @@ const riskBadgeClass = (level) => {
                 />
               </div>
               <div class="source-hint">
-                优先下载源码包，提取可扫描文件并生成量子脆弱算法迁移建议。
+                PyPI 扫描用于检查第三方 Python 包源码里是否使用 RSA、DSA、ECDSA、DH 等传统公钥算法。系统会读取包元数据，优先下载源码包，必要时回退 wheel；只提取文本源码、配置和密钥材料，不安装也不执行包代码。
               </div>
             </div>
 
@@ -545,7 +741,10 @@ const riskBadgeClass = (level) => {
               </div>
               <div v-else-if="popularData" class="popular-results">
                 <div class="popular-header">
-                  <span class="popular-title">热门 Python 仓库量子风险概览</span>
+                  <span class="popular-title">
+                    热门 Python 仓库量子风险概览
+                    <span class="info-tooltip" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.popular" :data-tip="HELP_TEXT.popular">?</span>
+                  </span>
                   <span class="popular-time">{{ formatScannedAt(popularData.scanned_at) }}</span>
                   <button @click="triggerPopularScan" :disabled="popularScanning" class="btn btn-outline popular-scan-btn">
                     ↻ 重新扫描
@@ -663,8 +862,24 @@ const riskBadgeClass = (level) => {
               </svg>
               <span class="scan-ring-text">⚡</span>
             </div>
+            <div class="scan-bar-wrap">
+              <div class="scan-bar-track">
+                <div class="scan-bar-fill" :style="{ width: popularProgress + '%' }"></div>
+              </div>
+              <span class="scan-percent">{{ Math.round(popularProgress) }}%</span>
+            </div>
           </div>
-          <p class="scan-label">⌁ 正在扫描热门仓库，请耐心等待…</p>
+          <div class="scan-stage-card">
+            <p class="scan-label">{{ currentPopularScanStage.label }}</p>
+            <span class="scan-detail">{{ currentPopularScanStage.detail }}</span>
+          </div>
+          <div class="scan-stage-steps">
+            <span
+              v-for="(stage, idx) in POPULAR_SCAN_STAGES"
+              :key="stage.label"
+              :class="{ active: idx === popularScanStep, done: idx < popularScanStep }"
+            ></span>
+          </div>
           <div class="scan-dots">
             <span></span><span></span><span></span>
           </div>
@@ -705,9 +920,20 @@ const riskBadgeClass = (level) => {
                 <div class="scan-bar-track">
                   <div class="scan-bar-fill" :style="{ width: scanProgress + '%' }"></div>
                 </div>
+                <span class="scan-percent">{{ Math.round(scanProgress) }}%</span>
               </div>
             </div>
-            <p class="scan-label">{{ scanMessages[scanMsgIndex] }}</p>
+            <div class="scan-stage-card">
+              <p class="scan-label">{{ currentScanStage.label }}</p>
+              <span class="scan-detail">{{ currentScanStage.detail }}</span>
+            </div>
+            <div class="scan-stage-steps">
+              <span
+                v-for="(stage, idx) in activeScanStages"
+                :key="stage.label"
+                :class="{ active: idx === scanMsgIndex, done: idx < scanMsgIndex }"
+              ></span>
+            </div>
             <div class="scan-dots">
               <span></span><span></span><span></span>
             </div>
@@ -716,18 +942,27 @@ const riskBadgeClass = (level) => {
 
         <!-- 结果 -->
         <transition name="fade-up">
-          <div v-if="scanResult" class="results-content">
+          <div v-if="scanMode !== 'popular' && scanResult" class="results-content">
             <div class="summary-grid">
               <div class="summary-card">
-                <span class="label">扫描文件</span>
+                <span class="label">
+                  扫描文件
+                  <span class="info-tooltip compact" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.scannedFiles" :data-tip="HELP_TEXT.scannedFiles">?</span>
+                </span>
                 <span class="value">{{ animatedSourceCount }}</span>
               </div>
               <div class="summary-card accent-danger" :class="{ 'has-findings': animatedFindingCount > 0 }">
-                <span class="label">发现风险</span>
+                <span class="label">
+                  发现风险
+                  <span class="info-tooltip compact" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.findings" :data-tip="HELP_TEXT.findings">?</span>
+                </span>
                 <span class="value danger">{{ animatedFindingCount }}</span>
               </div>
               <div class="summary-card">
-                <span class="label">涉及算法</span>
+                <span class="label">
+                  涉及算法
+                  <span class="info-tooltip compact" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.algorithms" :data-tip="HELP_TEXT.algorithms">?</span>
+                </span>
                 <span class="value">{{ animatedAlgoCount }}</span>
               </div>
               <div class="summary-card">
@@ -738,9 +973,14 @@ const riskBadgeClass = (level) => {
 
             <div v-if="migrationScore" class="migration-overview">
               <div class="migration-score" :class="riskBadgeClass(migrationScore.risk_level)">
-                <span class="score-label">迁移评分</span>
-                <strong>{{ migrationScore.score }}</strong>
-                <span>/100</span>
+                <span class="score-label">
+                  迁移评分
+                  <span class="info-tooltip compact" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.migrationScore" :data-tip="HELP_TEXT.migrationScore">?</span>
+                </span>
+                <div class="score-row">
+                  <strong class="score-number">{{ migrationScore.score }}</strong>
+                  <span class="score-total">/100</span>
+                </div>
               </div>
               <div class="migration-copy">
                 <div class="migration-title">
@@ -760,7 +1000,10 @@ const riskBadgeClass = (level) => {
 
             <div v-if="knowledgeGraph.nodes.length" class="knowledge-panel">
               <div class="panel-heading">
-                <h3>抗量子迁移知识图谱</h3>
+                <h3>
+                  抗量子迁移知识图谱
+                  <span class="info-tooltip" @mouseenter="showHelpTooltip($event.currentTarget)" @mouseleave="hideHelpTooltip" @focus="showHelpTooltip($event.currentTarget)" @blur="hideHelpTooltip" tabindex="0" :aria-label="HELP_TEXT.knowledgeGraph" :data-tip="HELP_TEXT.knowledgeGraph">?</span>
+                </h3>
                 <span>{{ knowledgeGraph.nodes.length }} 节点 · {{ knowledgeGraph.edges.length }} 关系</span>
               </div>
               <div class="graph-columns">
@@ -831,6 +1074,17 @@ const riskBadgeClass = (level) => {
       </section>
     </main>
   </div>
+  <Teleport to="body">
+    <div
+      v-if="helpTooltip.visible"
+      class="floating-help-tooltip"
+      :class="`is-${helpTooltip.placement}`"
+      :style="helpTooltipStyle"
+      role="tooltip"
+    >
+      {{ helpTooltip.text }}
+    </div>
+  </Teleport>
 </template>
 
 <style>
@@ -918,8 +1172,9 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   position: relative;
+  overflow: hidden;
   transition: var(--transition-theme);
 }
 
@@ -1009,6 +1264,7 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
   max-width: 1320px;
   width: 100%;
   margin: 0 auto;
@@ -1017,7 +1273,8 @@ body {
 }
 
 @media (max-width: 1024px) {
-  .main-layout { flex-direction: column; overflow-y: auto; }
+  .app-container { height: auto; min-height: 100vh; overflow: visible; }
+  .main-layout { flex-direction: column; overflow-y: auto; min-height: calc(100vh - 54px); }
 }
 
 .workspace {
@@ -1026,6 +1283,7 @@ body {
   flex-direction: column;
   gap: 0.65rem;
   min-width: 0;
+  min-height: 0;
 }
 
 @media (max-width: 1024px) {
@@ -1034,14 +1292,22 @@ body {
 
 .results-area {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.15rem;
   min-width: 0;
+  min-height: 0;
   transition: var(--transition-theme);
   box-shadow: var(--shadow-card);
+}
+
+.results-content,
+.popular-right-results {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 0.35rem;
 }
 
 /* ============================================
@@ -1056,9 +1322,14 @@ body {
   flex-direction: column;
   transition: all 0.3s;
   box-shadow: var(--shadow-card);
+  min-height: 0;
 }
 
 .card:hover { box-shadow: var(--shadow-lg); }
+
+.workspace > .card {
+  flex: 1 1 auto;
+}
 
 /* ============================================
    Tabs
@@ -1072,23 +1343,33 @@ body {
 
 .tabs button {
   flex: 1;
-  padding: 0.68rem 0.5rem;
+  padding: 0.68rem 0.32rem;
   border: none;
   background: transparent;
   cursor: pointer;
   font-weight: 500;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   transition: all 0.25s;
   font-family: var(--font-sans);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.28rem;
   position: relative;
+  min-width: 0;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.tab-icon { font-size: 0.88rem; opacity: 0.7; transition: opacity 0.25s; }
+.tab-icon { font-size: 0.84rem; opacity: 0.7; transition: opacity 0.25s; }
+
+.tabs button > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .tabs button:hover { color: var(--text-secondary); }
 .tabs button:hover .tab-icon { opacity: 1; }
@@ -1103,7 +1384,12 @@ body {
 /* ============================================
    Form
    ============================================ */
-.tab-content { padding: 0.95rem; }
+.tab-content {
+  padding: 0.95rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 
 .form-group { margin-bottom: 0.75rem; }
 
@@ -1115,6 +1401,174 @@ body {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.form-group label.label-with-help,
+.label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.info-tooltip {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  line-height: 1;
+  cursor: help;
+  position: relative;
+  text-transform: none;
+  letter-spacing: 0;
+  z-index: 6;
+}
+
+.info-tooltip.compact {
+  width: 0.92rem;
+  height: 0.92rem;
+  font-size: 0.62rem;
+}
+
+.info-tooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.55rem);
+  transform: translateX(-50%) translateY(-4px);
+  width: min(300px, 78vw);
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 9999;
+}
+
+.info-tooltip.floating-active::after {
+  display: none;
+}
+
+.info-tooltip:hover,
+.info-tooltip:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+  outline: none;
+}
+
+.info-tooltip:hover::after,
+.info-tooltip:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.label-with-help .info-tooltip::after {
+  left: calc(100% + 0.55rem);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.label-with-help .info-tooltip:hover::after,
+.label-with-help .info-tooltip:focus-visible::after {
+  transform: translateY(-50%) translateX(0);
+}
+
+.summary-card:nth-child(-n + 2) .info-tooltip::after,
+.score-label .info-tooltip::after,
+.panel-heading .info-tooltip::after {
+  left: calc(100% + 0.55rem);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.summary-card:nth-child(-n + 2) .info-tooltip:hover::after,
+.summary-card:nth-child(-n + 2) .info-tooltip:focus-visible::after,
+.score-label .info-tooltip:hover::after,
+.score-label .info-tooltip:focus-visible::after,
+.panel-heading .info-tooltip:hover::after,
+.panel-heading .info-tooltip:focus-visible::after {
+  transform: translateY(-50%) translateX(0);
+}
+
+.summary-card:nth-child(3) .info-tooltip::after {
+  left: auto;
+  right: calc(100% + 0.55rem);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+}
+
+.summary-card:nth-child(3) .info-tooltip:hover::after,
+.summary-card:nth-child(3) .info-tooltip:focus-visible::after {
+  transform: translateY(-50%) translateX(0);
+}
+
+.floating-help-tooltip {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  z-index: 99999;
+  pointer-events: none;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+  color: var(--text-secondary);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+  backdrop-filter: blur(10px);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-align: left;
+  white-space: normal;
+  animation: tooltip-pop 0.14s ease-out;
+}
+
+.floating-help-tooltip.is-bottom {
+  transform: translateX(-50%);
+}
+
+.floating-help-tooltip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 0.65rem;
+  height: 0.65rem;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.floating-help-tooltip.is-top::before {
+  bottom: -0.38rem;
+  transform: translateX(-50%) rotate(225deg);
+}
+
+.floating-help-tooltip.is-bottom::before {
+  top: -0.38rem;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+@keyframes tooltip-pop {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .input-field {
@@ -1263,6 +1717,35 @@ body {
   flex-direction: column;
   gap: 0.35rem;
   margin-top: 0.65rem;
+}
+
+.sample-import-row {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sample-import-row strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  margin-bottom: 0.12rem;
+}
+
+.sample-import-row span {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.sample-import-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .file-list-header {
@@ -1595,8 +2078,14 @@ body {
 }
 
 /* 进度条 */
-.scan-bar-wrap { width: 240px; }
+.scan-bar-wrap {
+  width: min(280px, 76vw);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
 .scan-bar-track {
+  flex: 1;
   height: 3px;
   border-radius: 3px;
   background: var(--border-light);
@@ -1611,11 +2100,58 @@ body {
   box-shadow: 0 0 8px var(--glow-strong);
 }
 
-.scan-label {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
+.scan-percent {
+  min-width: 3.1rem;
+  text-align: right;
   font-family: var(--font-mono);
-  margin: 0 0 0.85rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.scan-label {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 800;
+  margin: 0;
+}
+
+.scan-stage-card {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  min-width: min(360px, 88%);
+  margin-bottom: 0.8rem;
+  box-shadow: var(--shadow-card);
+}
+
+.scan-detail {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.scan-stage-steps {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0 0 0.8rem;
+}
+
+.scan-stage-steps span {
+  width: 34px;
+  height: 3px;
+  border-radius: 4px;
+  background: var(--border-light);
+  transition: all 0.25s ease;
+}
+
+.scan-stage-steps span.done,
+.scan-stage-steps span.active {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--glow-strong);
 }
 
 .scan-dots { display: flex; gap: 0.45rem; }
@@ -1657,13 +2193,16 @@ body {
   border: 1px solid var(--border);
   transition: all 0.3s;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   cursor: default;
 }
 
 .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card); }
 
 .summary-card .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.67rem;
   color: var(--text-muted);
   margin-bottom: 0.25rem;
@@ -1700,13 +2239,13 @@ body {
 
 .migration-overview {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.75rem;
+  grid-template-columns: 124px 1fr auto;
+  gap: 1rem;
   align-items: center;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 0.8rem;
+  padding: 0.95rem 1rem;
   margin-bottom: 0.9rem;
 }
 
@@ -1715,13 +2254,15 @@ body {
 }
 
 .migration-score {
-  min-width: 86px;
-  height: 72px;
+  width: 108px;
+  min-width: 108px;
+  height: 86px;
   border-radius: var(--radius);
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 0.12rem;
+  gap: 0.25rem;
   background: var(--accent-soft);
   color: var(--accent);
   border: 1px solid rgba(15, 155, 142, 0.16);
@@ -1742,21 +2283,35 @@ body {
 }
 
 .score-label {
-  position: absolute;
-  top: 0.45rem;
-  left: 0;
-  right: 0;
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   text-align: center;
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
   font-family: var(--font-sans);
   font-weight: 700;
 }
 
-.migration-score strong {
-  font-size: 1.65rem;
+.score-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   line-height: 1;
-  margin-top: 1rem;
+}
+
+.migration-score .score-number {
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.score-total {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: currentColor;
 }
 
 .migration-copy {
@@ -2064,10 +2619,11 @@ body {
    Popular Tab
    ============================================ */
 .popular-area {
-  min-height: 200px;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .popular-empty {
@@ -2092,8 +2648,18 @@ body {
 }
 
 /* Right-side popular results */
-.popular-right-results { display: flex; flex-direction: column; gap: 1rem; }
-.popular-right-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.popular-right-results { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+.popular-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--border);
+  padding: 0.1rem 0 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-card);
+}
 .popular-right-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); }
 .popular-right-meta { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
 .popular-right-repo {
@@ -2108,7 +2674,15 @@ body {
 .popular-right-repo-header { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .popular-right-repo-header .repo-name { font-weight: 700; font-size: 0.9rem; }
 .popular-right-repo-header .repo-stars { font-size: 0.75rem; color: var(--text-muted); }
-.popular-right-repo-header .repo-score { margin-left: auto; font-weight: 700; font-size: 0.82rem; }
+.popular-right-repo-header .repo-score {
+  margin-left: auto;
+  font-weight: 800;
+  font-size: 0.82rem;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  background: var(--bg-card);
+}
 .popular-right-algos { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 .popular-right-findings { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.3rem; border-top: 1px solid var(--border-light); padding-top: 0.4rem; }
 .popular-right-finding {
@@ -2143,11 +2717,32 @@ body {
   gap: 0.5rem;
 }
 
-.popular-results { display: flex; flex-direction: column; gap: 0.6rem; }
-.popular-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-.popular-title { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
-.popular-time { font-size: 0.75rem; color: var(--text-muted); }
-.popular-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.popular-results { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; flex: 1 1 auto; }
+.popular-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.popular-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.popular-time { font-size: 0.75rem; color: var(--text-muted); min-width: 0; }
+.popular-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
 .popular-repo-row {
   display: flex; align-items: center; gap: 0.6rem;
   padding: 0.55rem 0.7rem;
@@ -2263,5 +2858,10 @@ body {
   .logo-subtitle { display: none; }
   .logo-divider { display: none; }
   .main-layout { padding: 0.75rem; max-width: 100%; }
+  .results-area { overflow: visible; }
+  .results-content, .popular-right-results { height: auto; max-height: none; overflow: visible; padding-right: 0; }
+  .sample-import-row { align-items: stretch; flex-direction: column; }
+  .sample-import-btn { width: 100%; }
+  .popular-header { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

@@ -6,13 +6,15 @@
 
 - 支持粘贴代码片段扫描。
 - 支持多文件上传扫描。
-- 支持输入 GitHub 仓库地址，下载源码包后批量扫描。
-- 支持输入 PyPI 包名，下载源码包或 wheel 后批量扫描。
+- 支持多文件上传扫描，并可一键导入 `sample_inputs/` 中的内置风险样例。
+- 支持输入 GitHub 仓库地址，优先读取仓库文件树并发采集源码，必要时回退源码包扫描。
+- 支持输入 PyPI 包名，读取包元数据后优先扫描 sdist，必要时回退 wheel。
 - 支持识别 Python 加密 API、协议算法字符串和 PEM 密钥头。
 - 展示文件名、行号、算法、风险等级、证据、原因和迁移建议。
 - 展示迁移评分、迁移优先级和抗量子知识图谱。
 - 支持点击结果查看对应行附近代码。
 - 支持导出 Markdown 扫描报告。
+- 扫描过程中展示与当前输入来源匹配的阶段动画和进度。
 - 扫描时间和报告时间使用北京时间 `UTC+08:00`。
 
 ## 项目结构
@@ -152,6 +154,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 - `POST /api/scan/files`：扫描上传的多个代码文件。
 - `POST /api/scan/github`：扫描 GitHub 仓库源码，参数为 `repository_url`。
 - `POST /api/scan/pypi`：扫描 PyPI 包源码，参数为 `package_name`。
+- `GET /api/samples`：返回 `sample_inputs/` 中可一键导入的示例代码。
 - `GET /api/knowledge/graph`：返回算法、数学难题、量子威胁和 PQC 迁移建议的图谱数据。
 - `POST /api/report/markdown`：根据扫描结果生成 Markdown 报告。
 
@@ -205,7 +208,16 @@ sample_inputs/
 └── risky_protocol_assets.py
 ```
 
-这些文件是故意写入传统公钥算法用法的测试输入，不需要实际运行。启动服务后，可以在页面中选择“多文件上传”，一次性上传 `sample_inputs` 目录下的 `.py` 文件进行测试。
+这些文件是故意写入传统公钥算法用法的测试输入，不需要实际运行。启动服务后，可以在页面中选择“文件上传”，点击“导入示例代码”一键加载这些样例，也可以手动上传 `sample_inputs` 目录下的文件。
+
+## PyPI 扫描说明
+
+PyPI 面板用于检查第三方 Python 包发布物中的源码、配置和密钥材料，判断其是否包含需要抗量子迁移的传统公钥算法用法。系统会：
+
+- 读取 `https://pypi.org/pypi/<package>/json` 元数据。
+- 优先选择源码包 `sdist`，必要时回退到 wheel。
+- 只解包并扫描文本源码、配置和 PEM 文件，不安装、不导入、不执行包代码。
+- 对网络和 SSL 中断做重试，并在代理导致连接异常时优先使用不继承环境代理的请求方式。
 
 ## 测试
 

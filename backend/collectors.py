@@ -3,10 +3,11 @@ from __future__ import annotations
 import io
 import re
 import tarfile
-import tempfile
+import time
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import httpx
 
@@ -26,8 +27,24 @@ ALLOWED_SOURCE_SUFFIXES = {
 }
 MAX_COLLECTED_FILE_BYTES = 2 * 1024 * 1024
 MAX_COLLECTED_FILES = 80
+MAX_ARCHIVE_BYTES = 80 * 1024 * 1024
 HTTP_TIMEOUT_SECONDS = 20.0
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,213}$")
+GITHUB_API_ACCEPT = "application/vnd.github+json"
+GITHUB_SOURCE_HINTS = (
+    "crypto",
+    "crypt",
+    "cipher",
+    "sign",
+    "verify",
+    "key",
+    "cert",
+    "tls",
+    "ssl",
+    "ssh",
+    "jwt",
+    "auth",
+)
 
 
 class CollectionError(RuntimeError):
@@ -36,6 +53,56 @@ class CollectionError(RuntimeError):
 
 def is_supported_source_path(path: str | Path) -> bool:
     return Path(path).suffix.lower() in ALLOWED_SOURCE_SUFFIXES
+
+
+def source_priority(path: str) -> tuple[int, int, str]:
+    lowered = path.lower()
+    hint_score = 0 if any(hint in lowered for hint in GITHUB_SOURCE_HINTS) else 1
+    suffix_score = 0 if Path(path).suffix.lower() == ".py" else 1
+    return (hint_score, suffix_score, path)
+
+
+def get_with_retries(
+    client: httpx.Client,
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
+    max_bytes: int | None = None,
+    attempts: int = 3,
+) -> httpx.Response:
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with client.stream("GET", url, headers=headers, params=params) as response:
+                response.raise_for_status()
+                content_length = response.headers.get("content-length")
+                if max_bytes is not None and content_length and int(content_length) > max_bytes:
+                    raise CollectionError(f"远程文件超过 {max_bytes // (1024 * 1024)} MB 限制")
+                chunks: list[bytes] = []
+                size = 0
+                for chunk in response.iter_bytes():
+                    size += len(chunk)
+                    if max_bytes is not None and size > max_bytes:
+                        raise CollectionError(f"远程文件超过 {max_bytes // (1024 * 1024)} MB 限制")
+                    chunks.append(chunk)
+                content = b"".join(chunks)
+                headers_copy = dict(response.headers)
+                headers_copy.pop("content-encoding", None)
+                headers_copy["content-length"] = str(len(content))
+                return httpx.Response(
+                    response.status_code,
+                    headers=headers_copy,
+                    content=content,
+                    request=response.request,
+                )
+        except (httpx.HTTPError, OSError, CollectionError) as exc:
+            last_error = exc
+            if attempt < attempts:
+                time.sleep(0.25 * attempt)
+                continue
+            raise exc
+    raise CollectionError(f"请求失败：{last_error}")
 
 
 def validate_pypi_package_name(package_name: str) -> str:
@@ -125,57 +192,165 @@ def collect_github_sources(repository_url: str) -> list[SourceDocument]:
     normalized_url = validate_github_repository_url(repository_url)
     parsed = urlparse(normalized_url)
     owner, repo = parsed.path.strip("/").split("/")[:2]
-    archive_urls = [
-        f"https://github.com/{owner}/{repo}/archive/refs/heads/main.zip",
-        f"https://github.com/{owner}/{repo}/archive/refs/heads/master.zip",
-    ]
-
     last_error: Exception | None = None
-    with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True) as client:
+
+    with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True, trust_env=False) as client:
+        headers = {"Accept": GITHUB_API_ACCEPT}
+        branch_candidates = ["main", "master"]
+        try:
+            repo_api = get_with_retries(
+                client,
+                f"https://api.github.com/repos/{owner}/{repo}",
+                headers=headers,
+                attempts=2,
+            )
+            default_branch = repo_api.json().get("default_branch")
+            if default_branch:
+                branch_candidates = [default_branch, *[b for b in branch_candidates if b != default_branch]]
+        except (httpx.HTTPError, ValueError, CollectionError) as exc:
+            last_error = exc
+
+        for branch in branch_candidates:
+            try:
+                tree_response = get_with_retries(
+                    client,
+                    f"https://api.github.com/repos/{owner}/{repo}/git/trees/{quote(branch, safe='')}",
+                    headers=headers,
+                    params={"recursive": "1"},
+                    attempts=2,
+                )
+                tree_payload = tree_response.json()
+                tree_items = tree_payload.get("tree", [])
+                candidates: list[tuple[str, int]] = []
+                for item in tree_items:
+                    path = str(item.get("path", ""))
+                    size = int(item.get("size") or 0)
+                    if item.get("type") != "blob" or not is_supported_source_path(path):
+                        continue
+                    if size > MAX_COLLECTED_FILE_BYTES:
+                        continue
+                    candidates.append((path, size))
+
+                if candidates:
+                    candidates.sort(key=lambda item: source_priority(item[0]))
+                    documents: list[SourceDocument] = []
+                    selected = candidates[: MAX_COLLECTED_FILES * 2]
+
+                    def fetch_source(path_size: tuple[str, int]) -> SourceDocument | None:
+                        path, _size = path_size
+                        raw_url = (
+                            f"https://raw.githubusercontent.com/{owner}/{repo}/"
+                            f"{quote(branch, safe='')}/{quote(path, safe='/')}"
+                        )
+                        try:
+                            response = get_with_retries(
+                                client,
+                                raw_url,
+                                max_bytes=MAX_COLLECTED_FILE_BYTES,
+                                attempts=2,
+                            )
+                            content = response.content.decode("utf-8-sig")
+                        except (httpx.HTTPError, UnicodeDecodeError, CollectionError):
+                            return None
+                        return (normalized_url, path, content)
+
+                    with ThreadPoolExecutor(max_workers=8) as executor:
+                        future_map = {executor.submit(fetch_source, item): item for item in selected}
+                        for future in as_completed(future_map):
+                            result = future.result()
+                            if result is None:
+                                continue
+                            documents.append(result)
+                            if len(documents) >= MAX_COLLECTED_FILES:
+                                break
+                    if documents:
+                        documents.sort(key=lambda item: source_priority(item[1]))
+                        return documents[:MAX_COLLECTED_FILES]
+            except (httpx.HTTPError, ValueError, CollectionError) as exc:
+                last_error = exc
+
+        archive_urls = [
+            f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip"
+            for branch in branch_candidates
+        ]
         for archive_url in archive_urls:
             try:
-                response = client.get(archive_url)
-                response.raise_for_status()
+                response = get_with_retries(client, archive_url, max_bytes=MAX_ARCHIVE_BYTES, attempts=2)
                 documents = collect_from_zip_bytes(response.content, normalized_url)
                 if documents:
                     return documents
-            except (httpx.HTTPError, zipfile.BadZipFile, UnicodeDecodeError) as exc:
+            except (httpx.HTTPError, zipfile.BadZipFile, UnicodeDecodeError, CollectionError) as exc:
                 last_error = exc
 
     raise CollectionError(f"无法采集 GitHub 仓库源码：{last_error}")
+
+
+def pypi_candidate_score(item: dict[str, object]) -> tuple[int, int, str]:
+    package_type = str(item.get("packagetype", ""))
+    filename = str(item.get("filename", ""))
+    if package_type == "sdist":
+        type_score = 0
+    elif filename.endswith(".whl"):
+        type_score = 1
+    else:
+        type_score = 2
+    pure_python_score = 0 if "py3-none-any.whl" in filename else 1
+    return (type_score, pure_python_score, filename)
 
 
 def collect_pypi_sources(package_name: str) -> list[SourceDocument]:
     normalized_name = validate_pypi_package_name(package_name)
     metadata_url = f"https://pypi.org/pypi/{normalized_name}/json"
     origin = f"pypi:{normalized_name}"
+    last_error: Exception | None = None
 
-    try:
-        with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True) as client:
-            metadata = client.get(metadata_url)
-            metadata.raise_for_status()
-            payload = metadata.json()
-            urls = payload.get("urls", [])
-            source_dist = next((item for item in urls if item.get("packagetype") == "sdist"), None)
-            if source_dist is None:
-                source_dist = next((item for item in urls if str(item.get("filename", "")).endswith(".whl")), None)
-            if source_dist is None or not source_dist.get("url"):
-                raise CollectionError("PyPI 包没有可下载的源码包或 wheel")
-            archive = client.get(str(source_dist["url"]))
-            archive.raise_for_status()
-    except httpx.HTTPError as exc:
-        raise CollectionError(f"无法采集 PyPI 包：{exc}") from exc
+    for trust_env in (False, True):
+        try:
+            with httpx.Client(
+                timeout=HTTP_TIMEOUT_SECONDS,
+                follow_redirects=True,
+                trust_env=trust_env,
+            ) as client:
+                metadata = get_with_retries(client, metadata_url, attempts=3)
+                payload = metadata.json()
+                urls = sorted(payload.get("urls", []), key=pypi_candidate_score)
+                candidates = [
+                    item for item in urls
+                    if item.get("url") and str(item.get("filename", "")).endswith(
+                        (".zip", ".whl", ".tar.gz", ".tgz", ".tar.bz2", ".tar")
+                    )
+                ]
+                if not candidates:
+                    raise CollectionError("PyPI 包没有可下载的源码包或 wheel")
 
-    filename = str(source_dist.get("filename", ""))
-    try:
-        if filename.endswith(".zip") or filename.endswith(".whl"):
-            return collect_from_zip_bytes(archive.content, origin)
-        if filename.endswith((".tar.gz", ".tgz", ".tar.bz2", ".tar")):
-            return collect_from_tar_bytes(archive.content, origin)
-    except (tarfile.TarError, zipfile.BadZipFile, UnicodeDecodeError) as exc:
-        raise CollectionError(f"无法解析 PyPI 包源码：{exc}") from exc
+                for candidate in candidates:
+                    filename = str(candidate.get("filename", ""))
+                    try:
+                        archive = get_with_retries(
+                            client,
+                            str(candidate["url"]),
+                            max_bytes=MAX_ARCHIVE_BYTES,
+                            attempts=3,
+                        )
+                        if filename.endswith((".zip", ".whl")):
+                            documents = collect_from_zip_bytes(archive.content, origin)
+                        elif filename.endswith((".tar.gz", ".tgz", ".tar.bz2", ".tar")):
+                            documents = collect_from_tar_bytes(archive.content, origin)
+                        else:
+                            documents = []
+                        if documents:
+                            return documents
+                    except (
+                        httpx.HTTPError,
+                        tarfile.TarError,
+                        zipfile.BadZipFile,
+                        UnicodeDecodeError,
+                        CollectionError,
+                    ) as exc:
+                        last_error = exc
+                        continue
+        except (httpx.HTTPError, ValueError, CollectionError) as exc:
+            last_error = exc
+            continue
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        archive_path = Path(tmp_dir) / filename
-        archive_path.write_bytes(archive.content)
-        return collect_local_directory_sources(archive_path.parent, origin)
+    raise CollectionError(f"无法采集 PyPI 包：{last_error}")
