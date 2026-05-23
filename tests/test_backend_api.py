@@ -73,6 +73,26 @@ class BackendApiTests(unittest.TestCase):
         self.assertEqual(payload["summary"]["migration_score"]["affected_files"], 2)
         self.assertEqual(payload["summary"]["migration_score"]["algorithm_variety"], 2)
 
+    def test_scan_files_accepts_common_non_python_text_sources(self) -> None:
+        response = self.client.post(
+            "/api/scan/files",
+            files=[
+                (
+                    "files",
+                    (
+                        "Program.cs",
+                        b"using System.Security.Cryptography;\nvar rsa = RSA.Create();",
+                        "text/plain",
+                    ),
+                )
+            ],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["sources"][0]["file_name"], "Program.cs")
+        self.assertEqual(payload["findings"][0]["algorithm"], "RSA")
+
     def test_scan_github_validates_repository_url(self) -> None:
         response = self.client.post("/api/scan/github", json={"repository_url": "https://example.com/demo"})
 

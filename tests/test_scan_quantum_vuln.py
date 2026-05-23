@@ -100,6 +100,19 @@ class QuantumScannerTests(unittest.TestCase):
 
         self.assertEqual([finding["algorithm"] for finding in findings], ["Ed25519", "RSA"])
 
+    def test_detects_dotnet_crypto_api_usage_with_regex_fallback(self) -> None:
+        source = "\n".join(
+            [
+                "using System.Security.Cryptography;",
+                "var rsa = RSA.Create();",
+                "var ecdsa = ECDsa.Create();",
+            ]
+        )
+
+        findings = scan_source_for_crypto(source, filename="Program.cs")
+
+        self.assertEqual([finding["algorithm"] for finding in findings], ["RSA", "ECDSA"])
+
     def test_detects_pem_key_material_headers(self) -> None:
         source = "\n".join(
             [

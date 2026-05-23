@@ -69,7 +69,7 @@ const popularLoading = ref(false);
 const popularScanning = ref(false);
 const popularError = ref('');
 const expandedPopularRepo = ref(null);
-const popularTopN = ref(20);
+const popularTopN = ref(8);
 const popularProgress = ref(0);
 const popularScanStep = ref(0);
 let popularProgressTimer = null;
@@ -106,9 +106,9 @@ const SCAN_STAGES = {
   ],
 };
 const POPULAR_SCAN_STAGES = [
-  { label: '检索热门仓库', detail: '按关键词读取 GitHub 公开仓库列表，筛选 Python 项目' },
-  { label: '采集候选源码', detail: '优先读取仓库文件树，并跳过超大或非文本文件' },
-  { label: '批量风险扫描', detail: '逐仓库识别 RSA、DSA、DH、ECDSA 等量子脆弱算法' },
+  { label: '检索热门仓库', detail: '按关键词读取 GitHub 公开仓库列表，默认控制批量规模' },
+  { label: '并发采集源码', detail: '通过 GitHub API 文件树和 blob 内容接口并发读取文本文件' },
+  { label: '批量风险扫描', detail: '多仓库并发识别 RSA、DSA、DH、ECDSA 等量子脆弱算法' },
   { label: '生成榜单结果', detail: '按迁移评分、风险数量和受影响文件整理展示' },
 ];
 const SCAN_PROGRESS_FLOORS = [8, 30, 58, 88];
@@ -119,7 +119,7 @@ const HELP_TEXT = Object.freeze({
   algorithms: '本次扫描命中的不同算法类型数量，例如 RSA、DSA、DH、ECDSA、ECC、X25519/X448 等。',
   migrationScore: '迁移评分表示抗量子迁移的优先级，范围 0-100。当前按“高风险项×25 + 受影响文件×10 + 算法种类×10”估算并封顶 100；40 分及以上建议优先规划迁移。',
   knowledgeGraph: '知识图谱把传统算法、依赖的数学难题、量子风险和推荐的后量子标准关联起来，帮助判断迁移方向。',
-  github: 'GitHub 扫描会读取公开仓库源码和配置文件；优先使用文件树并发采集，必要时回退 main/master 分支 zip，不执行仓库代码。',
+  github: 'GitHub 扫描会读取公开仓库源码和配置文件；优先使用 GitHub API 文件树和 blob 内容接口并发采集，必要时回退 main/master 分支 zip，不执行仓库代码。',
   pypi: 'PyPI 扫描会读取包元数据，优先下载 sdist，必要时回退 wheel；只提取文本源码、配置和密钥材料，不安装也不执行包代码。',
   popular: '热门榜单会批量扫描密码学/加密相关热门 Python 仓库，用迁移评分和风险数量展示生态项目的优先级概览。',
 });
@@ -351,7 +351,7 @@ const triggerPopularScan = async () => {
 
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
-  const filtered = files.filter(f => /\.(py|pyw|txt|pem|ya?ml|json|cfg|ini|toml)$/i.test(f.name));
+  const filtered = files.filter(f => /\.(py|pyw|cs|csproj|xaml|xml|md|java|jsx?|tsx?|go|rs|txt|pem|ya?ml|json|cfg|ini|toml)$/i.test(f.name));
   if (filtered.length < files.length) alert('部分文件格式不支持，仅限代码、配置和密钥材料文本文件');
   // 合并去重
   const existing = new Set(selectedFiles.value.map(f => f.name));
@@ -660,11 +660,11 @@ const riskBadgeClass = (level) => {
             <!-- 文件上传模式 -->
             <div v-else-if="scanMode === 'files'" class="upload-area">
               <div class="upload-dropzone" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent @drop="(e) => { const dt = e.dataTransfer; if (dt.files.length) { const input = $refs.fileInput; const fake = new DataTransfer(); Array.from(dt.files).forEach(f => fake.items.add(f)); input.files = fake.files; input.dispatchEvent(new Event('change')); } }">
-                <input type="file" ref="fileInput" multiple @change="handleFileSelect" hidden accept=".py,.pyw,.txt,.pem,.yml,.yaml,.json,.cfg,.ini,.toml" />
+                <input type="file" ref="fileInput" multiple @change="handleFileSelect" hidden accept=".py,.pyw,.cs,.csproj,.xaml,.xml,.md,.java,.js,.jsx,.ts,.tsx,.go,.rs,.txt,.pem,.yml,.yaml,.json,.cfg,.ini,.toml" />
                 <div class="dropzone-hint">
                   <span class="upload-icon">⬆</span>
                   <p>拖放或点击选择文件</p>
-                  <small>.py · .pem · .yml · .json &nbsp; 单文件 ≤ 2MB</small>
+                  <small>.py · .cs · .pem · .yml · .json &nbsp; 单文件 ≤ 2MB</small>
                 </div>
               </div>
               <div class="sample-import-row">
@@ -706,7 +706,7 @@ const riskBadgeClass = (level) => {
                 />
               </div>
               <div class="source-hint">
-                将下载 main/master 分支源码压缩包，扫描 Python、配置和密钥材料文件。
+                优先通过 GitHub API 读取仓库文件树并发采集文本源码，支持 Python、C#、配置和密钥材料文件；必要时回退 main/master 分支源码包。
               </div>
             </div>
 
@@ -791,7 +791,7 @@ const riskBadgeClass = (level) => {
               <div v-else class="popular-empty">
                 <div class="form-group">
                   <label>扫描数量</label>
-                  <input v-model.number="popularTopN" type="number" min="1" max="100" class="input-field popular-top-input" placeholder="20" />
+                  <input v-model.number="popularTopN" type="number" min="1" max="30" class="input-field popular-top-input" placeholder="8" />
                 </div>
                 <div class="source-hint">
                   自动搜索 GitHub 上与密码学/加密相关的热门 Python 仓库并扫描量子脆弱性。
@@ -1969,11 +1969,19 @@ body {
   font-size: 0.82rem;
   font-family: var(--font-mono);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
+  line-height: 1.45;
+  max-height: 9rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.err-prefix { font-weight: 800; font-size: 0.9rem; }
+.err-prefix { font-weight: 800; font-size: 0.9rem; flex: 0 0 auto; }
 
 /* ============================================
    Empty State

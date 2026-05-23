@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import io
+import base64
+import binascii
+import os
 import re
 import tarfile
 import time
@@ -16,6 +19,18 @@ SourceDocument = tuple[str, str, str]
 ALLOWED_SOURCE_SUFFIXES = {
     ".py",
     ".pyw",
+    ".cs",
+    ".csproj",
+    ".xaml",
+    ".xml",
+    ".md",
+    ".java",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".go",
+    ".rs",
     ".txt",
     ".pem",
     ".yml",
@@ -29,6 +44,8 @@ MAX_COLLECTED_FILE_BYTES = 2 * 1024 * 1024
 MAX_COLLECTED_FILES = 80
 MAX_ARCHIVE_BYTES = 80 * 1024 * 1024
 HTTP_TIMEOUT_SECONDS = 20.0
+GITHUB_HTTP_TIMEOUT_SECONDS = 8.0
+GITHUB_FILE_WORKERS = 8
 PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,213}$")
 GITHUB_API_ACCEPT = "application/vnd.github+json"
 GITHUB_SOURCE_HINTS = (
@@ -51,6 +68,23 @@ class CollectionError(RuntimeError):
     pass
 
 
+def describe_http_error(error: Exception | None) -> str:
+    if error is None:
+        return "未知错误"
+    if isinstance(error, httpx.HTTPStatusError):
+        status_code = error.response.status_code
+        if status_code == 404:
+            return "仓库不存在、分支不可访问，或没有可采集的受支持文本源码文件"
+        if status_code in {403, 429}:
+            return "GitHub API 访问受限或速率限制；请稍后重试，或配置 GITHUB_TOKEN 后再扫描"
+        return f"GitHub 返回 HTTP {status_code}"
+    if isinstance(error, httpx.TimeoutException):
+        return "连接 GitHub 超时，请稍后重试"
+    if isinstance(error, httpx.ReadError):
+        return "GitHub 连接中断，请稍后重试"
+    return str(error)
+
+
 def is_supported_source_path(path: str | Path) -> bool:
     return Path(path).suffix.lower() in ALLOWED_SOURCE_SUFFIXES
 
@@ -60,6 +94,19 @@ def source_priority(path: str) -> tuple[int, int, str]:
     hint_score = 0 if any(hint in lowered for hint in GITHUB_SOURCE_HINTS) else 1
     suffix_score = 0 if Path(path).suffix.lower() == ".py" else 1
     return (hint_score, suffix_score, path)
+
+
+def decode_github_blob(payload: dict[str, object]) -> str:
+    encoding = str(payload.get("encoding", ""))
+    content = str(payload.get("content", ""))
+    if encoding != "base64" or not content:
+        raise CollectionError("GitHub API 未返回可解码的文件内容")
+    try:
+        compact_content = "".join(content.split())
+        data = base64.b64decode(compact_content, validate=True)
+        return data.decode("utf-8-sig")
+    except (binascii.Error, UnicodeDecodeError) as exc:
+        raise CollectionError("GitHub API 文件内容不是可扫描的 UTF-8 文本") from exc
 
 
 def get_with_retries(
@@ -188,14 +235,18 @@ def collect_local_directory_sources(directory: Path, origin: str) -> list[Source
     return documents
 
 
-def collect_github_sources(repository_url: str) -> list[SourceDocument]:
+def collect_github_sources(repository_url: str, max_files: int = MAX_COLLECTED_FILES) -> list[SourceDocument]:
     normalized_url = validate_github_repository_url(repository_url)
     parsed = urlparse(normalized_url)
     owner, repo = parsed.path.strip("/").split("/")[:2]
     last_error: Exception | None = None
+    file_limit = max(1, min(max_files, MAX_COLLECTED_FILES))
 
-    with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True, trust_env=False) as client:
+    with httpx.Client(timeout=GITHUB_HTTP_TIMEOUT_SECONDS, follow_redirects=True, trust_env=True) as client:
         headers = {"Accept": GITHUB_API_ACCEPT}
+        github_token = os.environ.get("GITHUB_TOKEN")
+        if github_token:
+            headers["Authorization"] = f"Bearer {github_token}"
         branch_candidates = ["main", "master"]
         try:
             repo_api = get_with_retries(
@@ -221,7 +272,7 @@ def collect_github_sources(repository_url: str) -> list[SourceDocument]:
                 )
                 tree_payload = tree_response.json()
                 tree_items = tree_payload.get("tree", [])
-                candidates: list[tuple[str, int]] = []
+                candidates: list[dict[str, str | int]] = []
                 for item in tree_items:
                     path = str(item.get("path", ""))
                     size = int(item.get("size") or 0)
@@ -229,43 +280,65 @@ def collect_github_sources(repository_url: str) -> list[SourceDocument]:
                         continue
                     if size > MAX_COLLECTED_FILE_BYTES:
                         continue
-                    candidates.append((path, size))
+                    candidates.append({
+                        "path": path,
+                        "size": size,
+                        "blob_url": str(item.get("url", "")),
+                    })
 
                 if candidates:
-                    candidates.sort(key=lambda item: source_priority(item[0]))
+                    candidates.sort(key=lambda item: source_priority(str(item["path"])))
                     documents: list[SourceDocument] = []
-                    selected = candidates[: MAX_COLLECTED_FILES * 2]
+                    selected = candidates[:file_limit]
 
-                    def fetch_source(path_size: tuple[str, int]) -> SourceDocument | None:
-                        path, _size = path_size
-                        raw_url = (
-                            f"https://raw.githubusercontent.com/{owner}/{repo}/"
-                            f"{quote(branch, safe='')}/{quote(path, safe='/')}"
-                        )
-                        try:
-                            response = get_with_retries(
-                                client,
-                                raw_url,
-                                max_bytes=MAX_COLLECTED_FILE_BYTES,
-                                attempts=2,
-                            )
-                            content = response.content.decode("utf-8-sig")
-                        except (httpx.HTTPError, UnicodeDecodeError, CollectionError):
-                            return None
+                    def fetch_source(item: dict[str, str | int]) -> SourceDocument | None:
+                        path = str(item["path"])
+                        blob_url = str(item.get("blob_url") or "")
+                        with httpx.Client(
+                            timeout=GITHUB_HTTP_TIMEOUT_SECONDS,
+                            follow_redirects=True,
+                            trust_env=True,
+                        ) as file_client:
+                            try:
+                                if blob_url:
+                                    response = get_with_retries(
+                                        file_client,
+                                        blob_url,
+                                        headers=headers,
+                                        max_bytes=MAX_COLLECTED_FILE_BYTES * 2,
+                                        attempts=1,
+                                    )
+                                    content = decode_github_blob(response.json())
+                                    return (normalized_url, path, content)
+                            except (httpx.HTTPError, ValueError, CollectionError):
+                                pass
+
+                            try:
+                                contents_response = get_with_retries(
+                                    file_client,
+                                    f"https://api.github.com/repos/{owner}/{repo}/contents/{quote(path, safe='/')}",
+                                    headers=headers,
+                                    params={"ref": branch},
+                                    max_bytes=MAX_COLLECTED_FILE_BYTES * 2,
+                                    attempts=1,
+                                )
+                                content = decode_github_blob(contents_response.json())
+                            except (httpx.HTTPError, ValueError, CollectionError):
+                                return None
                         return (normalized_url, path, content)
 
-                    with ThreadPoolExecutor(max_workers=8) as executor:
+                    with ThreadPoolExecutor(max_workers=GITHUB_FILE_WORKERS) as executor:
                         future_map = {executor.submit(fetch_source, item): item for item in selected}
                         for future in as_completed(future_map):
                             result = future.result()
                             if result is None:
                                 continue
                             documents.append(result)
-                            if len(documents) >= MAX_COLLECTED_FILES:
+                            if len(documents) >= file_limit:
                                 break
                     if documents:
                         documents.sort(key=lambda item: source_priority(item[1]))
-                        return documents[:MAX_COLLECTED_FILES]
+                        return documents[:file_limit]
             except (httpx.HTTPError, ValueError, CollectionError) as exc:
                 last_error = exc
 
@@ -276,13 +349,13 @@ def collect_github_sources(repository_url: str) -> list[SourceDocument]:
         for archive_url in archive_urls:
             try:
                 response = get_with_retries(client, archive_url, max_bytes=MAX_ARCHIVE_BYTES, attempts=2)
-                documents = collect_from_zip_bytes(response.content, normalized_url)
+                documents = collect_from_zip_bytes(response.content, normalized_url)[:file_limit]
                 if documents:
                     return documents
             except (httpx.HTTPError, zipfile.BadZipFile, UnicodeDecodeError, CollectionError) as exc:
                 last_error = exc
 
-    raise CollectionError(f"无法采集 GitHub 仓库源码：{last_error}")
+    raise CollectionError(f"无法采集 GitHub 仓库源码：{describe_http_error(last_error)}")
 
 
 def pypi_candidate_score(item: dict[str, object]) -> tuple[int, int, str]:

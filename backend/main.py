@@ -335,7 +335,7 @@ def knowledge_graph() -> dict[str, list[dict[str, str]]]:
 
 
 class PopularScanRequest(BaseModel):
-    top: int = Field(default=20, ge=1, le=100)
+    top: int = Field(default=8, ge=1, le=30)
 
 
 @app.post("/api/popular/scan")

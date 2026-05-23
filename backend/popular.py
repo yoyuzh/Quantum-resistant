@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 
 import httpx
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 
 GITHUB_SEARCH_API = "https://api.github.com/search/repositories"
 HTTP_TIMEOUT_SECONDS = 20.0
+POPULAR_SCAN_WORKERS = 5
+POPULAR_REPO_FILE_LIMIT = 6
+POPULAR_BATCH_TIMEOUT_SECONDS = 35.0
 
 
 @dataclass
@@ -94,12 +98,12 @@ def fetch_popular_repos(top: int = 20, token: str | None = None) -> list[RepoInf
         "per_page": str(top),
     }
 
-    max_retries = 3
+    max_retries = 1
     last_error: Exception | None = None
 
     for attempt in range(1, max_retries + 1):
         try:
-            with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True) as client:
+            with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True, trust_env=True) as client:
                 response = client.get(GITHUB_SEARCH_API, headers=headers, params=params)
             break  # 请求成功，跳出重试循环
         except httpx.TimeoutException as exc:
@@ -153,12 +157,12 @@ def fetch_popular_repos(top: int = 20, token: str | None = None) -> list[RepoInf
 
 def scan_single_repo(repo: RepoInfo) -> RepoScanResult:
     """对单个仓库执行量子脆弱性扫描。"""
-    max_retries = 3
+    max_retries = 1
     sources = None
 
     for attempt in range(1, max_retries + 1):
         try:
-            sources = collect_github_sources(repo.html_url)
+            sources = collect_github_sources(repo.html_url, max_files=POPULAR_REPO_FILE_LIMIT)
             break
         except (CollectionError, OSError) as exc:
             if attempt < max_retries:
@@ -240,7 +244,7 @@ def scan_single_repo(repo: RepoInfo) -> RepoScanResult:
     )
 
 
-def run_batch_scan(repos: list[RepoInfo]) -> BatchResult:
+def _run_batch_scan_sequential_legacy(repos: list[RepoInfo]) -> BatchResult:
     """编排批量扫描流程：顺序扫描仓库列表，汇总结果。"""
     total = len(repos)
     successful_repos: list[dict] = []
@@ -273,4 +277,63 @@ def run_batch_scan(repos: list[RepoInfo]) -> BatchResult:
         scanned_at=beijing_now_iso(),
         repos=successful_repos,
         meta=meta,
+    )
+
+
+def run_batch_scan(repos: list[RepoInfo], max_workers: int = POPULAR_SCAN_WORKERS) -> BatchResult:
+    """Run popular repository scans concurrently while preserving display order."""
+    total = len(repos)
+    result_by_name: dict[str, RepoScanResult] = {}
+
+    if repos:
+        workers = max(1, min(max_workers, total))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            future_map = {executor.submit(scan_single_repo, repo): repo for repo in repos}
+            for completed, future in enumerate(as_completed(future_map), start=1):
+                repo = future_map[future]
+                logger.info("完成扫描 [%d/%d]: %s", completed, total, repo.full_name)
+                try:
+                    result = future.result()
+                except Exception as exc:
+                    logger.warning("仓库 %s 扫描异常：%s", repo.full_name, exc)
+                    result = RepoScanResult(
+                        full_name=repo.full_name,
+                        star_count=repo.star_count,
+                        url=repo.html_url,
+                        migration_score=0,
+                        finding_count=0,
+                        success=False,
+                        error=str(exc),
+                    )
+                result_by_name[repo.full_name] = result
+
+    successful_repos: list[dict] = []
+    for repo in repos:
+        result = result_by_name.get(repo.full_name)
+        if result is None:
+            continue
+        if not result.success:
+            logger.warning("跳过仓库 %s：%s", repo.full_name, result.error)
+            continue
+
+        successful_repos.append({
+            "full_name": result.full_name,
+            "star_count": result.star_count,
+            "url": result.url,
+            "migration_score": result.migration_score,
+            "finding_count": result.finding_count,
+            "algorithms": result.algorithms,
+            "findings": result.findings,
+        })
+
+    return BatchResult(
+        scanned_at=beijing_now_iso(),
+        repos=successful_repos,
+        meta={
+            "total_repos": len(successful_repos),
+            "requested_count": total,
+            "query": "topic:cryptography language:python sort:stars",
+            "scan_mode": "concurrent",
+            "workers": min(max_workers, total) if total else 0,
+        },
     )

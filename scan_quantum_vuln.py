@@ -106,7 +106,17 @@ DIRECT_REGEX_RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
         "cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key",
     ),
     ("rsa", re.compile(r"\bRSA\.generate\s*\("), "RSA.generate"),
+    (
+        "rsa",
+        re.compile(r"\b(?:RSA\.Create|RSACryptoServiceProvider|RSAOpenSsl|RSACng)\s*\("),
+        ".NET RSA API",
+    ),
     ("dsa", re.compile(r"\bDSA\.generate\s*\("), "DSA.generate"),
+    (
+        "dsa",
+        re.compile(r"\b(?:DSA\.Create|DSACryptoServiceProvider|DSACng)\s*\("),
+        ".NET DSA API",
+    ),
     (
         "dh",
         re.compile(r"\bcryptography\.hazmat\.primitives\.asymmetric\.dh\.generate_parameters\s*\("),
@@ -128,6 +138,16 @@ DIRECT_REGEX_RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
         "cryptography.hazmat.primitives.asymmetric.ec.ECDSA",
     ),
     ("ecdsa", re.compile(r"\becdsa\.SigningKey\.generate\s*\("), "ecdsa.SigningKey.generate"),
+    (
+        "ecdh",
+        re.compile(r"\b(?:ECDiffieHellman\.Create|ECDiffieHellmanCng|ECDiffieHellmanOpenSsl)\s*\("),
+        ".NET ECDiffieHellman API",
+    ),
+    (
+        "ecdsa",
+        re.compile(r"\b(?:ECDsa\.Create|ECDsaCng|ECDsaOpenSsl)\s*\("),
+        ".NET ECDsa API",
+    ),
     (
         "x25519",
         re.compile(

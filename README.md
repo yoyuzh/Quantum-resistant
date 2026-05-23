@@ -158,7 +158,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 - `GET /api/knowledge/graph`：返回算法、数学难题、量子威胁和 PQC 迁移建议的图谱数据。
 - `POST /api/report/markdown`：根据扫描结果生成 Markdown 报告。
 
-远程采集会提取 `.py`、`.pyw`、`.txt`、`.pem`、`.yml`、`.yaml`、`.json`、`.cfg`、`.ini`、`.toml` 文件。单文件限制 2 MB，单次远程采集最多扫描 80 个文件。
+远程采集会提取常见文本源码、配置和密钥材料文件，包括 `.py`、`.cs`、`.csproj`、`.xaml`、`.xml`、`.md`、`.java`、`.js`、`.ts`、`.go`、`.rs`、`.txt`、`.pem`、`.yml`、`.yaml`、`.json`、`.cfg`、`.ini`、`.toml` 等。单文件限制 2 MB，单次远程采集最多扫描 80 个文件。
 
 ## 命令行扫描
 
@@ -188,6 +188,7 @@ python3 -B scan_quantum_vuln.py sample_inputs/risky_protocol_assets.py --json
 当前规则覆盖：
 
 - Python API：`cryptography`、`pycryptodome`、`ecdsa` 中的 RSA/DSA/DH/ECC/ECDH/ECDSA/X25519/X448/Ed25519/Ed448 用法。
+- .NET/C# API：`RSA.Create()`、`DSA.Create()`、`ECDsa.Create()`、`ECDiffieHellman.Create()` 以及对应 Cng/OpenSsl/Provider 类。
 - 协议算法标识：`RS256`、`PS256`、`ES256`、`EdDSA`、`ssh-rsa`、`rsa-sha2-*`、`ssh-dss`、`ecdsa-sha2-*`、`ssh-ed25519` 等。
 - PEM 密钥头：RSA、DSA、EC private/public key header。
 
