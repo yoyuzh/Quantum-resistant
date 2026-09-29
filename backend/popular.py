@@ -1,45 +1,33 @@
 from __future__ import annotations
 
-"""热门 Python 仓库批量量子脆弱性扫描核心逻辑。
-
-提供获取热门仓库列表、单仓库扫描、批量编排等功能。
-被 CLI 脚本 (scripts/batch_scan_popular.py) 和 API 端点共同使用。
-"""
-
 import logging
-import os
-import time
-from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 import httpx
 
-from backend.collectors import CollectionError, collect_github_sources
+from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries
+from backend.collectors import collect_github_sources
+from backend.remote_sources import describe_http_error, github_headers
 from backend.reporting import beijing_now_iso
-from scan_quantum_vuln import build_migration_score, scan_source_for_crypto
+from scan_quantum_vuln import analyze_source, build_migration_score, make_source_id
 
 logger = logging.getLogger(__name__)
-
 GITHUB_SEARCH_API = "https://api.github.com/search/repositories"
-HTTP_TIMEOUT_SECONDS = 20.0
 POPULAR_SCAN_WORKERS = 5
 POPULAR_REPO_FILE_LIMIT = 6
-POPULAR_BATCH_TIMEOUT_SECONDS = 35.0
+POPULAR_BATCH_TIMEOUT_SECONDS = 60.0
+SEARCH_QUERY = "topic:cryptography language:python"
 
 
 @dataclass
 class RepoInfo:
-    """GitHub 仓库基本信息。"""
-
-    full_name: str  # "owner/repo"
-    html_url: str  # "https://github.com/owner/repo"
-    star_count: int  # star 数
+    full_name: str
+    html_url: str
+    star_count: int
 
 
 @dataclass
 class RepoScanResult:
-    """单仓库扫描结果。"""
-
     full_name: str
     star_count: int
     url: str
@@ -49,291 +37,90 @@ class RepoScanResult:
     findings: list[dict] = field(default_factory=list)
     success: bool = True
     error: str | None = None
+    coverage: dict | None = None
+    diagnostics: list[dict] = field(default_factory=list)
+    details_truncated: bool = False
 
 
 @dataclass
 class BatchResult:
-    """批量扫描汇总结果。"""
-
     scanned_at: str
     repos: list[dict] = field(default_factory=list)
     meta: dict = field(default_factory=dict)
+    failures: list[dict] = field(default_factory=list)
 
 
-class FetchError(RuntimeError):
-    """获取热门仓库列表时发生的错误。"""
+class FetchError(CollectionError):
+    pass
 
 
-def fetch_popular_repos(top: int = 20, token: str | None = None) -> list[RepoInfo]:
-    """从 GitHub Search API 获取使用密码学相关库的热门 Python 仓库。
-
-    搜索关键词聚焦于加密/密码学相关仓库，避免拉取无关项目。
-    内置重试机制（最多 3 次），应对间歇性 SSL/网络错误。
-
-    Args:
-        top: 获取仓库数量上限，默认 20。
-        token: GitHub Personal Access Token，用于提高速率限制。
-               若为 None 则尝试从环境变量 GITHUB_TOKEN 读取。
-
-    Returns:
-        RepoInfo 列表，按 star 数降序排列。结果可能少于 top 个。
-
-    Raises:
-        FetchError: 当 GitHub API 请求失败时抛出。
-    """
-    if token is None:
-        token = os.environ.get("GITHUB_TOKEN")
-
-    headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
+def fetch_popular_repos(top: int = 20, token: str | None = None, *, deadline: Deadline | None = None) -> list[RepoInfo]:
+    budget = deadline or Deadline.after(POPULAR_BATCH_TIMEOUT_SECONDS)
+    headers = github_headers()
     if token:
         headers["Authorization"] = f"Bearer {token}"
-
-    # 搜索密码学相关的 Python 仓库（使用 topic 标签精准匹配）
-    search_query = "topic:cryptography language:python"
-
-    params = {
-        "q": search_query,
-        "sort": "stars",
-        "order": "desc",
-        "per_page": str(top),
-    }
-
-    max_retries = 1
-    last_error: Exception | None = None
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, follow_redirects=True, trust_env=True) as client:
-                response = client.get(GITHUB_SEARCH_API, headers=headers, params=params)
-            break  # 请求成功，跳出重试循环
-        except httpx.TimeoutException as exc:
-            last_error = exc
-            if attempt < max_retries:
-                logger.warning("GitHub API 请求超时，第 %d 次重试…", attempt)
-                time.sleep(attempt * 2)
-                continue
-            raise FetchError(
-                f"GitHub Search API 请求超时（{HTTP_TIMEOUT_SECONDS}s），已重试 {max_retries} 次，请检查网络连接"
-            )
-        except (httpx.HTTPError, OSError) as exc:
-            last_error = exc
-            if attempt < max_retries:
-                logger.warning("GitHub API 请求失败（%s），第 %d 次重试…", exc, attempt)
-                time.sleep(attempt * 2)
-                continue
-            raise FetchError(
-                f"GitHub Search API 请求失败（已重试 {max_retries} 次）：{exc}"
-            )
-    else:
-        raise FetchError(f"GitHub Search API 请求失败：{last_error}")
-
-    if response.status_code in (403, 429):
-        raise FetchError(
-            f"GitHub Search API 速率限制（HTTP {response.status_code}）。"
-            "请设置环境变量 GITHUB_TOKEN 以提高请求配额"
-        )
-
-    if response.status_code != 200:
-        raise FetchError(
-            f"GitHub Search API 返回错误（HTTP {response.status_code}）："
-            f"{response.text[:200]}"
-        )
-
-    data = response.json()
-    items = data.get("items", [])
-
-    repos: list[RepoInfo] = []
-    for item in items:
-        repos.append(
-            RepoInfo(
-                full_name=item["full_name"],
-                html_url=item["html_url"],
-                star_count=item.get("stargazers_count", 0),
-            )
-        )
-
-    return repos
+    try:
+        with httpx.Client(follow_redirects=True, trust_env=True) as client:
+            response = get_with_retries(client, GITHUB_SEARCH_API, headers=headers,
+                params={"q": SEARCH_QUERY, "sort": "stars", "order": "desc", "per_page": str(top)},
+                deadline=budget)
+            items = response.json()["items"]
+            return [RepoInfo(item["full_name"], item["html_url"], item.get("stargazers_count", 0)) for item in items[:top]]
+    except CollectionTimeout:
+        raise
+    except (httpx.HTTPError, CollectionError, OSError, ValueError, KeyError, TypeError) as exc:
+        raise FetchError(f"无法检索热门仓库：{describe_http_error(exc)}") from exc
 
 
-def scan_single_repo(repo: RepoInfo) -> RepoScanResult:
-    """对单个仓库执行量子脆弱性扫描。"""
-    max_retries = 1
-    sources = None
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            sources = collect_github_sources(repo.html_url, max_files=POPULAR_REPO_FILE_LIMIT)
-            break
-        except (CollectionError, OSError) as exc:
-            if attempt < max_retries:
-                logger.warning(
-                    "仓库 %s 采集失败（第 %d 次重试）：%s", repo.full_name, attempt, exc
-                )
-                time.sleep(attempt * 2)
-                continue
-            logger.warning("仓库 %s 采集失败（已重试 %d 次）：%s", repo.full_name, max_retries, exc)
-            return RepoScanResult(
-                full_name=repo.full_name,
-                star_count=repo.star_count,
-                url=repo.html_url,
-                migration_score=0,
-                finding_count=0,
-                success=False,
-                error=str(exc),
-            )
-        except Exception as exc:
-            logger.warning("仓库 %s 采集异常：%s", repo.full_name, exc)
-            return RepoScanResult(
-                full_name=repo.full_name,
-                star_count=repo.star_count,
-                url=repo.html_url,
-                migration_score=0,
-                finding_count=0,
-                success=False,
-                error=str(exc),
-            )
-
-    if sources is None:
-        return RepoScanResult(
-            full_name=repo.full_name,
-            star_count=repo.star_count,
-            url=repo.html_url,
-            migration_score=0,
-            finding_count=0,
-            success=False,
-            error="采集失败",
-        )
-
-    all_findings: list[dict] = []
-    source_dicts: list[dict] = []
-    for origin, filename, content in sources:
-        source_dicts.append({"origin": origin, "filename": filename})
-        file_findings = scan_source_for_crypto(
-            source=content,
-            filename=filename,
-            source_type="github_repository",
-            source_id=repo.full_name,
-        )
-        all_findings.extend(file_findings)
-
-    if not all_findings:
-        return RepoScanResult(
-            full_name=repo.full_name,
-            star_count=repo.star_count,
-            url=repo.html_url,
-            migration_score=0,
-            finding_count=0,
-            success=True,
-        )
-
-    score_result = build_migration_score(source_dicts, all_findings)
-    migration_score: int = score_result["score"]
-    algorithms = sorted(set(str(f["algorithm"]) for f in all_findings if f.get("algorithm")))
-    sorted_findings = sorted(all_findings, key=lambda f: int(f.get("line", 0)))
-    top_findings = sorted_findings[:20]
-
-    return RepoScanResult(
-        full_name=repo.full_name,
-        star_count=repo.star_count,
-        url=repo.html_url,
-        migration_score=migration_score,
-        finding_count=len(all_findings),
-        algorithms=algorithms,
-        findings=top_findings,
-        success=True,
-    )
+def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *, deadline: Deadline | None = None) -> RepoScanResult:
+    budget = deadline or Deadline.after(POPULAR_BATCH_TIMEOUT_SECONDS)
+    try:
+        sources = collect_github_sources(repo.html_url, max_files=max_files, deadline=budget)
+        if not sources:
+            raise CollectionError("没有采集到可扫描文件")
+        findings, records = [], []
+        diagnostics = list(getattr(sources, "diagnostics", []))
+        for index, (origin, filename, content) in enumerate(sources):
+            budget.remaining()
+            source_id = make_source_id(f"{repo.full_name}:{index}:{filename}", content)
+            records.append({"source_id": source_id, "file_name": filename})
+            found, notes = analyze_source(content, filename, "github_repository", source_id)
+            findings.extend(found)
+            diagnostics.extend(notes)
+        score = build_migration_score(records, findings)
+        ordered = sorted(findings, key=lambda f: (int(f.get("line", 0)), f.get("file_name", "")))
+        return RepoScanResult(repo.full_name, repo.star_count, repo.html_url, int(score["score"]), len(findings),
+            algorithms=sorted({f["algorithm"] for f in findings}), findings=ordered[:20],
+            coverage=getattr(sources, "coverage", {"scanned_files": len(sources), "file_limit": max_files, "candidate_files": None, "partial": True, "skipped_files": 0}),
+            diagnostics=diagnostics, details_truncated=len(findings) > 20)
+    except (CollectionError, OSError, ValueError) as exc:
+        return RepoScanResult(repo.full_name, repo.star_count, repo.html_url, 0, 0, success=False, error=str(exc))
 
 
-def _run_batch_scan_sequential_legacy(repos: list[RepoInfo]) -> BatchResult:
-    """编排批量扫描流程：顺序扫描仓库列表，汇总结果。"""
-    total = len(repos)
-    successful_repos: list[dict] = []
-
-    for i, repo in enumerate(repos, start=1):
-        logger.info("正在扫描 [%d/%d]: %s", i, total, repo.full_name)
-        result = scan_single_repo(repo)
-
-        if not result.success:
-            logger.warning("跳过仓库 %s：%s", repo.full_name, result.error)
-            continue
-
-        successful_repos.append({
-            "full_name": result.full_name,
-            "star_count": result.star_count,
-            "url": result.url,
-            "migration_score": result.migration_score,
-            "finding_count": result.finding_count,
-            "algorithms": result.algorithms,
-            "findings": result.findings,
-        })
-
-    meta = {
-        "total_repos": len(successful_repos),
-        "requested_count": total,
-        "query": "topic:cryptography language:python sort:stars",
-    }
-
-    return BatchResult(
-        scanned_at=beijing_now_iso(),
-        repos=successful_repos,
-        meta=meta,
-    )
-
-
-def run_batch_scan(repos: list[RepoInfo], max_workers: int = POPULAR_SCAN_WORKERS) -> BatchResult:
-    """Run popular repository scans concurrently while preserving display order."""
-    total = len(repos)
-    result_by_name: dict[str, RepoScanResult] = {}
-
-    if repos:
-        workers = max(1, min(max_workers, total))
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_map = {executor.submit(scan_single_repo, repo): repo for repo in repos}
-            for completed, future in enumerate(as_completed(future_map), start=1):
-                repo = future_map[future]
-                logger.info("完成扫描 [%d/%d]: %s", completed, total, repo.full_name)
-                try:
-                    result = future.result()
-                except Exception as exc:
-                    logger.warning("仓库 %s 扫描异常：%s", repo.full_name, exc)
-                    result = RepoScanResult(
-                        full_name=repo.full_name,
-                        star_count=repo.star_count,
-                        url=repo.html_url,
-                        migration_score=0,
-                        finding_count=0,
-                        success=False,
-                        error=str(exc),
-                    )
-                result_by_name[repo.full_name] = result
-
-    successful_repos: list[dict] = []
+def run_batch_scan(repos: list[RepoInfo], max_workers: int = POPULAR_SCAN_WORKERS, *, max_files: int = POPULAR_REPO_FILE_LIMIT, deadline: Deadline | None = None) -> BatchResult:
+    budget = deadline or Deadline.after(POPULAR_BATCH_TIMEOUT_SECONDS)
+    completed, timed_out = concurrent_collect(repos, lambda repo: scan_single_repo(repo, max_files=max_files, deadline=budget), max_workers, budget)
+    results = {repo.full_name: result for repo, result in completed}
+    successes, failures = [], []
     for repo in repos:
-        result = result_by_name.get(repo.full_name)
-        if result is None:
-            continue
-        if not result.success:
-            logger.warning("跳过仓库 %s：%s", repo.full_name, result.error)
-            continue
+        result = results.get(repo.full_name)
+        if isinstance(result, RepoScanResult) and result.success:
+            successes.append(asdict(result))
+        else:
+            error = result.error if isinstance(result, RepoScanResult) else "扫描超时或未完成" if result is None else "扫描发生异常"
+            failures.append({"full_name": repo.full_name, "error": error})
+    return BatchResult(beijing_now_iso(), successes,
+        {"total_repos": len(successes), "requested_count": len(repos), "query": SEARCH_QUERY + " sort:stars",
+         "scan_mode": "concurrent", "workers": max(1, min(max_workers, len(repos))) if repos else 0,
+         "max_files": max_files, "timed_out": timed_out, "failed_count": len(failures)}, failures)
 
-        successful_repos.append({
-            "full_name": result.full_name,
-            "star_count": result.star_count,
-            "url": result.url,
-            "migration_score": result.migration_score,
-            "finding_count": result.finding_count,
-            "algorithms": result.algorithms,
-            "findings": result.findings,
-        })
 
-    return BatchResult(
-        scanned_at=beijing_now_iso(),
-        repos=successful_repos,
-        meta={
-            "total_repos": len(successful_repos),
-            "requested_count": total,
-            "query": "topic:cryptography language:python sort:stars",
-            "scan_mode": "concurrent",
-            "workers": min(max_workers, total) if total else 0,
-        },
-    )
+def scan_popular(top: int = 8, max_files: int = POPULAR_REPO_FILE_LIMIT) -> BatchResult:
+    budget = Deadline.after(POPULAR_BATCH_TIMEOUT_SECONDS)
+    repos = fetch_popular_repos(top=top, deadline=budget)
+    result = run_batch_scan(repos, max_files=max_files, deadline=budget)
+    if not result.repos:
+        if result.meta["timed_out"]:
+            raise CollectionTimeout("热门扫描超时，没有完成的仓库；上次结果已保留")
+        raise CollectionError("本次未获得可扫描的仓库结果；上次结果已保留")
+    return result

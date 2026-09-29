@@ -12,6 +12,7 @@ $WebRoot = Join-Path $RepoRoot "web"
 $BackendProcess = $null
 $FrontendProcess = $null
 $PythonExe = $null
+$PreviousBackendUrl = $env:BACKEND_URL
 
 function Resolve-PythonCommand {
     $VenvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
@@ -52,15 +53,16 @@ try {
         -ArgumentList @("start.py", "--host", $BackendHost, "--port", $BackendPort, "--strict-port") `
         -WorkingDirectory $RepoRoot `
         -PassThru `
-        -NoNewWindow
+        -WindowStyle Hidden
 
+    $env:BACKEND_URL = "http://$BackendHost`:$BackendPort"
     Write-Host "Starting frontend on http://$FrontendHost`:$FrontendPort/static/"
     $FrontendProcess = Start-Process `
-        -FilePath "cmd.exe" `
-        -ArgumentList @("/c", "npm run dev -- --host $FrontendHost --port $FrontendPort") `
+        -FilePath (Get-Command node -ErrorAction Stop).Source `
+        -ArgumentList @("node_modules/vite/bin/vite.js", "--host", $FrontendHost, "--port", $FrontendPort, "--strictPort") `
         -WorkingDirectory $WebRoot `
         -PassThru `
-        -NoNewWindow
+        -WindowStyle Hidden
 
     Write-Host ""
     Write-Host "Development services are starting:"
@@ -80,6 +82,7 @@ try {
     }
 }
 finally {
+    $env:BACKEND_URL = $PreviousBackendUrl
     Stop-ChildProcess $FrontendProcess
     Stop-ChildProcess $BackendProcess
 }

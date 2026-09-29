@@ -1,250 +1,83 @@
 # 抗量子迁移风险扫描平台
 
-本项目用于识别代码、配置片段和密钥材料中可能需要进行抗量子密码迁移的传统公钥算法用法。当前覆盖 `RSA`、`DSA`、`DH`、`ECDH/ECDSA/ECC`，并扩展识别 `X25519/X448`、`Ed25519/Ed448`、JWT/SSH 算法标识以及 PEM 密钥头。
+面向抗量子密码迁移的静态分析原型：识别 Python 密码库调用、配置算法标识和专用 PEM 头，展示代码证据及迁移知识。扫描不执行输入代码。
 
-## 功能概览
+## 已实现的能力
 
-- 支持粘贴代码片段扫描。
-- 支持多文件上传扫描。
-- 支持多文件上传扫描，并可一键导入 `sample_inputs/` 中的内置风险样例。
-- 支持输入 GitHub 仓库地址，优先读取仓库文件树并发采集源码，必要时回退源码包扫描。
-- 支持输入 PyPI 包名，读取包元数据后优先扫描 sdist，必要时回退 wheel。
-- 支持识别 Python 加密 API、协议算法字符串和 PEM 密钥头。
-- 展示文件名、行号、算法、风险等级、证据、原因和迁移建议。
-- 展示迁移评分、迁移优先级和抗量子知识图谱。
-- 支持点击结果查看对应行附近代码。
-- 支持导出 Markdown 扫描报告。
-- 扫描过程中展示与当前输入来源匹配的阶段动画和进度。
-- 扫描时间和报告时间使用北京时间 `UTC+08:00`。
+- 四类输入：代码片段、多文件上传（含内置样例）、GitHub 仓库、PyPI 包。
+- 支持 RSA、DSA、DH、ECDH/ECDSA/ECC、X25519/X448、Ed25519/Ed448，以及部分 JWT/SSH 配置标识。
+- Python AST 解析完整导入目标、直接函数/类别名和常见局部遮蔽；无法解析时保守回退。其他文本语言仅有有限规则，不是完整语义分析器。
+- 通用 `PRIVATE KEY` / `PUBLIC KEY` 仅产生“算法待复核”诊断，不默认归类为 RSA。
+- 结果含源码定位、按算法/文件筛选、文本搜索、每页 50 项分页、Markdown 导出；同名文件通过 `source_id` 独立定位。
+- 每个输入模式保留当前页面会话中的草稿和上次结果；失败保留旧结果及时间。明暗主题持久化，等待状态显示真实耗时。
+- 热门密码学 Python 仓库按 Star 检索，网页默认 8 个、CLI 默认 20 个，每仓库默认最多 6 个文件；展示部分成功、失败原因和详情截断。
+- 算法迁移知识由算法资料生成，属于静态参考，不是实际软件供应链依赖图。
 
-## 项目结构
+迁移评分为启发式优先级：`min(100, 高风险项×25 + 受影响文件×10 + 算法种类×10)`，不是经过实验校准的风险概率。零发现不等于项目安全或完整覆盖。
 
-```text
-.
-├── backend/                 # FastAPI API 与静态页面挂载
-│   ├── main.py              # 路由、上传处理、扫描接口
-│   ├── reporting.py         # Markdown 报告生成
-│   └── README.md            # 后端接口简要说明
-├── web/                     # Vue 3 + Vite 前端
-│   ├── src/                 # 前端源码
-│   ├── scripts/             # 前端构建发布脚本
-│   ├── assets/              # 构建后由 FastAPI /static 挂载的静态资源
-│   ├── index.html           # 构建后由 FastAPI 返回的首页
-│   └── package.json
-├── scripts/
-│   ├── start_dev.sh         # macOS/Linux 同时启动前后端
-│   ├── start_dev.ps1        # Windows 同时启动前后端
-│   ├── start.ps1            # Windows 后端启动脚本
-│   └── stop_dev_services.ps1
-├── sample_inputs/           # 风险样例文件
-├── tests/                   # 扫描器、API 与启动脚本测试
-├── scan_quantum_vuln.py     # 核心扫描器与 CLI
-├── start.py                 # FastAPI 后端启动入口
-└── requirements.txt         # Python 依赖
+## 安装与运行
+
+需要 Python 3.10+ 和支持 Vite 5 的 Node.js（18+）。
+
+```sh
+python -m pip install -r requirements.txt
+npm --prefix web install
+npm --prefix web run build
+python start.py
 ```
 
-## 安装依赖
+默认后端端口为 8000；占用时自动尝试到 8020。需要固定地址时：
 
-Python 依赖：
-
-```bash
-python3 -m pip install -r requirements.txt
+```sh
+python start.py --port 8010 --strict-port
 ```
 
-前端依赖：
+开发环境（Vite 代理自动使用指定后端端口）：
 
-```bash
-cd web
-npm install
+```powershell
+./scripts/start_dev.ps1 -BackendPort 8010 -FrontendPort 3010
 ```
 
-## 本地开发启动
-
-macOS/Linux 可以在项目根目录运行：
-
-```bash
-./scripts/start_dev.sh
-```
-
-该脚本会同时启动：
-
-```text
-后端 API: http://127.0.0.1:8000
-前端页面: http://127.0.0.1:3000/static/
-```
-
-按 `Ctrl+C` 会同时停止前后端服务。
-
-如需指定端口：
-
-```bash
+```sh
 BACKEND_PORT=8010 FRONTEND_PORT=3010 ./scripts/start_dev.sh
 ```
 
-Windows PowerShell 可以在项目根目录运行：
+默认开发前端为 `http://127.0.0.1:3000/static/`，后端为 `http://127.0.0.1:8000`。单独启动 Vite 时，通过 `BACKEND_URL` 指定代理目标。修改前端后必须重新构建，FastAPI 才会提供新页面；不要手改 `web/index.html` 或 `web/assets/`。
 
-```powershell
-.\scripts\start_dev.ps1
+## CLI
+
+```sh
+python -B scan_quantum_vuln.py sample_inputs/risky_protocol_assets.py --json
+python -B scripts/batch_scan_popular.py --top 8 --max-files 6
 ```
 
-指定端口：
+扫描 CLI 保持原 JSON 发现数组形式，诊断输出到 stderr。批量脚本与网页共用检索和扫描服务，批量默认输出 `web/data/popular.json`。
 
-```powershell
-.\scripts\start_dev.ps1 -BackendPort 8010 -FrontendPort 3010
+## 限制与扫描范围
+
+单文件 2 MiB，单次上传最多 80 个文件、整个 multipart 请求最多 10 MiB（包含表单开销），只接受允许后缀的 UTF-8 文本。远程最多采集 80 个文件，单文件 2 MiB，归档响应限制见 `backend/collection_config.py`。
+
+普通远程采集共享 90 秒预算，热门批次共享 60 秒（含检索和重试）。超时停止调度，取消排队任务；正在执行的网络操作通过共享截止时间和有限读超时退出。前端对应 100 秒/70 秒超时。此为协作式截止机制，不强制中断 Python 线程。
+
+`coverage` 包含实际文件数、采集上限、候选数、跳过数及是否存在未扫描部分。候选总数未知时为 `null`，不计算完整覆盖率。`diagnostics` 与已确认发现分开，包含稳定代码、中文说明和可选 `source_id`。旧榜单缺少范围字段时显示“扫描范围未知”。
+
+GitHub 优先使用默认分支文件树并发采集，必要时尝试分支源码归档；可用 `GITHUB_TOKEN` 缓解 API 限流。PyPI 优先 sdist、回退 wheel，保留包内目录。远程归档只在内存中读取，不落地解压、不执行源码。
+
+热门结果原子替换，全部失败不覆盖旧结果。网页热门刷新采用单进程锁；多 worker 或多进程部署不具备跨进程互斥。当前建议单进程运行。
+
+## 代码与验证
+
+- `scanner/`：算法规则、Python 分析、文本回退与结果汇总；`scan_quantum_vuln.py` 保留公共入口。
+- `backend/`：模型、采集、扫描、热门编排、原子存储、知识和报告；`backend.main:app` 保持启动兼容。
+- `web/src/`：组件、composable、API 模块、纯函数和集中主题样式。
+- `tests/`：unittest、模拟 HTTP/归档测试、Hypothesis 属性测试；`web/tests/` 直接测试 JavaScript。
+
+```sh
+python -B -m unittest discover -s tests -v
+npm --prefix web test
+npm --prefix web run build
 ```
 
-如果 Windows 阻止脚本执行，可在当前 PowerShell 窗口临时放行：
+测试不访问真实远程服务。离线浏览器验收可运行 `python -m tests.browser_fixture`，访问 `http://127.0.0.1:8018/`：真实扫描/上传/导出配合模拟采集，仓库或包名含 `timeout` / `failure` 时分别模拟超时/失败；热门第二次刷新模拟失败，第三次恢复。该入口仅供本地测试，数据写临时目录。
 
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
-
-## 生产式单服务启动
-
-如果希望只启动 FastAPI，由后端直接返回构建后的前端页面，先构建前端：
-
-```bash
-cd web
-npm run build
-cd ..
-python3 start.py
-```
-
-默认访问地址：
-
-```text
-http://127.0.0.1:8000
-```
-
-如果 `8000` 端口已被占用，`start.py` 会自动选择 `8001` 到 `8020` 之间的下一个可用端口，并在终端中打印实际访问地址。
-
-## Windows PowerShell 仅启动后端
-
-在项目根目录运行：
-
-```powershell
-.\scripts\start.ps1
-```
-
-指定偏好的端口：
-
-```powershell
-.\scripts\start.ps1 -Port 8001
-```
-
-如果不希望自动切换端口，可以开启严格模式：
-
-```powershell
-.\scripts\start.ps1 -Port 8000 -StrictPort
-```
-
-如果 Windows 阻止脚本执行，可在当前 PowerShell 窗口临时放行：
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
-
-## API 接口
-
-默认后端地址为 `http://127.0.0.1:8000`。
-
-- `GET /`：生产式 Web 可视化页面。
-- `GET /api/health`：服务健康检查。
-- `POST /api/scan/snippet`：扫描粘贴的代码片段。
-- `POST /api/scan/files`：扫描上传的多个代码文件。
-- `POST /api/scan/github`：扫描 GitHub 仓库源码，参数为 `repository_url`。
-- `POST /api/scan/pypi`：扫描 PyPI 包源码，参数为 `package_name`。
-- `GET /api/samples`：返回 `sample_inputs/` 中可一键导入的示例代码。
-- `GET /api/knowledge/graph`：返回算法、数学难题、量子威胁和 PQC 迁移建议的图谱数据。
-- `POST /api/report/markdown`：根据扫描结果生成 Markdown 报告。
-
-远程采集会提取常见文本源码、配置和密钥材料文件，包括 `.py`、`.cs`、`.csproj`、`.xaml`、`.xml`、`.md`、`.java`、`.js`、`.ts`、`.go`、`.rs`、`.txt`、`.pem`、`.yml`、`.yaml`、`.json`、`.cfg`、`.ini`、`.toml` 等。单文件限制 2 MB，单次远程采集最多扫描 80 个文件。
-
-## 命令行扫描
-
-扫描示例文件：
-
-```bash
-python3 -B scan_quantum_vuln.py sample_rsa_code.py
-```
-
-输出 JSON：
-
-```bash
-python3 -B scan_quantum_vuln.py sample_inputs/risky_protocol_assets.py --json
-```
-
-示例输出：
-
-```text
-【高风险】在第8行发现量子脆弱算法：X25519
-  证据：x25519.X25519PrivateKey.generate
-  原因：X25519 属于椭圆曲线 Diffie-Hellman 密钥交换，量子计算可高效求解其离散对数基础。
-  建议：密钥交换迁移到 FIPS 203 ML-KEM，或在过渡期使用经评估的混合密钥交换。
-```
-
-## 扫描覆盖范围
-
-当前规则覆盖：
-
-- Python API：`cryptography`、`pycryptodome`、`ecdsa` 中的 RSA/DSA/DH/ECC/ECDH/ECDSA/X25519/X448/Ed25519/Ed448 用法。
-- .NET/C# API：`RSA.Create()`、`DSA.Create()`、`ECDsa.Create()`、`ECDiffieHellman.Create()` 以及对应 Cng/OpenSsl/Provider 类。
-- 协议算法标识：`RS256`、`PS256`、`ES256`、`EdDSA`、`ssh-rsa`、`rsa-sha2-*`、`ssh-dss`、`ecdsa-sha2-*`、`ssh-ed25519` 等。
-- PEM 密钥头：RSA、DSA、EC private/public key header。
-
-为降低误报，协议算法字符串只在变量名或参数名含有 `algorithm`、`jwt`、`ssh`、`tls`、`key`、`cert` 等上下文时触发；普通说明文本不会直接报风险。
-
-## 风险样例文件
-
-项目内置了一组用于 Web 上传测试的风险代码样例：
-
-```text
-sample_inputs/
-├── risky_rsa_cryptography.py
-├── risky_dh_dsa_cryptography.py
-├── risky_ecc_cryptography.py
-├── risky_pycryptodome_rsa_dsa.py
-├── risky_ecdsa_library.py
-├── risky_partial_syntax_fallback.py
-└── risky_protocol_assets.py
-```
-
-这些文件是故意写入传统公钥算法用法的测试输入，不需要实际运行。启动服务后，可以在页面中选择“文件上传”，点击“导入示例代码”一键加载这些样例，也可以手动上传 `sample_inputs` 目录下的文件。
-
-## PyPI 扫描说明
-
-PyPI 面板用于检查第三方 Python 包发布物中的源码、配置和密钥材料，判断其是否包含需要抗量子迁移的传统公钥算法用法。系统会：
-
-- 读取 `https://pypi.org/pypi/<package>/json` 元数据。
-- 优先选择源码包 `sdist`，必要时回退到 wheel。
-- 只解包并扫描文本源码、配置和 PEM 文件，不安装、不导入、不执行包代码。
-- 对网络和 SSL 中断做重试，并在代理导致连接异常时优先使用不继承环境代理的请求方式。
-
-## 测试
-
-运行扫描器、API 和启动脚本测试：
-
-```bash
-python3 -B -m unittest discover -s tests -v
-```
-
-构建前端：
-
-```bash
-cd web
-npm run build
-```
-
-## 常见问题
-
-- 访问 `http://127.0.0.1:3000/static/` 报 API 错误：确认后端 `http://127.0.0.1:8000/api/health` 正常。
-- 访问 `http://127.0.0.1:8000` 看到旧页面：先运行 `cd web && npm run build` 重新发布前端构建产物。
-- 端口被占用：`python3 start.py` 会自动切换后端端口；开发脚本严格使用指定端口，可以换端口后重试。
-- PowerShell 无法运行脚本：使用 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` 临时放行当前窗口。
-
-## 后续扩展方向
-
-- 支持更完整的 GitHub 分支选择和私有仓库 token。
-- 增加异步任务、扫描进度和历史记录。
-- 支持 CSV、JSON、PDF 等更多导出格式。
-- 扩展 Java、Go、JavaScript 等语言的算法识别规则。
+研究报告规划的真实依赖图谱、传播分析、Neo4j/数据库、LLM、完整多语言解析、历史任务及实验评估尚未实现。详见 [架构说明](docs/architecture.md)。

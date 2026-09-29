@@ -1,14 +1,231 @@
-/* Minimal resets for Quantum Crypto Scanner */
+@import './styles/theme.css';
+
 * {
   box-sizing: border-box;
 }
-
-html, body {
+body {
   margin: 0;
-  padding: 0;
-  height: 100%;
+  background: var(--bg-root);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
 }
-
-#app {
-  height: 100%;
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  touch-action: manipulation;
+}
+a {
+  color: var(--accent);
+  text-underline-offset: 0.2em;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+h2,
+h3,
+p {
+  margin: 0;
+}
+h2 {
+  font-size: 1.12rem;
+  overflow-wrap: anywhere;
+}
+h3 {
+  font-size: 0.95rem;
+}
+p + p {
+  margin-top: 0.5rem;
+}
+label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  min-width: 0;
+}
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+}
+.app-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.panel {
+  padding: 1.35rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+.button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.primary {
+  background: var(--accent-dim);
+  color: white;
+  border-color: var(--accent-dim);
+}
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.secondary {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.muted {
+  color: var(--text-secondary);
+}
+.small {
+  font-size: 0.78rem;
+}
+.eyebrow {
+  color: var(--accent-dim);
+  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  margin-bottom: 0.35rem;
+}
+.notice {
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.notice.error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.notice .button {
+  margin-top: 0.5rem;
+}
+.tag {
+  padding: 0.15rem 0.5rem;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  color: var(--accent-dim);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-glow);
+}
+.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 4rem 1rem;
+}
+.empty h2 {
+  color: var(--text-primary);
+  margin: 0.7rem 0;
+}
+.empty p {
+  font-size: 0.85rem;
+  max-width: 28rem;
+  margin: auto;
+}
+.empty-mark {
+  display: block;
+  font-size: 3.5rem;
+  color: var(--accent);
+}
+.empty.compact {
+  padding: 1rem;
+}
+footer {
+  text-align: center;
+  margin: 1.5rem 0 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 1024px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  .app-main {
+    padding: 1rem;
+  }
+}
+@media (max-width: 600px) {
+  .panel {
+    padding: 1rem;
+  }
+  .app-main {
+    padding: 0.75rem;
+  }
+  .empty {
+    padding: 2rem 0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

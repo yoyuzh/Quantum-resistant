@@ -258,7 +258,7 @@ class PopularResultsApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             response.json()["detail"],
-            "热门仓库扫描数据尚未生成，请先运行批量扫描脚本",
+            "热门仓库扫描数据尚未生成，请先运行批量扫描脚本或点击开始扫描",
         )
 
     @patch("backend.main.Path.exists", return_value=True)

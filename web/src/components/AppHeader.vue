@@ -1,0 +1,62 @@
+<script setup>
+defineProps({ theme: String });
+defineEmits(['toggle-theme']);
+</script>
+
+<template>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">Q</span>
+      <div>
+        <h1>抗量子迁移风险扫描平台</h1>
+        <p>发现密码算法 · 定位代码证据 · 辅助迁移决策</p>
+      </div>
+    </div>
+    <button
+      class="button secondary"
+      @click="$emit('toggle-theme')"
+      :aria-label="theme === 'light' ? '切换深色模式' : '切换浅色模式'"
+    >
+      {{ theme === 'light' ? '◐ 深色' : '☀ 浅色' }}
+    </button>
+  </header>
+</template>
+
+<style scoped>
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem max(1rem, calc((100vw - 1440px) / 2));
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.brand-mark {
+  font: 700 2rem var(--font-mono);
+  color: var(--accent);
+}
+h1 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+p {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0;
+}
+@media (max-width: 600px) {
+  .brand-mark,
+  p {
+    display: none;
+  }
+  h1 {
+    font-size: 0.95rem;
+  }
+}
+</style>

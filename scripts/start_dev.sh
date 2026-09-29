@@ -40,7 +40,7 @@ echo "Starting backend on http://${BACKEND_HOST}:${BACKEND_PORT}"
 BACKEND_PID="$!"
 
 echo "Starting frontend on http://${FRONTEND_HOST}:${FRONTEND_PORT}/static/"
-(cd web && npm run dev -- --host "${FRONTEND_HOST}" --port "${FRONTEND_PORT}") &
+(cd web && export BACKEND_URL="http://${BACKEND_HOST}:${BACKEND_PORT}" && exec node node_modules/vite/bin/vite.js --host "${FRONTEND_HOST}" --port "${FRONTEND_PORT}" --strictPort) &
 FRONTEND_PID="$!"
 
 cat <<EOF

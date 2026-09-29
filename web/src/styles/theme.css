@@ -1,0 +1,66 @@
+:root,
+[data-theme='light'] {
+  --bg-root: #f2f5f8;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #f8fafb;
+  --bg-input: #fbfcfd;
+  --border: #e1e6eb;
+  --border-light: #eaedf2;
+  --accent: #0f9b8e;
+  --accent-glow: rgba(15, 155, 142, 0.18);
+  --accent-dim: #0d7d72;
+  --accent-soft: rgba(15, 155, 142, 0.06);
+  --text-primary: #1a2532;
+  --text-secondary: #5b6b7c;
+  --text-muted: #93a3b8;
+  --danger: #e54545;
+  --danger-bg: rgba(229, 69, 69, 0.07);
+  --danger-glow: rgba(229, 69, 69, 0.2);
+  --success: #0f9b8e;
+  --success-bg: rgba(15, 155, 142, 0.07);
+  --warning: #d4790a;
+  --warning-bg: rgba(212, 121, 10, 0.07);
+  --line-badge-bg: #e3eaf1;
+  --line-badge-color: #3d566e;
+  --glow-strong: rgba(15, 155, 142, 0.32);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --grid-color: rgba(0, 0, 0, 0.025);
+  --font-mono: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  --font-sans: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --transition-theme:
+    background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+[data-theme='dark'] {
+  --bg-root: #0a0f16;
+  --bg-surface: #131c26;
+  --bg-card: #182230;
+  --bg-elevated: #1d2a38;
+  --bg-input: #101923;
+  --border: #233140;
+  --border-light: #2b3b4c;
+  --accent: #00d4aa;
+  --accent-glow: rgba(0, 212, 170, 0.2);
+  --accent-dim: #00a885;
+  --accent-soft: rgba(0, 212, 170, 0.05);
+  --text-primary: #e3ecf4;
+  --text-secondary: #8c9eb0;
+  --text-muted: #546678;
+  --danger: #ff5c72;
+  --danger-bg: rgba(255, 92, 114, 0.08);
+  --danger-glow: rgba(255, 92, 114, 0.2);
+  --success: #00d4aa;
+  --success-bg: rgba(0, 212, 170, 0.07);
+  --warning: #f0a040;
+  --warning-bg: rgba(240, 160, 64, 0.08);
+  --line-badge-bg: #1c3046;
+  --line-badge-color: #7abae8;
+  --glow-strong: rgba(0, 212, 170, 0.38);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --grid-color: rgba(255, 255, 255, 0.018);
+}

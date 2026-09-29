@@ -33,6 +33,8 @@ def build_markdown_report(
     findings: list[dict[str, Any]],
     source_type: str,
     scanned_at: Optional[str] = None,
+    coverage: dict | None = None,
+    diagnostics: list[dict] | None = None,
 ) -> str:
     generated_at = scanned_at or beijing_now_iso()
     summary = build_summary(sources, findings)
@@ -47,9 +49,16 @@ def build_markdown_report(
         f"- 迁移评分：{summary['migration_score']['score']}/100",
         f"- 迁移优先级：{summary['migration_score']['priority']}",
         "",
-        "## 算法统计",
-        "",
     ]
+
+    coverage_lines = ["## 扫描范围与诊断", "", "迁移评分是启发式优先级，不代表风险概率。"]
+    if coverage:
+        coverage_lines.append(f"实际扫描 {coverage['scanned_files']} 个文件；候选数量：{coverage.get('candidate_files') if coverage.get('candidate_files') is not None else '未知'}；跳过 {coverage.get('skipped_files', 0)} 个文件。")
+        coverage_lines.append("存在未扫描部分，零发现不代表整个项目没有相关用法。" if coverage.get("partial") else "结果仅对应本次输入的受支持规则范围。")
+    else:
+        coverage_lines.append("扫描范围未知。")
+    coverage_lines.extend(f"- {markdown_table_cell(d['message'])}" for d in diagnostics or [])
+    lines.extend([*coverage_lines, "", "## 算法统计", ""])
 
     if summary["algorithm_counts"]:
         lines.extend(["| 算法 | 数量 |", "| --- | ---: |"])
