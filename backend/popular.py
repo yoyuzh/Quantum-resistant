@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 
 import httpx
 
-from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries
+from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, remote_client_options
 from backend.collectors import collect_github_sources
-from backend.remote_sources import describe_http_error, github_headers
+from backend.remote_sources import describe_http_error, github_get, github_headers
 from backend.reporting import beijing_now_iso
 from scan_quantum_vuln import analyze_source, build_migration_score, make_source_id
 
@@ -60,8 +61,8 @@ def fetch_popular_repos(top: int = 20, token: str | None = None, *, deadline: De
     if token:
         headers["Authorization"] = f"Bearer {token}"
     try:
-        with httpx.Client(follow_redirects=True, trust_env=True) as client:
-            response = get_with_retries(client, GITHUB_SEARCH_API, headers=headers,
+        with httpx.Client(**remote_client_options()) as client:
+            response = github_get(client, GITHUB_SEARCH_API, headers=headers,
                 params={"q": SEARCH_QUERY, "sort": "stars", "order": "desc", "per_page": str(top)},
                 deadline=budget)
             items = response.json()["items"]
@@ -120,7 +121,11 @@ def scan_popular(top: int = 8, max_files: int = POPULAR_REPO_FILE_LIMIT) -> Batc
     repos = fetch_popular_repos(top=top, deadline=budget)
     result = run_batch_scan(repos, max_files=max_files, deadline=budget)
     if not result.repos:
+        reasons = Counter(item.get("error", "扫描未完成") for item in result.failures)
+        details = "；".join(f"{reason}（{count} 个）" for reason, count in reasons.most_common(3))
+        suffix = f"。失败原因：{details}" if details else ""
+        logger.warning("热门扫描没有成功的仓库：%s", details or "无失败详情")
         if result.meta["timed_out"]:
-            raise CollectionTimeout("热门扫描超时，没有完成的仓库；上次结果已保留")
-        raise CollectionError("本次未获得可扫描的仓库结果；上次结果已保留")
+            raise CollectionTimeout(f"热门扫描超时，没有完成的仓库；上次结果已保留{suffix}")
+        raise CollectionError(f"本次未获得可扫描的仓库结果；上次结果已保留{suffix}")
     return result

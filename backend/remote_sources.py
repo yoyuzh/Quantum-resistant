@@ -2,30 +2,60 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 import os
 import tarfile
+import time
 import zipfile
+from threading import Lock
 from urllib.parse import quote, urlparse
 
 import httpx
 
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes
-from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries
+from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries, remote_client_options
 from backend.collection_config import MAX_ARCHIVE_BYTES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
 from backend.collectors import is_supported_source_path, source_priority
+
+
+class GitHubAuthenticationError(CollectionError):
+    pass
+
+
+class GitHubRateLimitError(CollectionError):
+    pass
+
+
+_REJECTED_AUTH: dict[bytes, float] = {}
+_REJECTED_AUTH_LOCK = Lock()
+_REJECTED_AUTH_TTL_SECONDS = 300
+
+
+def _auth_fingerprint(authorization: str) -> bytes:
+    return hashlib.sha256(authorization.encode("utf-8")).digest()
+
+
+def _auth_was_rejected(authorization: str) -> bool:
+    with _REJECTED_AUTH_LOCK:
+        rejected_at = _REJECTED_AUTH.get(_auth_fingerprint(authorization))
+    return rejected_at is not None and time.monotonic() - rejected_at < _REJECTED_AUTH_TTL_SECONDS
 
 
 def github_headers() -> dict[str, str]:
     headers = {"Accept": "application/vnd.github+json"}
     token = os.environ.get("GITHUB_TOKEN")
     if token:
-        headers["Authorization"] = f"Bearer {token}"
+        authorization = f"Bearer {token}"
+        if not _auth_was_rejected(authorization):
+            headers["Authorization"] = authorization
     return headers
 
 
 def describe_http_error(exc: Exception | None) -> str:
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
+        if status == 401:
+            return "GitHub 拒绝访问（HTTP 401），请检查令牌或仓库权限"
         if status in {403, 429}:
             return "远程服务限制访问或请求过多；GitHub 可配置 GITHUB_TOKEN 后重试"
         if status == 404:
@@ -33,7 +63,31 @@ def describe_http_error(exc: Exception | None) -> str:
         return f"远程服务返回 HTTP {status}"
     if isinstance(exc, (httpx.TimeoutException, CollectionTimeout)):
         return "远程连接超时"
-    return "连接失败，或响应不是受支持的源码数据"
+    if isinstance(exc, CollectionError):
+        return str(exc)
+    return "连接失败，请检查系统代理与网络，或确认远程响应是受支持的源码数据"
+
+
+def github_get(client: httpx.Client, url: str, *, headers: dict[str, str], **kwargs) -> httpx.Response:
+    """Retry a public GitHub resource anonymously after a rejected token."""
+    try:
+        return get_with_retries(client, url, headers=headers.copy(), **kwargs)
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code in {403, 429} and urlparse(url).hostname == "api.github.com":
+            raise GitHubRateLimitError("GitHub API 限制访问或请求过多；请检查 GITHUB_TOKEN 或稍后重试") from exc
+        if exc.response.status_code != 401 or "Authorization" not in headers:
+            raise
+        rejected_auth = headers.pop("Authorization")
+        with _REJECTED_AUTH_LOCK:
+            _REJECTED_AUTH[_auth_fingerprint(rejected_auth)] = time.monotonic()
+        try:
+            return get_with_retries(client, url, headers=headers.copy(), **kwargs)
+        except httpx.HTTPStatusError as retry_exc:
+            if retry_exc.response.status_code == 401:
+                raise GitHubAuthenticationError("GitHub 拒绝匿名访问（HTTP 401），请检查仓库权限") from retry_exc
+            if retry_exc.response.status_code in {403, 429}:
+                raise GitHubRateLimitError("GitHub 令牌被拒绝，匿名请求又受到限流；请更新 GITHUB_TOKEN") from retry_exc
+            raise
 
 
 def decode_github_blob(payload: dict) -> str:
@@ -55,21 +109,26 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
     owner, repo = urlparse(url).path.strip("/").split("/")
     api = f"https://api.github.com/repos/{owner}/{repo}"
     headers, branches, last_error = github_headers(), ["main", "master"], None
-    with httpx.Client(follow_redirects=True, trust_env=True) as client:
+    api_rate_error = None
+    with httpx.Client(**remote_client_options()) as client:
         try:
-            metadata = get_with_retries(client, api, headers=headers, attempts=2, deadline=deadline).json()
+            metadata = github_get(client, api, headers=headers, attempts=2, deadline=deadline).json()
             if not isinstance(metadata, dict):
                 raise CollectionError("GitHub 仓库响应格式无效")
             default = metadata.get("default_branch")
             if default:
                 branches = [default, *[b for b in branches if b != default]]
-        except CollectionTimeout:
+        except (CollectionTimeout, GitHubAuthenticationError):
             raise
+        except GitHubRateLimitError as exc:
+            api_rate_error = last_error = exc
         except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:
             last_error = exc
         for branch in branches:
+            if api_rate_error:
+                break
             try:
-                payload = get_with_retries(client, f"{api}/git/trees/{quote(branch, safe='')}", headers=headers,
+                payload = github_get(client, f"{api}/git/trees/{quote(branch, safe='')}", headers=headers,
                                            params={"recursive": "1"}, attempts=2, deadline=deadline).json()
                 if not isinstance(payload, dict) or not isinstance(payload.get("tree"), list) or not all(isinstance(i, dict) for i in payload["tree"]):
                     raise CollectionError("GitHub 文件列表响应格式无效")
@@ -83,19 +142,21 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     if blob_url.startswith(api + "/git/blobs/"):
                         urls.append((blob_url, None))
                     urls.append((f"{api}/contents/{quote(path, safe='/')}", {"ref": branch}))
-                    with httpx.Client(follow_redirects=True, trust_env=True) as file_client:
+                    with httpx.Client(**remote_client_options()) as file_client:
                         for target, params in urls:
                             try:
-                                response = get_with_retries(file_client, target, headers=headers, params=params,
+                                response = github_get(file_client, target, headers=headers, params=params,
                                                             max_bytes=MAX_COLLECTED_FILE_BYTES * 2, attempts=1, deadline=deadline)
                                 return (url, path, decode_github_blob(response.json()))
-                            except CollectionTimeout:
+                            except (CollectionTimeout, GitHubAuthenticationError, GitHubRateLimitError):
                                 raise
                             except (httpx.HTTPError, ValueError, CollectionError, OSError):
                                 continue
                     raise CollectionError(f"未能读取 {path}")
                 completed, timed_out = concurrent_collect(eligible, fetch, 8, deadline)
                 docs = [result for _, result in completed if not isinstance(result, Exception)]
+                auth_error = next((result for _, result in completed if isinstance(result, GitHubAuthenticationError)), None)
+                rate_error = next((result for _, result in completed if isinstance(result, GitHubRateLimitError)), None)
                 if docs:
                     docs.sort(key=lambda d: source_priority(d[1]))
                     skipped = len(candidates) - len(docs)
@@ -108,22 +169,29 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                                             skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics)
                 if timed_out:
                     raise CollectionTimeout("GitHub 文件采集超时")
-            except CollectionTimeout:
+                if auth_error:
+                    raise auth_error
+                if rate_error:
+                    raise rate_error
+            except (CollectionTimeout, GitHubAuthenticationError):
                 raise
+            except GitHubRateLimitError as exc:
+                api_rate_error = last_error = exc
+                break
             except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:
                 last_error = exc
         for branch in branches:
             try:
-                archive = get_with_retries(client, f"{url}/archive/refs/heads/{quote(branch, safe='')}.zip",
-                                           max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline)
+                archive = github_get(client, f"{url}/archive/refs/heads/{quote(branch, safe='')}.zip", headers=headers,
+                                     max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline)
                 docs = collect_from_zip_bytes(archive.content, url, max_files=limit, deadline=deadline)
                 if docs:
                     return docs
-            except CollectionTimeout:
+            except (CollectionTimeout, GitHubAuthenticationError):
                 raise
             except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
                 last_error = exc
-    raise CollectionError(f"无法采集 GitHub 仓库：{describe_http_error(last_error)}")
+    raise CollectionError(f"无法采集 GitHub 仓库：{describe_http_error(api_rate_error or last_error)}")
 
 
 def pypi_candidate_score(item: dict) -> tuple:
@@ -132,11 +200,19 @@ def pypi_candidate_score(item: dict) -> tuple:
 
 
 def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
-    last_error = None
-    for trust_env in (False, True):
+    last_error: Exception | None = None
+    options = [{"follow_redirects": True, "trust_env": False}]
+    proxy_options = remote_client_options()
+    if proxy_options.get("proxy") or any(os.environ.get(key) for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")):
+        options.append(proxy_options)
+    for index, client_options in enumerate(options):
+        if index and not isinstance(last_error, (httpx.TransportError, OSError)):
+            break
         try:
-            with httpx.Client(follow_redirects=True, trust_env=trust_env) as client:
-                payload = get_with_retries(client, f"https://pypi.org/pypi/{name}/json", deadline=deadline).json()
+            with httpx.Client(**client_options) as client:
+                payload = get_with_retries(client, f"https://pypi.org/pypi/{name}/json", deadline=deadline,
+                                           attempts=1 if index == 0 and len(options) > 1 else 3,
+                                           socket_timeout=4.0 if index == 0 and len(options) > 1 else 8.0).json()
                 if not isinstance(payload, dict) or not isinstance(payload.get("urls"), list) or not all(isinstance(i, dict) for i in payload["urls"]):
                     raise CollectionError("PyPI 版本响应格式无效")
                 for item in sorted(payload.get("urls", []), key=pypi_candidate_score):
@@ -146,7 +222,8 @@ def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
                     if not filename.endswith((".zip", ".whl", ".tar.gz", ".tgz", ".tar.bz2", ".tar")):
                         continue
                     try:
-                        response = get_with_retries(client, url, max_bytes=MAX_ARCHIVE_BYTES, deadline=deadline)
+                        response = get_with_retries(client, url, max_bytes=MAX_ARCHIVE_BYTES, deadline=deadline,
+                                                    attempts=1 if index == 0 and len(options) > 1 else 3)
                         if filename.endswith((".zip", ".whl")):
                             docs = collect_from_zip_bytes(response.content, f"pypi:{name}", strip_root=not filename.endswith(".whl"), deadline=deadline)
                         else:
@@ -157,6 +234,8 @@ def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
                         raise
                     except (httpx.HTTPError, CollectionError, tarfile.TarError, zipfile.BadZipFile, OSError) as exc:
                         last_error = exc
+                        if index == 0 and len(options) > 1 and isinstance(exc, (httpx.TransportError, OSError)):
+                            break
         except CollectionTimeout:
             raise
         except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -14,6 +15,7 @@ from fastapi.testclient import TestClient
 from backend.collection_common import CollectedSources, CollectionError, CollectionTimeout, Deadline
 from backend.main import app, POPULAR_SCAN_LOCK
 from backend.popular import BatchResult, FetchError, RepoInfo, RepoScanResult, fetch_popular_repos, run_batch_scan, scan_popular, scan_single_repo
+from backend.remote_sources import _REJECTED_AUTH
 from backend.storage import write_results
 from scripts.batch_scan_popular import main
 
@@ -27,7 +29,23 @@ def success(name="a/b"):
 
 
 class PopularServiceTests(unittest.TestCase):
-    @patch("backend.popular.get_with_retries")
+    def setUp(self):
+        _REJECTED_AUTH.clear()
+
+    def test_popular_search_retries_invalid_token_anonymously(self):
+        authorizations = []
+        real_client = httpx.Client
+        def handle(request):
+            authorizations.append(request.headers.get("authorization"))
+            if request.headers.get("authorization"):
+                return httpx.Response(401)
+            return httpx.Response(200, json={"items": [{"full_name": "a/b", "html_url": "https://github.com/a/b", "stargazers_count": 100}]})
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "invalid"}), \
+             patch("backend.popular.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
+            self.assertEqual(fetch_popular_repos(top=1)[0].full_name, "a/b")
+        self.assertEqual(authorizations, ["Bearer invalid", None])
+
+    @patch("backend.popular.github_get")
     def test_search_query_and_token(self, get):
         get.return_value = httpx.Response(200, json={"items": [{"full_name": "a/b", "html_url": "https://github.com/a/b", "stargazers_count": 100}]})
         self.assertEqual(fetch_popular_repos(top=8, token="test-token")[0].full_name, "a/b")
@@ -37,7 +55,7 @@ class PopularServiceTests(unittest.TestCase):
         self.assertEqual(options["params"]["per_page"], "8")
         self.assertEqual(options["headers"]["Authorization"], "Bearer test-token")
 
-    @patch("backend.popular.get_with_retries")
+    @patch("backend.popular.github_get")
     def test_search_failures(self, get):
         for status in (403, 429, 500):
             response = httpx.Response(status, request=httpx.Request("GET", "https://api.github.com"))
@@ -48,7 +66,7 @@ class PopularServiceTests(unittest.TestCase):
         with self.assertRaises(CollectionTimeout):
             fetch_popular_repos()
 
-    @patch("backend.popular.get_with_retries")
+    @patch("backend.popular.github_get")
     def test_malformed_search_response(self, get):
         get.return_value = httpx.Response(200, json={"unexpected": []})
         with self.assertRaises(FetchError):
@@ -105,6 +123,24 @@ class PopularServiceTests(unittest.TestCase):
         with self.assertRaises(CollectionError):
             scan_popular()
         self.assertIs(fetch.call_args.kwargs["deadline"], batch.call_args.kwargs["deadline"])
+
+    @patch("backend.popular.run_batch_scan")
+    @patch("backend.popular.fetch_popular_repos", return_value=[repo()])
+    def test_all_failed_batch_reports_collection_reason(self, fetch, batch):
+        batch.return_value = BatchResult("now", meta={"timed_out": False}, failures=[
+            {"full_name": "a/b", "error": "GitHub 连接失败，请检查代理"},
+        ])
+        with self.assertRaisesRegex(CollectionError, "GitHub 连接失败，请检查代理"):
+            scan_popular()
+
+    @patch("backend.popular.scan_single_repo")
+    @patch("backend.popular.fetch_popular_repos")
+    def test_popular_partial_failure_keeps_successes(self, fetch, scan):
+        fetch.return_value = [repo("good/repo"), repo("bad/repo")]
+        scan.side_effect = lambda item, **kw: success(item.full_name) if item.full_name == "good/repo" else RepoScanResult(item.full_name, 0, item.html_url, 0, 0, success=False, error="GitHub 拒绝访问")
+        result = scan_popular(top=2)
+        self.assertEqual([item["full_name"] for item in result.repos], ["good/repo"])
+        self.assertEqual(result.failures[0]["full_name"], "bad/repo")
 
 
 class PopularApiTests(unittest.TestCase):

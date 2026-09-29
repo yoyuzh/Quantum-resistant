@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import time
+import urllib.request
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from typing import Callable, Iterable, TypeVar
@@ -47,6 +49,20 @@ class CollectedSources(list[SourceDocument]):
         self.diagnostics = diagnostics or []
 
 
+def remote_client_options() -> dict:
+    """Use explicit proxy variables, then the Windows static system proxy."""
+    options = {"follow_redirects": True, "trust_env": True}
+    if any(os.environ.get(key) for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")):
+        return options
+    if os.name == "nt":
+        read_registry = getattr(urllib.request, "getproxies_registry", None)
+        proxies = read_registry() if read_registry else {}
+        proxy = proxies.get("https") or proxies.get("http")
+        if proxy:
+            options["proxy"] = proxy
+    return options
+
+
 def concurrent_collect(items: Iterable[T], function: Callable[[T], R], workers: int, deadline: Deadline) -> tuple[list[tuple[T, R | Exception]], bool]:
     """Bound both running and queued work; workers never mutate returned results."""
     iterator = iter(items)
@@ -89,11 +105,12 @@ def concurrent_collect(items: Iterable[T], function: Callable[[T], R], workers: 
 
 def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = None,
                      params: dict | None = None, max_bytes: int | None = 8 * 1024 * 1024,
-                     attempts: int = 3, deadline: Deadline | None = None) -> httpx.Response:
+                     attempts: int = 3, deadline: Deadline | None = None,
+                     socket_timeout: float = 8.0) -> httpx.Response:
     budget = deadline or Deadline.after()
     for attempt in range(attempts):
         try:
-            timeout = min(8.0, budget.remaining())
+            timeout = min(socket_timeout, budget.remaining())
             with client.stream("GET", url, headers=headers, params=params, timeout=timeout) as response:
                 response.raise_for_status()
                 length = response.headers.get("content-length", "")
