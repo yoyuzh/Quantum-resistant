@@ -29,17 +29,29 @@ const modes = [
 .mode-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 1.2rem;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.35rem;
 }
 .button {
   background: transparent;
   color: var(--text-secondary);
-  border-color: transparent;
 }
 .button.active {
   color: var(--accent-dim);
   background: var(--accent-soft);
-  border-color: var(--accent);
+}
+.button:hover:not(.active) {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+@media (max-width: 600px) {
+  .mode-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .button {
+    padding-inline: 0.4rem;
+  }
 }
 </style>

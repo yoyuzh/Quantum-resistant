@@ -2,6 +2,8 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-color: var(--border-light) transparent;
+  scrollbar-width: thin;
 }
 body {
   margin: 0;
@@ -67,8 +69,16 @@ textarea {
   padding: 0.65rem 0.75rem;
   color: var(--text-primary);
   background: var(--bg-input);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius);
+}
+input:hover:not(:disabled),
+textarea:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+input:disabled,
+textarea:disabled {
+  opacity: 0.55;
 }
 input::placeholder,
 textarea::placeholder {
@@ -77,21 +87,71 @@ textarea::placeholder {
 .app-main {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem 0.75rem;
 }
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch;
 }
 .panel {
-  padding: 1.35rem;
+  padding: 0;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   min-width: 0;
+}
+.panel-heading {
+  padding: 1.1rem 1.25rem;
+  flex-shrink: 0;
+}
+.panel-body {
+  padding: 1.25rem;
+  min-width: 0;
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+.panel-body > * {
+  flex-shrink: 0;
+}
+.panel-actions {
+  flex-shrink: 0;
+  padding: 1rem 1.25rem;
+  background: var(--bg-elevated);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.panel-actions.stack {
+  gap: 0.6rem;
+}
+.input-panel,
+.popular-panel,
+.popular-detail,
+.result-layout,
+.input-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.input-form,
+.result-layout {
+  flex: 1;
+}
+.results {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.welcome-body {
+  flex: 1;
+  justify-content: space-between;
+}
+.welcome-body .empty {
+  margin-block: auto;
+}
+.panel-body:focus-visible {
+  outline-offset: -4px;
 }
 .stack {
   display: flex;
@@ -106,7 +166,8 @@ textarea::placeholder {
   align-items: center;
 }
 .button {
-  border: 1px solid var(--border);
+  min-height: 44px;
+  border: 0;
   border-radius: var(--radius);
   padding: 0.6rem 0.85rem;
   font-size: 0.8rem;
@@ -116,8 +177,7 @@ textarea::placeholder {
 }
 .primary {
   background: var(--accent-dim);
-  color: white;
-  border-color: var(--accent-dim);
+  color: var(--on-accent);
 }
 .primary:hover:not(:disabled) {
   filter: brightness(1.08);
@@ -127,7 +187,8 @@ textarea::placeholder {
   background: var(--bg-elevated);
 }
 .secondary:hover:not(:disabled) {
-  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dim);
 }
 .muted {
   color: var(--text-secondary);
@@ -143,7 +204,6 @@ textarea::placeholder {
 }
 .notice {
   padding: 0.85rem;
-  border: 1px solid var(--border);
   background: var(--bg-elevated);
   border-radius: var(--radius);
   font-size: 0.8rem;
@@ -152,7 +212,6 @@ textarea::placeholder {
 .notice.error {
   background: var(--danger-bg);
   color: var(--danger);
-  border-color: var(--danger);
 }
 .notice .button {
   margin-top: 0.5rem;
@@ -163,7 +222,6 @@ textarea::placeholder {
   font-size: 0.75rem;
   color: var(--accent-dim);
   background: var(--accent-soft);
-  border: 1px solid var(--accent-glow);
 }
 .empty {
   text-align: center;
@@ -189,9 +247,46 @@ textarea::placeholder {
 }
 footer {
   text-align: center;
-  margin: 1.5rem 0 0.25rem;
+  margin: 0.75rem 0 0;
   color: var(--text-secondary);
   font-size: 0.72rem;
+}
+@media (min-width: 1025px) and (min-height: 720px) {
+  #app {
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .app-main {
+    width: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .workspace-grid {
+    min-height: 0;
+  }
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .input-body > .snippet-input {
+    flex: 1;
+    min-height: 260px;
+  }
+  .snippet-input .editor-label {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .snippet-input .editor {
+    flex: 1;
+    min-height: 160px;
+    height: 100%;
+    resize: none;
+  }
 }
 .sr-only {
   position: absolute;
@@ -211,6 +306,11 @@ footer {
 }
 @media (max-width: 600px) {
   .panel {
+    border-radius: var(--radius);
+  }
+  .panel-heading,
+  .panel-body,
+  .panel-actions {
     padding: 1rem;
   }
   .app-main {

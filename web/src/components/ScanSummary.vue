@@ -30,12 +30,11 @@ defineProps({ summary: Object });
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.7rem;
+  gap: 0.5rem;
 }
 .metrics div {
-  padding: 1rem 0.7rem;
+  padding: 0.7rem;
   background: var(--bg-elevated);
-  border: 1px solid var(--border-light);
   border-radius: var(--radius);
 }
 span {
@@ -45,9 +44,10 @@ span {
 }
 strong {
   display: block;
-  font-size: 1.9rem;
+  font-size: 1.65rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
-  margin-top: 0.4rem;
+  margin-top: 0.15rem;
 }
 small {
   font-size: 0.75rem;

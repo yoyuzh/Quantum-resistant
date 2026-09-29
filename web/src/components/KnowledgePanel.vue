@@ -34,8 +34,8 @@ onMounted(load);
 <style scoped>
 .knowledge {
   padding: 1rem;
-  border: 1px solid var(--border);
   border-radius: var(--radius);
+  background: var(--bg-elevated);
 }
 summary {
   cursor: pointer;

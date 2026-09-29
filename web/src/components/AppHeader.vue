@@ -28,18 +28,29 @@ defineEmits(['toggle-theme']);
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem max(1rem, calc((100vw - 1440px) / 2));
+  padding: 0.85rem max(1.5rem, calc((100vw - 1392px) / 2));
   background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
 }
 .brand {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
 .brand-mark {
-  font: 700 2rem var(--font-mono);
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font: 700 1.5rem var(--font-mono);
   color: var(--accent);
+}
+.app-header > .button {
+  flex-shrink: 0;
 }
 h1 {
   font-size: 1.05rem;
@@ -51,6 +62,9 @@ p {
   margin: 0.25rem 0 0;
 }
 @media (max-width: 600px) {
+  .app-header {
+    padding: 0.85rem 1rem;
+  }
   .brand-mark,
   p {
     display: none;

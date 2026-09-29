@@ -28,10 +28,9 @@ const expanded = ref(false);
 <style scoped>
 .finding {
   padding: 1rem;
-  border: 1px solid var(--border);
   border-left: 3px solid var(--danger);
   border-radius: var(--radius);
-  background: var(--bg-surface);
+  background: var(--bg-elevated);
 }
 .risk {
   color: var(--danger);

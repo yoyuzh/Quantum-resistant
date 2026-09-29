@@ -10,6 +10,8 @@ const props = defineProps({ result: Object });
 const exporting = ref(false);
 const exportError = ref('');
 const downloadUrl = ref('');
+const body = ref(null);
+watch(() => props.result, () => body.value?.scrollTo({ top: 0 }), { flush: 'post' });
 function clearDownload() {
   if (downloadUrl.value) URL.revokeObjectURL(downloadUrl.value);
   downloadUrl.value = '';
@@ -44,30 +46,37 @@ async function exportReport() {
 </script>
 
 <template>
-  <div class="stack">
+  <div class="result-layout">
     <p class="sr-only" role="status">扫描完成，共 {{ result.summary.finding_count }} 项发现。</p>
-    <div class="result-heading">
-      <div>
-        <h2>扫描结果</h2>
-        <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
+    <div class="panel-heading">
+      <div class="result-heading">
+        <div>
+          <h2>扫描结果</h2>
+          <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
+        </div>
+        <button class="button secondary" :disabled="exporting" @click="exportReport">
+          {{ exporting ? '正在导出…' : '导出 Markdown' }}
+        </button>
       </div>
-      <button class="button secondary" :disabled="exporting" @click="exportReport">
-        {{ exporting ? '正在导出…' : '导出 Markdown' }}
-      </button>
+      <p v-if="exportError" class="notice error export-feedback" role="alert">{{ exportError }}</p>
+      <p v-if="downloadUrl" class="notice export-feedback" role="status">
+        报告已生成。如未自动下载，可
+        <a :href="downloadUrl" download="quantum-scan-report.md">保存 Markdown 报告</a>。
+      </p>
     </div>
-    <p v-if="exportError" class="notice error" role="alert">{{ exportError }}</p>
-    <p v-if="downloadUrl" class="notice" role="status">
-      报告已生成。如未自动下载，可
-      <a :href="downloadUrl" download="quantum-scan-report.md">保存 Markdown 报告</a>。
-    </p>
-    <ScanSummary :summary="result.summary" />
-    <CoverageNotice :coverage="result.coverage" :diagnostics="result.diagnostics" />
-    <FindingsList :findings="result.findings" :sources="result.sources" />
-    <KnowledgePanel />
+    <div ref="body" class="panel-body stack" role="region" tabindex="0" aria-label="扫描结果内容">
+      <ScanSummary :summary="result.summary" />
+      <CoverageNotice :coverage="result.coverage" :diagnostics="result.diagnostics" />
+      <FindingsList :findings="result.findings" :sources="result.sources" />
+      <KnowledgePanel />
+    </div>
   </div>
 </template>
 
 <style scoped>
+.export-feedback {
+  margin-top: 0.75rem;
+}
 .result-heading {
   display: flex;
   justify-content: space-between;

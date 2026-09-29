@@ -1,5 +1,6 @@
 :root,
 [data-theme='light'] {
+  color-scheme: light;
   --bg-root: #f2f5f8;
   --bg-surface: #ffffff;
   --bg-card: #ffffff;
@@ -7,19 +8,20 @@
   --bg-input: #fbfcfd;
   --border: #e1e6eb;
   --border-light: #eaedf2;
-  --accent: #0f9b8e;
+  --accent: #087c71;
+  --on-accent: #ffffff;
   --accent-glow: rgba(15, 155, 142, 0.18);
   --accent-dim: #0d7d72;
   --accent-soft: rgba(15, 155, 142, 0.06);
   --text-primary: #1a2532;
   --text-secondary: #5b6b7c;
   --text-muted: #93a3b8;
-  --danger: #e54545;
+  --danger: #c52f40;
   --danger-bg: rgba(229, 69, 69, 0.07);
   --danger-glow: rgba(229, 69, 69, 0.2);
   --success: #0f9b8e;
   --success-bg: rgba(15, 155, 142, 0.07);
-  --warning: #d4790a;
+  --warning: #965508;
   --warning-bg: rgba(212, 121, 10, 0.07);
   --line-badge-bg: #e3eaf1;
   --line-badge-color: #3d566e;
@@ -36,6 +38,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
   --bg-root: #0a0f16;
   --bg-surface: #131c26;
   --bg-card: #182230;
@@ -44,6 +47,7 @@
   --border: #233140;
   --border-light: #2b3b4c;
   --accent: #00d4aa;
+  --on-accent: #071e19;
   --accent-glow: rgba(0, 212, 170, 0.2);
   --accent-dim: #00a885;
   --accent-soft: rgba(0, 212, 170, 0.05);

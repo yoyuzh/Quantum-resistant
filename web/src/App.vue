@@ -25,6 +25,14 @@ const { states, start } = useScan();
 const { state: popular, run: runPopular } = usePopular();
 const { theme, toggle } = useTheme();
 const current = computed(() => states[mode.value]);
+const inputBody = ref(null);
+watch(
+  () => current.value?.error,
+  (error) => {
+    if (error) inputBody.value?.querySelector('[role="alert"]')?.scrollIntoView({ block: 'nearest' });
+  },
+  { flush: 'post' },
+);
 const titles = {
   snippet: '扫描代码片段',
   files: '扫描本地文件',
@@ -51,48 +59,59 @@ function submit() {
       @reload="runPopular(false)"
     />
     <div v-else class="workspace-grid">
-      <section class="panel stack">
-        <div>
+      <section class="panel input-panel" aria-label="扫描输入区域">
+        <div class="panel-heading">
           <p class="eyebrow">扫描工作区</p>
           <h2>{{ titles[mode] }}</h2>
         </div>
-        <form class="stack" @submit.prevent="submit">
-          <SnippetInput
-            v-if="mode === 'snippet'"
-            v-model:filename="drafts.snippet.filename"
-            v-model:content="drafts.snippet.content"
-            :disabled="current.busy"
-          />
-          <FileUpload
-            v-else-if="mode === 'files'"
-            v-model:files="drafts.files.files"
-            :disabled="current.busy"
-          />
-          <RemoteInput
-            v-else
+        <form class="input-form" @submit.prevent="submit">
+          <div
             :key="mode"
-            v-model="drafts[mode].value"
-            :mode="mode"
-            :disabled="current.busy"
-          />
-          <button type="submit" class="button primary" :disabled="current.busy">
-            {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
-          </button>
+            ref="inputBody"
+            class="panel-body stack input-body"
+            role="region"
+            tabindex="0"
+            aria-label="扫描输入内容"
+          >
+            <SnippetInput
+              v-if="mode === 'snippet'"
+              v-model:filename="drafts.snippet.filename"
+              v-model:content="drafts.snippet.content"
+              :disabled="current.busy"
+            />
+            <FileUpload
+              v-else-if="mode === 'files'"
+              v-model:files="drafts.files.files"
+              :disabled="current.busy"
+            />
+            <RemoteInput
+              v-else
+              :key="mode"
+              v-model="drafts[mode].value"
+              :mode="mode"
+              :disabled="current.busy"
+            />
+            <ScanStatus
+              :busy="current.busy"
+              :error="current.error"
+              :elapsed="current.elapsed"
+              :has-result="!!current.result"
+              @retry="submit"
+            />
+          </div>
+          <div class="panel-actions stack">
+            <button type="submit" class="button primary" :disabled="current.busy">
+              {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
+            </button>
+            <p class="muted small">
+              只做静态分析，不执行输入代码。当前输入和扫描结果仅保存在本次页面会话中。
+            </p>
+          </div>
         </form>
-        <ScanStatus
-          :busy="current.busy"
-          :error="current.error"
-          :elapsed="current.elapsed"
-          :has-result="!!current.result"
-          @retry="submit"
-        />
-        <p class="muted small">
-          只做静态分析，不执行输入代码。当前输入和扫描结果仅保存在本次页面会话中。
-        </p>
       </section>
       <section class="panel results" aria-label="扫描结果区域">
         <ScanResults v-if="current.result" :key="mode" :result="current.result" />
-        <div v-else class="stack">
+        <div v-else class="panel-body stack welcome-body" role="region" tabindex="0" aria-label="扫描指引与迁移知识">
           <div class="empty">
             <span class="empty-mark" aria-hidden="true">⌕</span>
             <h2>{{ current.busy ? '正在分析，请稍候' : '从一段代码开始' }}</h2>

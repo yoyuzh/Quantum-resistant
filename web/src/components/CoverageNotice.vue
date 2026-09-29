@@ -31,7 +31,5 @@ summary {
 }
 ul {
   padding-left: 1.2rem;
-  max-height: 220px;
-  overflow: auto;
 }
 </style>

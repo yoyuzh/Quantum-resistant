@@ -4,7 +4,7 @@ defineEmits(['update:filename', 'update:content']);
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack snippet-input">
     <label
       >文件名<input
         :value="filename"
@@ -13,7 +13,7 @@ defineEmits(['update:filename', 'update:content']);
         @input="$emit('update:filename', $event.target.value)"
         placeholder="snippet.py"
     /></label>
-    <label
+    <label class="editor-label"
       >待扫描内容<textarea
         class="editor"
         :value="content"

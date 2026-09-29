@@ -24,7 +24,6 @@ const lines = computed(() => codeLines(props.sources, props.finding.source_id, p
 .code-view {
   overflow: auto;
   background: var(--bg-input);
-  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.6rem 0;
   font: 0.75rem/1.8 var(--font-mono);

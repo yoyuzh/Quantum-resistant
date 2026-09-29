@@ -104,11 +104,13 @@ async function samples() {
   gap: 0.6rem;
   width: 100%;
   padding: 2rem 0.8rem;
-  border: 1px dashed var(--accent);
   border-radius: var(--radius);
   color: var(--text-primary);
   background: var(--accent-soft);
   cursor: pointer;
+}
+.dropzone:hover:not(:disabled) {
+  background: var(--accent-glow);
 }
 .upload-icon {
   color: var(--accent);
@@ -118,20 +120,26 @@ async function samples() {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 350px;
-  overflow-y: auto;
 }
 li {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--border-light);
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+li + li {
+  margin-top: 0.4rem;
 }
 li span {
+  min-width: 0;
   overflow-wrap: anywhere;
   font-size: 0.85rem;
+}
+li .button {
+  flex-shrink: 0;
 }
 small {
   display: block;

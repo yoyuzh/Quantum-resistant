@@ -15,13 +15,13 @@ defineEmits(['retry']);
     <div>
       <strong>{{ label }}</strong>
       <p>
-        已等待 {{ elapsed }} 秒，完成后自动显示结果。{{ hasResult ? '下方保留上次结果。' : '' }}
+        已等待 {{ elapsed }} 秒，完成后自动显示结果。{{ hasResult ? '已保留上次结果。' : '' }}
       </p>
     </div>
   </div>
   <div v-if="error" class="notice error" role="alert">
     <p>{{ error }}</p>
-    <button class="button secondary" :disabled="busy" @click="$emit('retry')">重试</button>
+    <button type="button" class="button secondary" :disabled="busy" @click="$emit('retry')">重试</button>
   </div>
 </template>
 
