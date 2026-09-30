@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from html import escape
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -8,6 +9,8 @@ from scan_quantum_vuln import build_migration_score
 from backend.analysis import METHOD_LABELS, build_analysis
 
 BEIJING_TZ = timezone(timedelta(hours=8))
+SOURCE_LABELS = {'snippet': '代码片段', 'manual_upload': '文件上传',
+                 'github_repository': 'GitHub 仓库', 'pypi_package': 'PyPI 包'}
 
 
 def beijing_now_iso() -> str:
@@ -25,7 +28,7 @@ def build_summary(sources: list[dict[str, Any]], findings: list[dict[str, Any]])
 
 
 def markdown_table_cell(value: object) -> str:
-    text = str(value)
+    text = escape(str(value), quote=False)
     return text.replace("|", "\\|").replace("\n", "<br>")
 
 
@@ -44,7 +47,7 @@ def build_markdown_report(
         "# 量子脆弱密码算法扫描报告",
         "",
         f"- 扫描时间：{generated_at}",
-        f"- 输入来源：{source_type}",
+        f"- 输入来源：{SOURCE_LABELS.get(source_type, source_type)}",
         f"- 文件数量：{summary['source_count']}",
         f"- 风险发现总数：{summary['finding_count']}",
         f"- 迁移评分：{summary['migration_score']['score']}/100",
@@ -69,6 +72,14 @@ def build_markdown_report(
         lines.append("未发现已知量子脆弱公钥算法用法。")
 
     analysis = build_analysis(findings)
+    insights = analysis["insights"]
+    lines.extend(["", "## 本次扫描解读", "", *[f"- {markdown_table_cell(c)}" for c in insights["conclusions"]]])
+    for title, key in [("受影响文件 Top 8", "files"), ("识别方式", "methods"), ("用途分类", "purposes")]:
+        lines.extend(["", f"### {title}", "", "| 项目 | 发现数 |", "| --- | ---: |"])
+        for row in insights[key]:
+            label = row['label'] + (f" ({row['key']})" if key == 'files' else '')
+            lines.append(f"| {markdown_table_cell(label)} | {row['count']} |")
+    lines.append(f"其余 {insights['other_files']} 个命中文件，共 {insights['other_findings']} 项发现。统计分母为本次全部 {len(findings)} 项发现。")
     lines.extend(["", "本报告是本次输入的静态证据清单，不是完整供应链或标准化 CBOM。", ""])
     if analysis["assets"]:
         lines.extend(["## 密码资产清单", "", "| 文件（身份） | 算法 | 命中 | 识别方式 | 密码库 / API |", "| --- | --- | ---: | --- | --- |"])
@@ -90,28 +101,16 @@ def build_markdown_report(
         lines.append("未发现已知量子脆弱公钥算法用法。")
         return "\n".join(lines)
 
-    lines.extend(
-        [
-            "| 文件（身份） | 行号 | 算法 | 风险等级 | 证据 | 原因 | 迁移建议 | 识别方式 |",
-            "| --- | ---: | --- | --- | --- | --- | --- | --- |",
-        ]
-    )
-    for finding in findings:
-        lines.append(
-            "| "
-            + " | ".join(
-                [
-                    markdown_table_cell(f"{finding.get('file_name', '')} ({finding.get('source_id', '')})"),
-                    markdown_table_cell(finding.get("line", "")),
-                    markdown_table_cell(finding.get("algorithm", "")),
-                    markdown_table_cell(finding.get("risk_level", "")),
-                    markdown_table_cell(finding.get("evidence", "")),
-                    markdown_table_cell(finding.get("reason", "")),
-                    markdown_table_cell(finding.get("recommendation", "")),
-                    METHOD_LABELS.get(finding.get("detection_method"), "未记录"),
-                ]
-            )
-            + " |"
-        )
-
+    for index, finding in enumerate(findings, 1):
+        lines.extend([
+            f"### {index}. {markdown_table_cell(finding['algorithm'])} · 第 {finding['line']} 行", "",
+            f"- 文件：{markdown_table_cell(finding['file_name'])}",
+            f"- 文件身份：{markdown_table_cell(finding['source_id'])}",
+            f"- 识别方式：{METHOD_LABELS.get(finding.get('detection_method'), '未记录')}",
+            f"- 已确认 API：{markdown_table_cell(finding.get('resolved_api') or '未记录')}",
+            f"- 风险等级：{markdown_table_cell(finding['risk_level'])}",
+            f"- 证据：{markdown_table_cell(finding['evidence'])}",
+            f"- 原因：{markdown_table_cell(finding['reason'])}",
+            f"- 迁移参考：{markdown_table_cell(finding['recommendation'])}", "",
+        ])
     return "\n".join(lines)

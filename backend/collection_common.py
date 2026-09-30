@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import os
 import time
+import logging
+from email.utils import parsedate_to_datetime
+from contextlib import contextmanager
+from threading import BoundedSemaphore, Event, Lock
 import urllib.request
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Iterable, TypeVar
 
 import httpx
@@ -22,19 +26,102 @@ class CollectionTimeout(CollectionError):
     pass
 
 
+class CollectionCancelled(CollectionTimeout):
+    pass
+
+
+class CollectionControl:
+    def __init__(self, report=None):
+        self.cancelled = Event()
+        self.report = report
+        self.lock = Lock()
+        self.bytes = 0
+        self.grace_seconds = 0
+        self.finalizing = False
+
+    def request_cancel(self) -> bool:
+        with self.lock:
+            if self.finalizing:
+                return False
+            self.cancelled.set()
+            return True
+
+    def begin_commit(self) -> bool:
+        with self.lock:
+            if self.cancelled.is_set():
+                return False
+            self.finalizing = True
+            return True
+
+    def accept(self, size: int) -> bool:
+        with self.lock:
+            if self.bytes + size > 20 * 1024 * 1024:
+                return False
+            self.bytes += size
+        return True
+
+    def emit(self, **values):
+        if self.report:
+            self.report(**values)
+
+
 @dataclass(frozen=True)
 class Deadline:
     end: float
+    control: CollectionControl = field(default_factory=CollectionControl, compare=False)
 
     @classmethod
     def after(cls, seconds: float = 90) -> Deadline:
         return cls(time.monotonic() + seconds)
 
     def remaining(self) -> float:
+        if self.control.cancelled.is_set():
+            raise CollectionCancelled("任务已取消，正在保留已完成部分")
         value = self.end - time.monotonic()
         if value <= 0:
             raise CollectionTimeout("远程扫描已超时，请缩小扫描范围后重试")
         return value
+
+    def child(self, seconds: float) -> Deadline:
+        return Deadline(min(self.end, time.monotonic() + seconds), self.control)
+
+    def pause(self, seconds: float) -> None:
+        self.control.cancelled.wait(min(seconds, self.remaining()))
+        self.remaining()
+
+
+HTTP_SLOTS = BoundedSemaphore(8)
+logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def http_slot(deadline: Deadline):
+    acquired = False
+    try:
+        while not acquired:
+            acquired = HTTP_SLOTS.acquire(timeout=min(.2, deadline.remaining()))
+        yield
+    finally:
+        if acquired:
+            HTTP_SLOTS.release()
+
+
+def retry_delay(response: httpx.Response, attempt: int) -> float:
+    value = response.headers.get("retry-after")
+    if value:
+        try:
+            return max(0, float(value))
+        except ValueError:
+            try:
+                return max(0, parsedate_to_datetime(value).timestamp() - time.time())
+            except (ValueError, TypeError, OverflowError):
+                pass
+    if response.headers.get("x-ratelimit-remaining") == "0":
+        try:
+            return max(1, float(response.headers['x-ratelimit-reset']) - time.time())
+        except (ValueError, KeyError):
+            return 60
+    return 60 if response.status_code in {403, 429} else .5 * 2 ** attempt
 
 
 class CollectedSources(list[SourceDocument]):
@@ -96,8 +183,17 @@ def concurrent_collect(items: Iterable[T], function: Callable[[T], R], workers: 
     except CollectionTimeout:
         timed_out = True
     finally:
-        for future in pending:
-            future.cancel()
+        if timed_out and pending:
+            # Give cooperative workers a short opportunity to publish completed files.
+            wait(tuple(pending), timeout=deadline.control.grace_seconds)
+        for future, item in pending.items():
+            if future.done() and not future.cancelled():
+                try:
+                    results.append((item, future.result()))
+                except Exception as exc:
+                    results.append((item, exc))
+            else:
+                future.cancel()
         # In-flight HTTP calls carry the same deadline and bounded socket timeouts.
         executor.shutdown(wait=False, cancel_futures=True)
     return results, timed_out
@@ -109,9 +205,11 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
                      socket_timeout: float = 8.0) -> httpx.Response:
     budget = deadline or Deadline.after()
     for attempt in range(attempts):
+        delay = .5 * 2 ** attempt
+        started = time.monotonic()
         try:
             timeout = min(socket_timeout, budget.remaining())
-            with client.stream("GET", url, headers=headers, params=params, timeout=timeout) as response:
+            with bounded_stream(client, url, budget, timeout, headers=headers, params=params) as response:
                 response.raise_for_status()
                 length = response.headers.get("content-length", "")
                 if length.isdigit() and max_bytes is not None and int(length) > max_bytes:
@@ -124,12 +222,34 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
                         raise CollectionError("远程响应超过大小限制")
                     chunks.append(chunk)
                 budget.remaining()
-                return httpx.Response(response.status_code, content=b"".join(chunks), request=response.request)
+                # iter_bytes() has already decompressed the body. Forwarding the
+                # wire encoding would make HTTPX decode it a second time.
+                headers_out = {key: value for key, value in response.headers.items()
+                               if key.lower() not in {'content-encoding', 'content-length', 'transfer-encoding'}}
+                return httpx.Response(response.status_code, content=b"".join(chunks), headers=headers_out, request=response.request)
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code not in {429, 500, 502, 503, 504} or attempt == attempts - 1:
+            limited = exc.response.status_code == 403 and (exc.response.headers.get('x-ratelimit-remaining') == '0' or 'retry-after' in exc.response.headers)
+            if (exc.response.status_code not in {429, 500, 502, 503, 504} and not limited) or attempt == attempts - 1:
                 raise
+            delay = retry_delay(exc.response, attempt)
+            if delay >= budget.remaining():
+                raise
+        except httpx.DecodingError:
+            # Retrying identical malformed content only consumes the task budget.
+            raise
         except (httpx.HTTPError, OSError):
             if attempt == attempts - 1:
                 raise
-        time.sleep(min(0.25 * (attempt + 1), budget.remaining()))
+        finally:
+            logger.debug("remote_request host=%s attempt=%d elapsed=%.3f", httpx.URL(url).host, attempt + 1, time.monotonic() - started)
+        budget.pause(delay)
     raise CollectionError("远程请求失败")
+
+
+@contextmanager
+def bounded_stream(client, url, budget, socket_timeout, **kwargs):
+    with http_slot(budget):
+        timeout = min(socket_timeout, budget.remaining())
+        with client.stream('GET', url, **kwargs,
+                           timeout=httpx.Timeout(timeout, connect=min(4, timeout), pool=min(2, timeout))) as response:
+            yield response

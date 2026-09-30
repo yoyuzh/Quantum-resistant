@@ -5,11 +5,13 @@ from fastapi import HTTPException
 from backend.models import MAX_SOURCE_BYTES, SourceType, ScanResponse
 from backend.reporting import beijing_now_iso, build_summary
 from backend.analysis import build_analysis
+from backend.collection_common import CollectionTimeout, Deadline
 from scan_quantum_vuln import make_source_id, analyze_source
 
 def build_scan_response(
     documents: list[tuple[str, str] | tuple[str, str, str]],
     source_type: SourceType,
+    *, deadline: Deadline | None = None,
 ) -> ScanResponse:
     scanned_at = beijing_now_iso()
     sources: list[dict[str, Any]] = []
@@ -17,6 +19,13 @@ def build_scan_response(
     diagnostics = list(getattr(documents, "diagnostics", []))
 
     for index, document in enumerate(documents):
+        if deadline:
+            try:
+                deadline.remaining()
+            except CollectionTimeout:
+                diagnostics.append({"code": "analysis_interrupted", "message": "分析已中断，仅保留完整分析过的文件。"})
+                break
+            deadline.control.emit(stage="静态分析")
         if len(document) == 3:
             origin, filename, content = document
         else:
@@ -39,15 +48,22 @@ def build_scan_response(
         file_findings, file_diagnostics = analyze_source(content, filename, source_type, source_id, include_metadata=True)
         findings.extend(file_findings)
         diagnostics.extend(file_diagnostics)
+        if deadline:
+            deadline.control.emit(analyzed_delta=1)
 
     summary = build_summary(sources, findings)
+    coverage = dict(getattr(documents, "coverage", {"scanned_files": len(sources), "candidate_files": len(documents)}))
+    coverage['scanned_files'] = len(sources)
+    if len(sources) < len(documents):
+        coverage['partial'] = True
+        coverage['skipped_files'] = coverage.get('skipped_files', 0) + len(documents) - len(sources)
     return ScanResponse(
         scanned_at=scanned_at,
         source_type=source_type,
         sources=sources,
         findings=findings,
         summary=summary,
-        coverage=getattr(documents, "coverage", {"scanned_files": len(sources), "candidate_files": len(sources)}),
+        coverage=coverage,
         diagnostics=diagnostics,
         analysis=build_analysis(findings),
     )

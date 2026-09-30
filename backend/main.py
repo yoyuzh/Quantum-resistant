@@ -17,6 +17,11 @@ from backend.models import *
 from backend.popular import scan_popular
 from backend.reporting import build_markdown_report
 from backend.report_exports import build_csv_report, build_json_report
+from backend.html_report import build_html_report
+from backend.task_routes import router as task_router
+from backend import task_routes
+from backend.task_store import TaskStore
+from contextlib import asynccontextmanager
 from backend.scanning import build_scan_response
 from backend.storage import write_results
 from backend.uploads import MAX_TOTAL_UPLOAD_BYTES, normalize_filename, parse_multipart_files
@@ -25,7 +30,16 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
 SAMPLE_INPUTS_DIR = PROJECT_ROOT / "sample_inputs"
 POPULAR_SCAN_LOCK = Lock()
-app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.2.0")
+@asynccontextmanager
+async def lifespan(app):
+    if task_routes.store.closed:
+        task_routes.store = TaskStore()
+    yield
+    task_routes.store.close()
+
+
+app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.3.0", lifespan=lifespan)
+app.include_router(task_router)
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 
@@ -166,3 +180,9 @@ def export_csv_report(payload: ReportRequest) -> Response:
     report = build_csv_report([finding.model_dump() for finding in payload.findings])
     return Response(report, media_type="text/csv",
                     headers={"Content-Disposition": 'attachment; filename="quantum-scan-findings.csv"'})
+
+
+@app.post('/api/report/html')
+def export_html_report(payload: ReportRequest) -> Response:
+    return Response(build_html_report(**payload.model_dump()), media_type='text/html',
+                    headers={'Content-Disposition': 'attachment; filename="quantum-scan-report.html"'})

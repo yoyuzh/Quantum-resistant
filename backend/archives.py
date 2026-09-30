@@ -5,7 +5,7 @@ import tarfile
 import zipfile
 from pathlib import PurePosixPath
 
-from backend.collection_common import CollectedSources, Deadline
+from backend.collection_common import CollectedSources, CollectionTimeout, Deadline
 from backend.collection_config import ALLOWED_SOURCE_SUFFIXES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
 
 
@@ -33,8 +33,15 @@ def _collect(entries, read, origin, limit, root, deadline):
     candidates = [(entry, name, size) for entry, name, size in entries
                   if PurePosixPath(name).suffix.lower() in ALLOWED_SOURCE_SUFFIXES]
     documents, diagnostics = [], []
+    deadline.control.emit(stage="读取归档")
     for entry, raw_name, size in candidates:
-        deadline.remaining()
+        try:
+            deadline.remaining()
+        except CollectionTimeout:
+            if not documents:
+                raise
+            diagnostics.append({"code": "collection_interrupted", "message": "归档采集中断，已保留读完的文件。"})
+            break
         if len(documents) >= limit:
             break
         name = safe_archive_member_name(raw_name, root)
@@ -47,7 +54,11 @@ def _collect(entries, read, origin, limit, root, deadline):
             content = data.decode("utf-8-sig")
         except (UnicodeError, OSError, RuntimeError, zipfile.BadZipFile):
             continue
+        if not deadline.control.accept(len(data)):
+            diagnostics.append({"code": "text_budget", "message": "采集文本达到 20 MiB 总量上限。"})
+            break
         documents.append((origin, name, content))
+        deadline.control.emit(collected_delta=1)
     skipped = len(candidates) - len(documents)
     if skipped:
         diagnostics.append({"code": "files_skipped", "message": f"归档中有 {skipped} 个候选文件因采集上限、大小、路径或编码限制未扫描。"})

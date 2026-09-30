@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+from backend.insights import build_insights
 
 METHOD_LABELS = {
     "ast_call": "AST 调用", "ast_config": "AST 配置",
@@ -58,6 +59,7 @@ def build_analysis(findings: list[dict[str, Any]]) -> dict[str, Any]:
         ]
     return {
         "version": 1,
+        "insights": build_insights(findings),
         "assets": sorted(assets.values(), key=lambda a: (a["file_name"], a["source_id"], a["algorithm"])),
         "migrations": sorted(migrations.values(), key=lambda m: (-m["affected_files"], -m["finding_count"], m["algorithm"])),
     }

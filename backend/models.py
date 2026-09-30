@@ -90,6 +90,7 @@ class MigrationItem(MigrationDirection):
 
 class ScanAnalysis(BaseModel):
     version: int = 1
+    insights: dict[str, Any] | None = None
     assets: list[CryptoAsset]
     migrations: list[MigrationItem]
 
