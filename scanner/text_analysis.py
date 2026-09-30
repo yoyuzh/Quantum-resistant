@@ -67,13 +67,13 @@ def extract_aliases_from_source(source: str) -> dict[str, str]:
     return visitor.aliases
 
 
-def finding(line: int, algorithm: str, evidence: str) -> Finding:
+def finding(line: int, algorithm: str, evidence: str, method: str = "text_call") -> Finding:
     p = VULNERABLE_ALGOS[algorithm]
-    return Finding(line, p.name, p.risk_level, p.reason, p.recommendation, evidence)
+    return Finding(line, p.name, p.risk_level, p.reason, p.recommendation, evidence, method)
 
 
 def scan_pem(source: str) -> list[Finding]:
-    return [finding(i, key, evidence)
+    return [finding(i, key, evidence, "pem_header")
             for i, line in enumerate(source.splitlines(), 1)
             for key, pattern, evidence in PEM_HEADER_RULES if pattern.search(line)]
 
@@ -102,6 +102,6 @@ def scan_with_regex(source: str, aliases: dict[str, str] | None = None, *, c_sty
             for key, pattern, evidence in STRING_IDENTIFIER_RULES:
                 match = pattern.search(context.group(2))
                 if match:
-                    results.append(finding(number, key, f"{evidence}: {match.group()}"))
+                    results.append(finding(number, key, f"{evidence}: {match.group()}", "text_config"))
     unique = {(f.line, f.algorithm): f for f in results}
     return sorted(unique.values(), key=lambda f: (f.line, f.algorithm))

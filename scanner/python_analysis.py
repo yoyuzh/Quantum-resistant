@@ -92,9 +92,14 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
         self.findings: list[Finding] = []
         self.class_outer: dict[str, str] | None = None
 
-    def add_finding(self, line: int, algorithm: str, evidence: str) -> None:
+    def add_finding(self, line: int, algorithm: str, evidence: str, *, resolved_api: str | None = None) -> None:
         profile = VULNERABLE_ALGOS[algorithm]
-        self.findings.append(Finding(line, profile.name, profile.risk_level, profile.reason, profile.recommendation, evidence))
+        library = None
+        if resolved_api:
+            library = {"Crypto": "PyCryptodome"}.get(resolved_api.split(".")[0], resolved_api.split(".")[0])
+        self.findings.append(Finding(line, profile.name, profile.risk_level, profile.reason,
+                                     profile.recommendation, evidence,
+                                     "ast_call" if resolved_api else "ast_config", library, resolved_api))
 
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
@@ -105,17 +110,21 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
             self.aliases[alias.asname or alias.name] = f"{node.module}.{alias.name}" if not node.level else ""
 
     def resolve_algorithm_from_call(self, name: str) -> str | None:
+        target = self.resolve_call_target(name)
+        return resolve_direct_call(target) if target else None
+
+    def resolve_call_target(self, name: str) -> str | None:
         root, *tail = name.split(".")
         target = self.aliases.get(root)
         if not target:
             return None
-        return resolve_direct_call(".".join([target, *tail]))
+        return ".".join([target, *tail])
 
     def visit_Call(self, node: ast.Call) -> None:
         name = get_dotted_name(node.func)
         algorithm = self.resolve_algorithm_from_call(name) if name else None
         if algorithm:
-            self.add_finding(node.lineno, algorithm, name)
+            self.add_finding(node.lineno, algorithm, name, resolved_api=self.resolve_call_target(name))
         self.generic_visit(node)
 
     def scan_string_value(self, node: ast.AST, context: str, line: int) -> None:

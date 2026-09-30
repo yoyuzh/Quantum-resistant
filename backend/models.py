@@ -48,6 +48,50 @@ class FindingRecord(BaseModel):
     evidence: str
     reason: str
     recommendation: str
+    detection_method: Literal["ast_call", "ast_config", "text_call", "text_config", "pem_header"] | None = None
+    library: str | None = None
+    resolved_api: str | None = None
+
+
+class AssetLocation(BaseModel):
+    line: int
+    evidence: str
+
+
+class MigrationDirection(BaseModel):
+    purpose: str
+    targets: list[str]
+    reference_url: str
+
+
+class CryptoAsset(MigrationDirection):
+    source_id: str
+    file_name: str
+    algorithm: str
+    finding_count: int
+    locations: list[AssetLocation]
+    detection_methods: list[str]
+    libraries: list[str]
+    resolved_apis: list[str]
+
+
+class MigrationAction(BaseModel):
+    title: str
+    description: str
+
+
+class MigrationItem(MigrationDirection):
+    algorithm: str
+    source_ids: list[str]
+    finding_count: int
+    affected_files: int
+    actions: list[MigrationAction]
+
+
+class ScanAnalysis(BaseModel):
+    version: int = 1
+    assets: list[CryptoAsset]
+    migrations: list[MigrationItem]
 
 
 class ScanSummary(BaseModel):
@@ -79,6 +123,7 @@ class ScanResponse(BaseModel):
     summary: ScanSummary
     coverage: Coverage | None = None
     diagnostics: list[Diagnostic] = Field(default_factory=list)
+    analysis: ScanAnalysis | None = None
 
 
 class ReportRequest(BaseModel):

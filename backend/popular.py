@@ -85,7 +85,7 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
             budget.remaining()
             source_id = make_source_id(f"{repo.full_name}:{index}:{filename}", content)
             records.append({"source_id": source_id, "file_name": filename})
-            found, notes = analyze_source(content, filename, "github_repository", source_id)
+            found, notes = analyze_source(content, filename, "github_repository", source_id, include_metadata=True)
             findings.extend(found)
             diagnostics.extend(notes)
         score = build_migration_score(records, findings)

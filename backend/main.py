@@ -16,6 +16,7 @@ from backend.knowledge import knowledge_graph
 from backend.models import *
 from backend.popular import scan_popular
 from backend.reporting import build_markdown_report
+from backend.report_exports import build_csv_report, build_json_report
 from backend.scanning import build_scan_response
 from backend.storage import write_results
 from backend.uploads import MAX_TOTAL_UPLOAD_BYTES, normalize_filename, parse_multipart_files
@@ -151,3 +152,17 @@ def export_markdown_report(payload: ReportRequest) -> Response:
         diagnostics=[d.model_dump() for d in payload.diagnostics],
     )
     return Response(report, media_type="text/markdown", headers={"Content-Disposition": 'attachment; filename="quantum-scan-report.md"'})
+
+
+@app.post("/api/report/json")
+def export_json_report(payload: ReportRequest) -> Response:
+    report = build_json_report(**payload.model_dump())
+    return Response(json.dumps(report, ensure_ascii=False, indent=2), media_type="application/json",
+                    headers={"Content-Disposition": 'attachment; filename="quantum-scan-report.json"'})
+
+
+@app.post("/api/report/csv")
+def export_csv_report(payload: ReportRequest) -> Response:
+    report = build_csv_report([finding.model_dump() for finding in payload.findings])
+    return Response(report, media_type="text/csv",
+                    headers={"Content-Disposition": 'attachment; filename="quantum-scan-findings.csv"'})

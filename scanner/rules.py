@@ -19,6 +19,9 @@ class Finding:
     reason: str
     recommendation: str
     evidence: str
+    detection_method: str | None = None
+    library: str | None = None
+    resolved_api: str | None = None
 
 
 VULNERABLE_ALGOS: dict[str, AlgorithmProfile] = {

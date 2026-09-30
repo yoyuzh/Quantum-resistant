@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import HTTPException
 from backend.models import MAX_SOURCE_BYTES, SourceType, ScanResponse
 from backend.reporting import beijing_now_iso, build_summary
+from backend.analysis import build_analysis
 from scan_quantum_vuln import make_source_id, analyze_source
 
 def build_scan_response(
@@ -35,7 +36,7 @@ def build_scan_response(
             "origin": origin,
         }
         sources.append(source_record)
-        file_findings, file_diagnostics = analyze_source(content, filename, source_type, source_id)
+        file_findings, file_diagnostics = analyze_source(content, filename, source_type, source_id, include_metadata=True)
         findings.extend(file_findings)
         diagnostics.extend(file_diagnostics)
 
@@ -48,4 +49,5 @@ def build_scan_response(
         summary=summary,
         coverage=getattr(documents, "coverage", {"scanned_files": len(sources), "candidate_files": len(sources)}),
         diagnostics=diagnostics,
+        analysis=build_analysis(findings),
     )

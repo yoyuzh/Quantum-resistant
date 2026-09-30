@@ -9,7 +9,7 @@ from scanner.results import make_source_id, merge_findings
 from scanner.text_analysis import scan_pem, scan_with_regex
 
 
-def analyze_source(source: str, filename: str = "snippet.py", source_type: str = "snippet", source_id: str | None = None) -> tuple[list[dict], list[dict]]:
+def analyze_source(source: str, filename: str = "snippet.py", source_type: str = "snippet", source_id: str | None = None, *, include_metadata: bool = False) -> tuple[list[dict], list[dict]]:
     identity = source_id or make_source_id(filename, source)
     diagnostics: list[dict] = []
     suffix = Path(filename).suffix.lower()
@@ -25,9 +25,15 @@ def analyze_source(source: str, filename: str = "snippet.py", source_type: str =
         found = scan_with_regex(source)
     if re.search(r"-----BEGIN (?:PRIVATE|PUBLIC) KEY-----", source):
         diagnostics.append({"code": "unknown_pem_algorithm", "message": f"{filename} 包含通用 PEM 密钥头，算法尚未识别，需要复核。", "source_id": identity})
-    return ([{**asdict(f), "source_id": identity, "file_name": filename, "source_type": source_type}
-             for f in merge_findings(found)], diagnostics)
+    records = []
+    for item in merge_findings(found):
+        record = asdict(item)
+        if not include_metadata:
+            for key in ("detection_method", "library", "resolved_api"):
+                record.pop(key)
+        records.append({**record, "source_id": identity, "file_name": filename, "source_type": source_type})
+    return records, diagnostics
 
 
-def scan_source_for_crypto(source: str, filename: str = "snippet.py", source_type: str = "snippet", source_id: str | None = None) -> list[dict]:
-    return analyze_source(source, filename, source_type, source_id)[0]
+def scan_source_for_crypto(source: str, filename: str = "snippet.py", source_type: str = "snippet", source_id: str | None = None, *, include_metadata: bool = False) -> list[dict]:
+    return analyze_source(source, filename, source_type, source_id, include_metadata=include_metadata)[0]

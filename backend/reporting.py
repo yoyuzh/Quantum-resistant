@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from scan_quantum_vuln import build_migration_score
+from backend.analysis import METHOD_LABELS, build_analysis
 
 BEIJING_TZ = timezone(timedelta(hours=8))
 
@@ -67,6 +68,22 @@ def build_markdown_report(
     else:
         lines.append("未发现已知量子脆弱公钥算法用法。")
 
+    analysis = build_analysis(findings)
+    lines.extend(["", "本报告是本次输入的静态证据清单，不是完整供应链或标准化 CBOM。", ""])
+    if analysis["assets"]:
+        lines.extend(["## 密码资产清单", "", "| 文件（身份） | 算法 | 命中 | 识别方式 | 密码库 / API |", "| --- | --- | ---: | --- | --- |"])
+        for asset in analysis["assets"]:
+            cells = [f"{asset['file_name']} ({asset['source_id']})", asset["algorithm"], asset["finding_count"],
+                     " / ".join(METHOD_LABELS.get(m, "未记录") for m in asset["detection_methods"]),
+                     " / ".join(asset["resolved_apis"] or asset["libraries"]) or "未记录"]
+            lines.append("| " + " | ".join(markdown_table_cell(c) for c in cells) + " |")
+        lines.extend(["", "## 迁移待办", "", "按受影响文件数、发现数排序；用途和实际迁移方案需人工确认。", ""])
+        for item in analysis["migrations"]:
+            lines.extend([f"### {markdown_table_cell(item['algorithm'])} · {item['affected_files']} 个文件 / {item['finding_count']} 项发现",
+                          "", f"用途：{item['purpose']}；参考方向：{' / '.join(item['targets'])}。"])
+            lines.extend(f"- {step['title']}：{step['description']}" for step in item["actions"])
+            lines.extend([f"[NIST 标准参考]({item['reference_url']})", ""])
+
     lines.extend(["", "## 发现明细", ""])
 
     if not findings:
@@ -75,8 +92,8 @@ def build_markdown_report(
 
     lines.extend(
         [
-            "| 文件 | 行号 | 算法 | 风险等级 | 证据 | 原因 | 迁移建议 |",
-            "| --- | ---: | --- | --- | --- | --- | --- |",
+            "| 文件（身份） | 行号 | 算法 | 风险等级 | 证据 | 原因 | 迁移建议 | 识别方式 |",
+            "| --- | ---: | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for finding in findings:
@@ -84,13 +101,14 @@ def build_markdown_report(
             "| "
             + " | ".join(
                 [
-                    markdown_table_cell(finding.get("file_name", "")),
+                    markdown_table_cell(f"{finding.get('file_name', '')} ({finding.get('source_id', '')})"),
                     markdown_table_cell(finding.get("line", "")),
                     markdown_table_cell(finding.get("algorithm", "")),
                     markdown_table_cell(finding.get("risk_level", "")),
                     markdown_table_cell(finding.get("evidence", "")),
                     markdown_table_cell(finding.get("reason", "")),
                     markdown_table_cell(finding.get("recommendation", "")),
+                    METHOD_LABELS.get(finding.get("detection_method"), "未记录"),
                 ]
             )
             + " |"
