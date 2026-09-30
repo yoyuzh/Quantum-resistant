@@ -1,27 +1,51 @@
 {
-  "scanned_at": "2026-09-30T12:22:08+08:00",
+  "scanned_at": "2026-10-01T03:00:54+08:00",
   "repos": [
     {
       "full_name": "OpenMined/PySyft",
       "star_count": 10041,
       "url": "https://github.com/OpenMined/PySyft",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
+      "migration_score": 45,
+      "finding_count": 1,
+      "algorithms": [
+        "ECC"
+      ],
+      "findings": [
+        {
+          "source_id": "src_620d117ba9e0",
+          "file_name": "packages/syft-enclave/tests/test_attestation_https.py",
+          "source_type": "github_repository",
+          "line": 126,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "ec.generate_private_key",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "ast_call",
+          "library": "cryptography",
+          "resolved_api": "cryptography.hazmat.primitives.asymmetric.ec.generate_private_key"
+        }
+      ],
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
+        "scanned_files": 640,
+        "file_limit": 5000,
         "candidate_files": 640,
-        "skipped_files": 634,
-        "partial": true
+        "skipped_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "diagnostics": [
         {
-          "code": "partial_collection",
-          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
+          "code": "syntax_fallback",
+          "message": "packages/syft-restrict/examples/gemma_inference.obfuscated.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_a6522c6101e7"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "packages/syft-restrict/examples/gemma_inference_ranges.obfuscated.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_95d8ad5000ad"
         }
       ],
       "details_truncated": false,
@@ -29,88 +53,945 @@
     },
     {
       "full_name": "pyca/cryptography",
-      "star_count": 7790,
+      "star_count": 7791,
       "url": "https://github.com/pyca/cryptography",
-      "migration_score": 45,
-      "finding_count": 1,
+      "migration_score": 100,
+      "finding_count": 329,
       "algorithms": [
-        "ECDSA"
+        "DH",
+        "DSA",
+        "ECC",
+        "ECDH",
+        "ECDSA",
+        "Ed25519",
+        "Ed448",
+        "RSA",
+        "X25519",
+        "X448"
       ],
       "findings": [
         {
-          "line": 31,
-          "algorithm": "ECDSA",
+          "source_id": "src_0c90b23f188e",
+          "file_name": "vectors/cryptography_vectors/asymmetric/DSA/custom/nilpotent.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
           "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "ec.ECDSA",
-          "detection_method": "ast_call",
-          "library": "cryptography",
-          "resolved_api": "cryptography.hazmat.primitives.asymmetric.ec.ECDSA",
-          "source_id": "src_2a6455c40f3e",
-          "file_name": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
-          "source_type": "github_repository"
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_e3b96e24eb5e",
+          "file_name": "vectors/cryptography_vectors/asymmetric/EC/ec-missing-curve.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_80159d95d267",
+          "file_name": "vectors/cryptography_vectors/asymmetric/EC/explicit_parameters_private_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_f34c7cf7521b",
+          "file_name": "vectors/cryptography_vectors/asymmetric/EC/explicit_parameters_wap_wsg_idm_ecid_wtls11_private_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_151217f4483a",
+          "file_name": "vectors/cryptography_vectors/asymmetric/EC/high-bit-set.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_c9c6bf62a3ea",
+          "file_name": "vectors/cryptography_vectors/asymmetric/EC/secp128r1_private_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_3983a9aa205d",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/dsa_4096.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_da57398067b8",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/dsa_private_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_ccc674ed85f2",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/ec_private_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_dfa0b0946150",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/ec_private_key_encrypted.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "evidence": "PEM EC key header",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_f7ba88b0b931",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/ec_public_key_rsa_delimiter.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_ee46ad5f824d",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/rsa-bad-1025-q-is-2.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_440b9dfbab68",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/rsa_private_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_9cd0be2f213b",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/rsa_wrong_delimiter_public_key.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_f6cf8b6be12f",
+          "file_name": "vectors/cryptography_vectors/asymmetric/PKCS8/wrong-pem-delimiter-rsa.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_74c9c4ae7f88",
+          "file_name": "vectors/cryptography_vectors/asymmetric/Traditional_OpenSSL_Serialization/dsa-wrong-version.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_10b12d75267d",
+          "file_name": "vectors/cryptography_vectors/asymmetric/Traditional_OpenSSL_Serialization/dsa.1024.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_b953162f3e62",
+          "file_name": "vectors/cryptography_vectors/asymmetric/Traditional_OpenSSL_Serialization/dsa.2048.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_e6183474cfba",
+          "file_name": "vectors/cryptography_vectors/asymmetric/Traditional_OpenSSL_Serialization/dsa.3072.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "PEM DSA key header",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_23fa8dd01a3f",
+          "file_name": "vectors/cryptography_vectors/asymmetric/Traditional_OpenSSL_Serialization/key1-malformed-dek-info.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
         }
       ],
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
+        "scanned_files": 878,
+        "file_limit": 5000,
         "candidate_files": 880,
-        "skipped_files": 874,
-        "partial": true
+        "skipped_files": 2,
+        "partial": true,
+        "skip_reasons": {
+          "file_size": 2
+        }
       },
       "diagnostics": [
         {
-          "code": "partial_collection",
-          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
+          "code": "files_skipped",
+          "message": "归档中有 2 个候选文件因采集上限、大小、路径或编码限制未扫描。",
+          "source_id": null
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "tests/hazmat/primitives/test_ec.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_6df49319f7b7"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "tests/hazmat/primitives/test_ed25519.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_ef754deebb13"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "tests/hazmat/primitives/test_ed448.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_79f5b25a5951"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "tests/hazmat/primitives/test_serialization.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_cc3729a2ebf4"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "tests/hazmat/primitives/test_x25519.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_6d063fc5fe17"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "tests/hazmat/primitives/test_x448.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_9f5f1f80ac80"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/DH/dh_key_256.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_75df065f7d0d"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/DH/dhkey.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_eb8c583126e5"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/DH/dhkey_rfc5114_2.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_bf4b3cfe18c5"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/DH/dhpub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b5f46a1098fc"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/DH/dhpub_cryptography_old.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_13b3b5e713d5"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/DH/dhpub_rfc5114_2.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_2c62476d306a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp256k1-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_f60e25196461"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp256k1-pub-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_52a2f14351f7"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp256r1-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b6bdc66a2f01"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp256r1-explicit-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_830b1b23209a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp256r1-pub-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_0fc5c99bdc6b"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp256r1-pub-explicit-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_86dba52b7b7d"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp384r1-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_36ab19825633"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp384r1-explicit-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_f9a2c6f25561"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp384r1-pub-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_72e06bd76ce4"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp384r1-pub-explicit-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_40ce9bc77efe"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp521r1-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_332bfd081b27"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp521r1-explicit-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_5d6a966286c4"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp521r1-pub-explicit-no-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b11b200a3244"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/secp521r1-pub-explicit-seed.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_83a11a175f98"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/sect163k1-spki.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_6933ddda0909"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/sect163r2-spki.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_cb2841d7756b"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/sect233k1-spki.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b20af5bba285"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/EC/sect233r1-spki.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_1689385ce244"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/ECDSA/RFC6979/evppkey_ecdsa_rfc6979.txt 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_2f1144979826"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/Ed25519/ed25519-pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_eb54c92978cd"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/Ed25519/ed25519-pub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_80c96b9d2b18"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/Ed448/ed448-pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_d46eae7067f8"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/Ed448/ed448-pub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_f0202a98bdaa"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/MLKEM/mlkem768.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_63b7323260ab"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/dsa_public_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_3bbabfa318db"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/ec_public_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_d3fc28effb60"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PEM_Serialization/rsa_public_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_fc8b99e88e33"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/bad-oid-dsa-key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_db45abf1a3ad"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec-consistent-curve.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_55d55966afc1"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec-inconsistent-curve.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_2b2b624c9349"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec-inconsistent-curve2.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_33cb24e09036"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec-invalid-private-scalar.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_af49ba2e8d67"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec-invalid-version.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_bd8183f44ccf"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec_oid_not_in_reg_private_2.pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_0ca609c1d608"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ec_private_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_81a28a6b09f9"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/ecc_private_with_rfc5915_ext.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_2b55f6c0f35a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/nodompar_private.pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_e5b75467d271"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/private.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_1b7898e8414a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_e501114beb27"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048_hash.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_e4ac0c0bd30c"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048_hash_mask.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_d0351e67172e"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048_hash_mask_diff.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_c9e522bd4602"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/rsa_pss_2048_hash_mask_salt.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_54abacfd1d2a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/unenc-dsa-pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_26abbc46622a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/unenc-dsa-pkcs8.pub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_8d5cb5b62f36"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/unenc-rsa-pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_dab162bea057"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/unenc-rsa-pkcs8.pub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_ae5a435807b9"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/PKCS8/withdompar_private.pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b8e6ec737bba"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/X25519/x25519-pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_70efe763f19b"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/X25519/x25519-pub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_51ac4cd3cdea"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/X448/x448-pkcs8.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_0d5810f4f278"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/asymmetric/X448/x448-pub.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_92e0c272282a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/pkcs12/ca/ca_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_64f62a620894"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/x509/cryptography.io.chain_with_garbage.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_37a0d65242a0"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/x509/cryptography.io.with_garbage.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_db870c995473"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/x509/custom/ca/ca_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_3e788c167fdd"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "vectors/cryptography_vectors/x509/custom/ca/rsa_key.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_1158f3269664"
         }
       ],
-      "details_truncated": false,
+      "details_truncated": true,
       "error_code": null
     },
     {
       "full_name": "RsaCtfTool/RsaCtfTool",
-      "star_count": 7152,
+      "star_count": 7154,
       "url": "https://github.com/RsaCtfTool/RsaCtfTool",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
+      "migration_score": 80,
+      "finding_count": 2,
+      "algorithms": [
+        "RSA"
+      ],
+      "findings": [
+        {
+          "source_id": "src_6058b768ff14",
+          "file_name": "examples/masked.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        },
+        {
+          "source_id": "src_29c2f75f0cd3",
+          "file_name": "examples/partial_d.pem",
+          "source_type": "github_repository",
+          "line": 1,
+          "algorithm": "RSA",
+          "risk_level": "高风险",
+          "evidence": "PEM RSA key header",
+          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
+          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
+          "detection_method": "pem_header",
+          "library": null,
+          "resolved_api": null
+        }
+      ],
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
+        "scanned_files": 123,
+        "file_limit": 5000,
         "candidate_files": 123,
-        "skipped_files": 117,
-        "partial": true
+        "skipped_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "diagnostics": [
         {
-          "code": "partial_collection",
-          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
-        },
-        {
           "code": "unknown_pem_algorithm",
           "message": "src/RsaCtfTool/attacks/multi_keys/common_modulus_related_message.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
-          "source_id": "src_3b6060d5e697"
+          "source_id": "src_dee34bf40846"
         },
         {
           "code": "unknown_pem_algorithm",
           "message": "src/RsaCtfTool/attacks/multi_keys/hastads.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
-          "source_id": "src_4f850ae030ed"
+          "source_id": "src_202adcd466dc"
         },
         {
           "code": "unknown_pem_algorithm",
           "message": "src/RsaCtfTool/attacks/multi_keys/same_n_huge_e.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
-          "source_id": "src_c8f9a650dd79"
+          "source_id": "src_c36e91baf8e2"
         },
         {
           "code": "unknown_pem_algorithm",
           "message": "src/RsaCtfTool/attacks/single_key/SQUFOF.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
-          "source_id": "src_b01d9f6d12cc"
+          "source_id": "src_7fab991c3660"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/boneh_durfee.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_6d03bc9e2f90"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/classical_shor.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_6edcd46eddf6"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/compositorial_pm1_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_4ff6e29fcf40"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/cube_root.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_139e5fab343a"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/dixon.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_199ab7f8c4fe"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/ecm.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b2f567e21e8d"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/ecm2.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_733d5ac7abca"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/euler.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b46f257f333b"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/factor_2PN.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_9981cfcb4ef1"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/factordb.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_df967452a079"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/factorial_pm1_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_acbeff438941"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/fermat.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_8fce53a44594"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/fermat_numbers_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_75e963066ea1"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/fibonacci_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_be5857412043"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/hart.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_7a3f66a9cd83"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/highandlowbitsequal.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_1eb78d253568"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/kraitchik.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_bb76b5a8b9dd"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/lehman.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_88f613d414fc"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/lehmer.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_4471cfc1d76b"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/lucas_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_9f89ea66c758"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/mersenne_pm1_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_7f1cfe659ba1"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/mersenne_primes.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_7b82734e6795"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/neca.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b2ff528871ce"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/nonRSA.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_79b62b874ec7"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/noveltyprimes.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_52f13c9379b2"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/pastctfprimes.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_2a3ed2828e5c"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/pisano_period.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_181465a6e0e5"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/pollard_p_1.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_7c5293cf464e"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/pollard_rho.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_5760ed4678cd"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/pollard_strassen.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_012dc9ea6b92"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/primorial_pm1_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_1f17c075c9eb"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/quadratic_sieve.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_5a9a207e5bd1"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/rapid7primes.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_a291c14349ee"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/roca.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_df014009816d"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/siqs.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_1cb5daae7823"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/small_crt_exp.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_0eea830c6b50"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/smallfraction.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_b3a77325463d"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/smallq.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_70ed3baff001"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/system_primes_gcd.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_65fa4607e0c0"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/wiener.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_0c370e66b08c"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/z3_solver.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_e42f1198a54c"
         }
       ],
       "details_truncated": false,
@@ -127,18 +1008,14 @@
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
+        "scanned_files": 184,
+        "file_limit": 5000,
         "candidate_files": 184,
-        "skipped_files": 178,
-        "partial": true
+        "skipped_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
-      "diagnostics": [
-        {
-          "code": "partial_collection",
-          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
-        }
-      ],
+      "diagnostics": [],
       "details_truncated": false,
       "error_code": null
     },
@@ -153,41 +1030,53 @@
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
+        "scanned_files": 34,
+        "file_limit": 5000,
         "candidate_files": 34,
-        "skipped_files": 28,
-        "partial": true
+        "skipped_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "diagnostics": [
         {
-          "code": "partial_collection",
-          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
-        },
-        {
           "code": "syntax_fallback",
           "message": "cloakify.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_ffd4f02fd7f4"
+          "source_id": "src_c49af6fb9c0a"
         },
         {
           "code": "syntax_fallback",
           "message": "cloakifyFactory.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_94f156b7d04a"
+          "source_id": "src_27f62f70f59d"
         },
         {
           "code": "syntax_fallback",
           "message": "decloakify.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_32b79fe0874f"
+          "source_id": "src_8546765e5290"
         },
         {
           "code": "syntax_fallback",
           "message": "noiseTools/prependEmoji.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_dcbf7400d333"
+          "source_id": "src_c0bc647d9a3b"
         },
         {
           "code": "syntax_fallback",
           "message": "noiseTools/prependID.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_3064d76b7de6"
+          "source_id": "src_175ba04c6438"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "noiseTools/prependLatLonCoords.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_9011b5a0e20c"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "noiseTools/prependTimestamps.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_f1c912904c49"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "removeNoise.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_cd3e93acd48f"
         }
       ],
       "details_truncated": false,
@@ -200,7 +1089,7 @@
     "query": "topic:cryptography language:python sort:stars",
     "scan_mode": "concurrent",
     "workers": 3,
-    "max_files": 6,
+    "max_files": 5000,
     "timed_out": false,
     "failed_count": 0,
     "incomplete": false,
