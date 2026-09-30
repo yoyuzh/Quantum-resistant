@@ -3,6 +3,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { filterFindings, findingKey, paginate } from '../utils/results.js';
 import FindingCard from './FindingCard.vue';
 import SelectControl from './SelectControl.vue';
+import { methodLabel } from '../utils/analysis.js';
 const props = defineProps({
   findings: Array,
   sources: Array,
@@ -11,7 +12,7 @@ const props = defineProps({
   selectedKey: String,
 });
 const emit = defineEmits(['update:filters']);
-const local = reactive({ algorithm: '', sourceId: '', query: '' });
+const local = reactive({ algorithm: '', sourceId: '', query: '', method: '' });
 function field(name) {
   return computed({
     get: () => (props.filters || local)[name],
@@ -22,6 +23,13 @@ function field(name) {
 const algorithm = field('algorithm');
 const sourceId = field('sourceId');
 const query = field('query');
+const method = field('method');
+const methodOptions = computed(() => [
+  { value: '', label: '全部识别方式' },
+  ...[...new Set(props.findings.map((f) => f.detection_method || 'unknown'))]
+    .sort()
+    .map((value) => ({ value, label: methodLabel(value) })),
+]);
 const page = ref(1);
 const list = ref(null);
 async function changePage(delta) {
@@ -55,16 +63,17 @@ const filtered = computed(
       algorithm: algorithm.value,
       sourceId: sourceId.value,
       query: query.value,
-    }),
+    }).filter((f) => !method.value || (f.detection_method || 'unknown') === method.value),
 );
 const pagination = computed(() => paginate(filtered.value, page.value));
-watch([algorithm, sourceId, query], () => {
+watch([algorithm, sourceId, query, method], () => {
   page.value = 1;
 });
 watch(
   () => props.findings,
   () => {
-    if (!props.filters) Object.assign(local, { algorithm: '', sourceId: '', query: '' });
+    if (!props.filters)
+      Object.assign(local, { algorithm: '', sourceId: '', query: '', method: '' });
     page.value = 1;
   },
 );
@@ -87,6 +96,7 @@ watch(
     <div class="filters">
       <SelectControl v-model="algorithm" label="算法" :options="algorithmOptions" />
       <SelectControl v-model="sourceId" label="文件" :options="fileOptions" />
+      <SelectControl v-model="method" label="识别方式" :options="methodOptions" />
       <label class="search"
         >搜索<input v-model="query" type="search" placeholder="文件、API、证据或迁移建议"
       /></label>

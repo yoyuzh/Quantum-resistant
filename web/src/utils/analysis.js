@@ -10,7 +10,9 @@ export const methodLabel = (method) =>
   })[method] || '未记录';
 
 export function selectedFindings(result, filters) {
-  const selected = filterFindings(result.findings, filters);
+  const selected = filterFindings(result.findings, filters).filter(
+    (finding) => !filters.method || (finding.detection_method || 'unknown') === filters.method,
+  );
   if (!filters.target) return selected;
   const allowed = new Set(
     (result.analysis?.migrations || [])

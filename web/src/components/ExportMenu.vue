@@ -17,6 +17,10 @@ function save(format) {
         <AppIcon name="download" :size="17" />{{ exporting ? '正在导出…' : '导出报告' }}
       </summary>
       <div class="export-options">
+        <button class="button secondary" :disabled="exporting" @click="save('html')">
+          HTML 图文报告
+        </button>
+        <p class="small muted">离线阅读；浏览器打印可另存为 PDF</p>
         <button class="button secondary" :disabled="exporting" @click="save('markdown')">
           Markdown 报告
         </button>
@@ -26,7 +30,9 @@ function save(format) {
         <button class="button secondary" :disabled="exporting" @click="save('csv')">
           CSV 发现明细
         </button>
-        <p class="small muted">不附带完整源码</p>
+        <p class="small muted">
+          Markdown 便于编辑；JSON 用于程序处理；CSV 可用表格软件打开。不附带完整源码。
+        </p>
       </div>
     </details>
     <p v-if="error" class="notice error" role="alert">{{ error }}</p>

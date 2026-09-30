@@ -12,6 +12,7 @@ defineProps({ state: Object, mode: String });
       :mode="mode"
       :elapsed="state.elapsed"
       :has-result="!!state.result"
+      :progress="state.progress"
     />
     <Transition v-else name="content" appear>
       <ScanResults v-if="state.result" :result="state.result" />

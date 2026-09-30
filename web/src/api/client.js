@@ -7,7 +7,7 @@ export class ApiError extends Error {
 
 export async function request(
   path,
-  { method = 'GET', body, signal, timeout = 15000, text = false } = {},
+  { method = 'GET', body, signal, timeout = 15000, text = false, headers = {} } = {},
 ) {
   const controller = new AbortController();
   const cancel = () => controller.abort();
@@ -23,7 +23,12 @@ export async function request(
     const response = await fetch(path, {
       method,
       signal: controller.signal,
-      headers: body && !form ? { 'Content-Type': 'application/json' } : undefined,
+      headers:
+        body && !form
+          ? { 'Content-Type': 'application/json', ...headers }
+          : Object.keys(headers).length
+            ? headers
+            : undefined,
       body: body ? (form ? body : JSON.stringify(body)) : undefined,
     });
     const content = await response.text();

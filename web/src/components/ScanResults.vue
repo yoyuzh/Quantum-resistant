@@ -11,6 +11,7 @@ import AssetInventory from './AssetInventory.vue';
 import MigrationChecklist from './MigrationChecklist.vue';
 import ExportMenu from './ExportMenu.vue';
 import AppIcon from './AppIcon.vue';
+import { methodLabel } from '../utils/analysis.js';
 const props = defineProps({ result: Object });
 const body = ref(null);
 const { tab, filters, findings, selectedKey, reset, select, reveal } = useResultSelection(
@@ -96,6 +97,7 @@ function tabKeys(event, index) {
           >当前筛选：{{ filters.algorithm || '全部算法'
           }}{{ filters.sourceId ? ' · ' + filters.sourceId : ''
           }}{{ filters.target ? ' · ' + filters.target : ''
+          }}{{ filters.method ? ' · ' + methodLabel(filters.method) : ''
           }}{{ filters.query ? ' · ' + filters.query : '' }}</span
         >
         <button class="button secondary" @click="reset">

@@ -6,11 +6,29 @@ import PopularDetail from './PopularDetail.vue';
 import SelectControl from './SelectControl.vue';
 import ScanLoading from './ScanLoading.vue';
 import AppIcon from './AppIcon.vue';
+import TaskProgress from './TaskProgress.vue';
+import PopularOverview from './PopularOverview.vue';
 const topOptions = [5, 8, 10, 20, 30].map((value) => ({ value, label: `${value} 个仓库` }));
 const props = defineProps({ state: Object });
-defineEmits(['refresh', 'reload', 'update:top']);
+defineEmits(['refresh', 'reload', 'update:top', 'cancel']);
+const previous = ref(false);
+const displayed = computed(() =>
+  previous.value && props.state.previous ? props.state.previous : props.state.result,
+);
+watch(
+  () => props.state.previous,
+  (value) => {
+    if (value) previous.value = true;
+  },
+);
 const selected = ref('');
-const repos = computed(() => sortRepos(props.state.result?.repos || []));
+const repos = computed(() => sortRepos(displayed.value?.repos || []));
+watch(
+  () => props.state.result,
+  () => {
+    previous.value = false;
+  },
+);
 const activeRepo = computed(() => repos.value.find((r) => r.full_name === selected.value));
 watch(
   repos,
@@ -45,7 +63,7 @@ watch(
           {{ state.busy ? '正在扫描…' : state.result ? '重新扫描热门仓库' : '开始热门扫描' }}
         </button>
         <p class="small muted">
-          每仓库最多采集 6 个文件；整个批次时间预算 60 秒。失败或超时的仓库单独列出。
+          每仓库最多采集 6 个文件；后台任务时间预算 120 秒。失败或超时的仓库单独列出。
         </p>
         <ScanStatus
           :busy="state.busy || state.loading"
@@ -55,11 +73,27 @@ watch(
           :has-result="!!state.result"
           @retry="$emit(state.retryRefresh ? 'refresh' : 'reload')"
         />
-        <template v-if="state.result">
-          <p class="small muted">上次结果：{{ formatTime(state.result.scanned_at) }}（北京时间）</p>
+        <TaskProgress :state="state" @cancel="$emit('cancel')" />
+        <template v-if="displayed">
+          <p class="small muted">
+            {{ previous ? '上次快照' : '本次结果' }}：{{
+              formatTime(displayed.scanned_at)
+            }}（北京时间）
+          </p>
+          <p v-if="displayed.meta?.incomplete" class="notice">
+            本次批次未完整结束或未保存；上次榜单快照未覆盖。{{ displayed.meta.save_error }}
+          </p>
+          <button
+            v-if="state.result?.meta?.incomplete"
+            class="button secondary"
+            @click="state.previous ? (previous = !previous) : $emit('reload')"
+          >
+            {{ previous ? '查看本次部分结果' : '查看上次快照' }}
+          </button>
+          <PopularOverview :result="displayed" @select="selected = $event" />
           <p class="small">
             成功 {{ repos.length }} 个 · 失败
-            {{ state.result.failures?.length ?? state.result.meta?.failed_count ?? 0 }} 个
+            {{ displayed.failures?.length ?? displayed.meta?.failed_count ?? 0 }} 个
           </p>
           <div class="repo-list" aria-label="热门仓库列表">
             <button
@@ -80,9 +114,9 @@ watch(
               ><span class="tag">{{ repo.migration_score }}</span>
             </button>
           </div>
-          <details v-if="state.result.failures?.length" class="notice">
+          <details v-if="displayed.failures?.length" class="notice">
             <summary>查看失败仓库</summary>
-            <p v-for="failure in state.result.failures" :key="failure.full_name">
+            <p v-for="failure in displayed.failures" :key="failure.full_name">
               <strong>{{ failure.full_name }}</strong
               >：{{ failure.error }}
             </p>
@@ -94,7 +128,12 @@ watch(
       </div>
     </section>
     <section v-if="state.busy" class="panel results" aria-label="热门扫描进度">
-      <ScanLoading mode="popular" :elapsed="state.elapsed" :has-result="!!state.result" />
+      <ScanLoading
+        mode="popular"
+        :elapsed="state.elapsed"
+        :has-result="!!state.result"
+        :progress="state.progress"
+      />
     </section>
     <Transition v-else name="content" appear>
       <PopularDetail :key="selected" :repo="activeRepo" />

@@ -6,6 +6,7 @@ import SnippetInput from './components/SnippetInput.vue';
 import FileUpload from './components/FileUpload.vue';
 import RemoteInput from './components/RemoteInput.vue';
 import ScanStatus from './components/ScanStatus.vue';
+import TaskProgress from './components/TaskProgress.vue';
 import ResultsWorkspace from './components/ResultsWorkspace.vue';
 import AppIcon from './components/AppIcon.vue';
 import PopularView from './components/PopularView.vue';
@@ -21,8 +22,8 @@ const drafts = reactive({
   github: { value: 'https://github.com/pyca/cryptography' },
   pypi: { value: 'cryptography' },
 });
-const { states, start } = useScan();
-const { state: popular, run: runPopular } = usePopular();
+const { states, start, cancel } = useScan();
+const { state: popular, run: runPopular, cancel: cancelPopular } = usePopular();
 const { theme, toggle } = useTheme();
 const current = computed(() => states[mode.value]);
 const inputBody = ref(null);
@@ -58,6 +59,7 @@ function submit() {
       @update:top="popular.top = $event"
       @refresh="runPopular(true)"
       @reload="runPopular(false)"
+      @cancel="cancelPopular"
     />
     <div v-else class="workspace-grid">
       <section class="panel input-panel" aria-label="扫描输入区域">
@@ -99,6 +101,7 @@ function submit() {
               :has-result="!!current.result"
               @retry="submit"
             />
+            <TaskProgress :state="current" @cancel="cancel(mode)" />
           </div>
           <div class="panel-actions stack">
             <button type="submit" class="button primary" :disabled="current.busy">

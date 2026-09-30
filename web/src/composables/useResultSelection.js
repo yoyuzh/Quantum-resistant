@@ -4,14 +4,15 @@ import { findingKey } from '../utils/results.js';
 
 export function useResultSelection(result) {
   const tab = ref('overview');
-  const filters = reactive({ sourceId: '', algorithm: '', query: '', target: '' });
+  const filters = reactive({ sourceId: '', algorithm: '', query: '', target: '', method: '' });
   const selectedKey = ref('');
   const findings = computed(() => selectedFindings(result.value, filters));
   function reset() {
-    Object.assign(filters, { sourceId: '', algorithm: '', query: '', target: '' });
+    Object.assign(filters, { sourceId: '', algorithm: '', query: '', target: '', method: '' });
     selectedKey.value = '';
   }
   function select(value) {
+    reset();
     Object.assign(filters, value);
     selectedKey.value = '';
     tab.value = 'findings';

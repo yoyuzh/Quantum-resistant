@@ -32,9 +32,27 @@ export function useExport(result) {
         signal: controller.signal,
       });
       if (id !== sequence) return;
-      const mime = { markdown: 'text/markdown', json: 'application/json', csv: 'text/csv' }[format];
+      const mime = {
+        html: 'text/html',
+        markdown: 'text/markdown',
+        json: 'application/json',
+        csv: 'text/csv',
+      }[format];
       const url = URL.createObjectURL(new Blob([content], { type: `${mime};charset=utf-8` }));
-      const filename = `quantum-scan-report.${extension}`;
+      const stamp = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+        .format(new Date())
+        .replace(/[^0-9]/g, '');
+      const source = result.value.source_type || 'scan';
+      const filename = `quantum-${source}-${stamp}.${extension}`;
       download.value = { url, filename };
       const anchor = document.createElement('a');
       anchor.href = url;

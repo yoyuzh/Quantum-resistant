@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
-const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean });
+const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object });
 const description = computed(
   () =>
     ({
@@ -26,8 +26,14 @@ const description = computed(
     </div>
     <p class="eyebrow">密码资产分析</p>
     <h2>正在寻找代码中的密码线索</h2>
-    <p class="description">{{ description }}</p>
-    <span class="elapsed" aria-live="off">已等待 {{ elapsed || 0 }} 秒</span>
+    <p class="description">{{ progress?.stage || description }}</p>
+    <p v-if="progress" class="small muted">
+      已采集 {{ progress.collected_files }} · 已分析 {{ progress.analyzed_files }} 个文件
+    </p>
+    <span class="elapsed" aria-live="off"
+      >{{ progress?.state === 'queued' ? '排队等待' : '已等待' }}
+      {{ Math.floor(progress?.elapsed || elapsed || 0) }} 秒</span
+    >
     <p class="small muted">
       {{ hasResult ? '上次结果已保留，完成后更新。' : '分析过程不会执行输入代码。' }}
     </p>
