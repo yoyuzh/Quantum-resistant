@@ -6,9 +6,10 @@ from pathlib import PurePath
 from fastapi import HTTPException
 from backend.collectors import is_supported_source_path
 from backend.models import MAX_SOURCE_BYTES
+from backend.collection_config import MAX_COLLECTED_FILES, MAX_UPLOAD_BYTES, MAX_TEXT_BYTES
 
-MAX_TOTAL_UPLOAD_BYTES = 10 * 1024 * 1024
-MAX_UPLOAD_FILES = 80
+MAX_TOTAL_UPLOAD_BYTES = MAX_UPLOAD_BYTES
+MAX_UPLOAD_FILES = MAX_COLLECTED_FILES
 
 def normalize_filename(filename: str, fallback: str = "snippet.py") -> str:
     cleaned = filename.replace("\\", "/").split("/")[-1].strip()
@@ -20,7 +21,7 @@ def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str
     if "multipart/form-data" not in content_type:
         raise HTTPException(status_code=415, detail="请使用 multipart/form-data 上传文件")
     if len(body) > MAX_TOTAL_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="上传请求超过 10 MiB 限制")
+        raise HTTPException(status_code=413, detail="上传请求超过 110 MiB 限制")
 
     raw_message = (
         f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode("utf-8") + body
@@ -30,6 +31,7 @@ def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str
         raise HTTPException(status_code=400, detail="上传数据格式不正确")
 
     documents: list[tuple[str, str]] = []
+    text_bytes = 0
     for part in message.iter_parts():
         filename = part.get_filename()
         if not filename:
@@ -37,7 +39,7 @@ def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str
         if part.get_param("name", header="content-disposition") != "files":
             raise HTTPException(400, "上传文件字段必须为 files")
         if len(documents) >= MAX_UPLOAD_FILES:
-            raise HTTPException(413, "单次最多上传 80 个文件")
+            raise HTTPException(413, "单次最多上传 5000 个文件")
         normalized_filename = normalize_filename(filename, "uploaded.py")
         if not is_supported_source_path(normalized_filename):
             raise HTTPException(
@@ -58,6 +60,9 @@ def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str
             ) from exc
 
         documents.append((normalized_filename, content))
+        text_bytes += len(content.encode('utf-8'))
+        if text_bytes > MAX_TEXT_BYTES:
+            raise HTTPException(413, "源码文本超过 100 MiB 限制")
 
     if not documents:
         raise HTTPException(status_code=400, detail="未上传文件")

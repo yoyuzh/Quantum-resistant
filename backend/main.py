@@ -14,7 +14,7 @@ from starlette.concurrency import run_in_threadpool
 from backend.collectors import CollectionError, CollectionTimeout, collect_github_sources, collect_pypi_sources, is_supported_source_path
 from backend.knowledge import knowledge_graph
 from backend.models import *
-from backend.popular import scan_popular
+from backend.popular import scan_popular, batch_incomplete
 from backend.reporting import build_markdown_report
 from backend.report_exports import build_csv_report, build_json_report
 from backend.html_report import build_html_report
@@ -25,6 +25,7 @@ from contextlib import asynccontextmanager
 from backend.scanning import build_scan_response
 from backend.storage import write_results
 from backend.uploads import MAX_TOTAL_UPLOAD_BYTES, normalize_filename, parse_multipart_files
+from backend.collection_config import MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_ARCHIVE_BYTES, SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
@@ -52,6 +53,14 @@ async def validation_error(request: Request, exc: RequestValidationError) -> JSO
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get('/api/config')
+def scan_config() -> dict:
+    return {'max_files': MAX_COLLECTED_FILES, 'max_file_bytes': MAX_SOURCE_BYTES,
+            'max_text_bytes': MAX_TEXT_BYTES, 'max_upload_bytes': MAX_TOTAL_UPLOAD_BYTES,
+            'max_archive_bytes': MAX_ARCHIVE_BYTES, 'scan_timeout_seconds': SCAN_TIMEOUT_SECONDS,
+            'popular_timeout_seconds': POPULAR_TIMEOUT_SECONDS, 'minimum_loading_ms': 1500}
 
 
 @app.get("/", include_in_schema=False)
@@ -82,27 +91,42 @@ def scan_snippet(payload: SnippetScanRequest) -> ScanResponse:
 
 @app.post("/api/scan/files", response_model=ScanResponse)
 async def scan_files(request: Request) -> ScanResponse:
-    body = bytearray()
-    async for chunk in request.stream():
-        if len(body) + len(chunk) > MAX_TOTAL_UPLOAD_BYTES:
-            raise HTTPException(413, "上传请求超过 10 MiB 限制")
-        body.extend(chunk)
-    def scan():
-        documents = parse_multipart_files(request.headers.get("content-type", ""), bytes(body))
-        return build_scan_response(documents, "manual_upload")
-    return await run_in_threadpool(scan)
+    # The legacy response remains complete; ingestion uses the same bounded spool.
+    from backend.upload_stream import read_upload
+    from backend.collection_common import Deadline
+    storage = task_routes.store.storage
+    folder = storage.folder()
+    budget = Deadline.after()
+    budget.control.storage, budget.control.folder = storage, folder
+    try:
+        documents, _ = await read_upload(request, storage, folder)
+        result = await run_in_threadpool(task_routes.local_work, documents, 'manual_upload', budget)
+        for source in result['sources']:
+            source['content'] = budget.control.source_paths[source['source_id']].read_text(encoding='utf-8')
+            source['content_available'] = None
+        return ScanResponse(**result)
+    finally:
+        storage.remove_folder(folder)
 
 
 def remote_scan(collector, value: str, source_type: SourceType) -> ScanResponse:
+    from backend.collection_common import Deadline
+    budget = Deadline.after()
+    storage = task_routes.store.storage
+    folder = storage.folder()
+    budget.control.storage, budget.control.folder = storage, folder
     try:
-        documents = collector(value)
+        result = task_routes.remote_work('github' if source_type == 'github_repository' else 'pypi', value, budget, collector=collector)
+        for source in result['sources']:
+            source['content'] = budget.control.source_paths[source['source_id']].read_text(encoding='utf-8')
+            source['content_available'] = None
+        return ScanResponse(**result)
     except CollectionTimeout as exc:
         raise HTTPException(504, str(exc)) from exc
     except CollectionError as exc:
-        raise HTTPException(502, str(exc)) from exc
-    if not documents:
-        raise HTTPException(404, "未找到可扫描的文本文件")
-    return build_scan_response(documents, source_type)
+        raise HTTPException(404 if str(exc) == '未找到可扫描的文本文件' else 502, str(exc)) from exc
+    finally:
+        storage.remove_folder(folder)
 
 
 @app.post("/api/scan/github", response_model=ScanResponse)
@@ -124,6 +148,9 @@ def trigger_popular_scan(payload: PopularScanRequest = PopularScanRequest()) -> 
         raise HTTPException(409, "热门仓库正在扫描，请等待本次扫描完成")
     try:
         result = scan_popular(top=payload.top)
+        if batch_incomplete(result):
+            result.meta.update(incomplete=True, saved_snapshot=False)
+            return asdict(result)
         write_results(result, WEB_DIR / "data/popular.json")
         return asdict(result)
     except CollectionTimeout as exc:

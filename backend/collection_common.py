@@ -10,6 +10,7 @@ import urllib.request
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, TypeVar
+from backend.collection_config import MAX_COLLECTED_FILES, MAX_TEXT_BYTES, SCAN_TIMEOUT_SECONDS
 
 import httpx
 
@@ -31,13 +32,21 @@ class CollectionCancelled(CollectionTimeout):
 
 
 class CollectionControl:
-    def __init__(self, report=None):
+    def __init__(self, report=None, *, max_bytes=MAX_TEXT_BYTES, parent=None, scope=None):
         self.cancelled = Event()
         self.report = report
         self.lock = Lock()
         self.bytes = 0
         self.grace_seconds = 0
         self.finalizing = False
+        self.max_bytes = max_bytes
+        self.parent = parent
+        self.scope = scope
+        self.publisher = None
+        self.storage = getattr(parent, 'storage', None)
+        self.folder = getattr(parent, 'folder', None)
+        if parent:
+            self.cancelled = parent.cancelled
 
     def request_cancel(self) -> bool:
         with self.lock:
@@ -55,14 +64,20 @@ class CollectionControl:
 
     def accept(self, size: int) -> bool:
         with self.lock:
-            if self.bytes + size > 20 * 1024 * 1024:
+            if self.bytes + size > self.max_bytes:
                 return False
             self.bytes += size
         return True
 
     def emit(self, **values):
+        if self.parent:
+            self.parent.emit(scope=self.scope, **values)
+            return
         if self.report:
             self.report(**values)
+
+    def publish(self, document):
+        return self.publisher(document) if self.publisher else document
 
 
 @dataclass(frozen=True)
@@ -71,7 +86,7 @@ class Deadline:
     control: CollectionControl = field(default_factory=CollectionControl, compare=False)
 
     @classmethod
-    def after(cls, seconds: float = 90) -> Deadline:
+    def after(cls, seconds: float = SCAN_TIMEOUT_SECONDS) -> Deadline:
         return cls(time.monotonic() + seconds)
 
     def remaining(self) -> float:
@@ -127,12 +142,12 @@ def retry_delay(response: httpx.Response, attempt: int) -> float:
 class CollectedSources(list[SourceDocument]):
     """List-compatible collection result, with explicit coverage metadata."""
 
-    def __init__(self, documents: Iterable[SourceDocument] = (), *, limit: int = 80,
+    def __init__(self, documents: Iterable[SourceDocument] = (), *, limit: int = MAX_COLLECTED_FILES,
                  candidates: int | None = None, skipped: int = 0, partial: bool = False,
-                 diagnostics: list[dict] | None = None) -> None:
+                 diagnostics: list[dict] | None = None, skip_reasons: dict | None = None) -> None:
         super().__init__(documents)
         self.coverage = {"scanned_files": len(self), "file_limit": limit, "candidate_files": candidates,
-                         "skipped_files": skipped, "partial": partial}
+                         "skipped_files": skipped, "partial": partial, "skip_reasons": skip_reasons or {}}
         self.diagnostics = diagnostics or []
 
 
@@ -202,11 +217,12 @@ def concurrent_collect(items: Iterable[T], function: Callable[[T], R], workers: 
 def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = None,
                      params: dict | None = None, max_bytes: int | None = 8 * 1024 * 1024,
                      attempts: int = 3, deadline: Deadline | None = None,
-                     socket_timeout: float = 8.0) -> httpx.Response:
+                     socket_timeout: float = 8.0, spool: bool = False) -> httpx.Response:
     budget = deadline or Deadline.after()
     for attempt in range(attempts):
         delay = .5 * 2 ** attempt
         started = time.monotonic()
+        path = None
         try:
             timeout = min(socket_timeout, budget.remaining())
             with bounded_stream(client, url, budget, timeout, headers=headers, params=params) as response:
@@ -215,18 +231,32 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
                 if length.isdigit() and max_bytes is not None and int(length) > max_bytes:
                     raise CollectionError("远程响应超过大小限制")
                 chunks, size = [], 0
+                if spool and budget.control.storage:
+                    path = budget.control.storage.write(budget.control.folder, b'', '.archive')
+                if spool:
+                    total = int(length) if length.isdigit() and not response.headers.get('content-encoding') else None
+                    budget.control.emit(download_bytes=0, download_total=total)
                 for chunk in response.iter_bytes():
                     budget.remaining()
                     size += len(chunk)
                     if max_bytes is not None and size > max_bytes:
                         raise CollectionError("远程响应超过大小限制")
-                    chunks.append(chunk)
+                    if path:
+                        budget.control.storage.append(path, chunk)
+                    else:
+                        chunks.append(chunk)
+                    if spool:
+                        budget.control.emit(download_bytes=size)
                 budget.remaining()
                 # iter_bytes() has already decompressed the body. Forwarding the
                 # wire encoding would make HTTPX decode it a second time.
                 headers_out = {key: value for key, value in response.headers.items()
                                if key.lower() not in {'content-encoding', 'content-length', 'transfer-encoding'}}
-                return httpx.Response(response.status_code, content=b"".join(chunks), headers=headers_out, request=response.request)
+                result = httpx.Response(response.status_code, content=b"".join(chunks), headers=headers_out, request=response.request)
+                if path:
+                    result.extensions['archive_path'] = path
+                    path = None
+                return result
         except httpx.HTTPStatusError as exc:
             limited = exc.response.status_code == 403 and (exc.response.headers.get('x-ratelimit-remaining') == '0' or 'retry-after' in exc.response.headers)
             if (exc.response.status_code not in {429, 500, 502, 503, 504} and not limited) or attempt == attempts - 1:
@@ -241,6 +271,8 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
             if attempt == attempts - 1:
                 raise
         finally:
+            if path:
+                budget.control.storage.remove(path)
             logger.debug("remote_request host=%s attempt=%d elapsed=%.3f", httpx.URL(url).host, attempt + 1, time.monotonic() - started)
         budget.pause(delay)
     raise CollectionError("远程请求失败")

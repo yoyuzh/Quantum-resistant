@@ -82,7 +82,7 @@ class PopularServiceTests(unittest.TestCase):
         self.assertEqual(len(result.findings), 20)
         self.assertEqual(len({f["source_id"] for f in result.findings}), 2)
         self.assertTrue(result.details_truncated)
-        self.assertEqual(collect.call_args.kwargs["max_files"], 6)
+        self.assertEqual(collect.call_args.kwargs["max_files"], 5000)
 
     @patch("backend.popular.collect_github_sources")
     def test_failed_empty_and_clean_collection(self, collect):
@@ -198,7 +198,7 @@ class StorageAndCliTests(unittest.TestCase):
     @patch("scripts.batch_scan_popular.write_results")
     @patch("scripts.batch_scan_popular.scan_popular", return_value=BatchResult("now", [{"full_name": "a/b"}]))
     def test_cli_defaults_and_options(self, scan, write):
-        for argv, top, limit in [(["batch"], 20, 6), (["batch", "--top", "5", "--max-files", "12"], 5, 12)]:
+        for argv, top, limit in [(["batch"], 20, 5000), (["batch", "--top", "5", "--max-files", "12"], 5, 12)]:
             with patch("sys.argv", argv), redirect_stdout(io.StringIO()):
                 self.assertEqual(main(), 0)
             scan.assert_called_with(top=top, max_files=limit)

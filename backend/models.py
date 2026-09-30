@@ -36,6 +36,7 @@ class SourceRecord(BaseModel):
     line_count: int
     char_count: int
     origin: Optional[str] = None
+    content_available: bool | None = None
 
 
 class FindingRecord(BaseModel):
@@ -108,6 +109,7 @@ class Coverage(BaseModel):
     candidate_files: int | None = None
     skipped_files: int = 0
     partial: bool = False
+    skip_reasons: dict[str, int] = Field(default_factory=dict)
 
 
 class Diagnostic(BaseModel):

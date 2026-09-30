@@ -103,8 +103,8 @@ class TaskTests(unittest.TestCase):
         large = limited.submit('pypi', {}, 'large', lambda d: {'sources': [{}]})
         future = limited.jobs[large['id']].future
         future.result(timeout=2)
-        with self.assertRaises(HTTPException):
-            limited.get(large['id'])
+        self.assertEqual(limited.get(large['id'])['state'], 'failed')
+        self.assertFalse(limited.get(large['id'])['has_result'])
 
     def test_api_real_job_and_restart_not_found(self):
         with patch.object(task_routes, 'store', self.store), patch('backend.main.collect_github_sources', return_value=[('a.py', CODE)]):
@@ -241,7 +241,7 @@ class ReliabilityTests(unittest.TestCase):
 
     def test_text_budget_is_shared_by_children(self):
         deadline = Deadline.after()
-        self.assertTrue(deadline.control.accept(20 * 1024 * 1024))
+        self.assertTrue(deadline.control.accept(100 * 1024 * 1024))
         self.assertFalse(deadline.child(5).control.accept(1))
 
     def test_pypi_limits_candidates_and_skips_oversize(self):

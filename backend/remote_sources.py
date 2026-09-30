@@ -7,6 +7,7 @@ import os
 import tarfile
 import time
 import zipfile
+from collections import Counter
 from threading import Lock
 from urllib.parse import quote, urlparse
 
@@ -24,6 +25,12 @@ class GitHubAuthenticationError(CollectionError):
 
 class GitHubRateLimitError(CollectionError):
     pass
+
+
+class FileCollectionError(CollectionError):
+    def __init__(self, message, reason):
+        super().__init__(message)
+        self.reason = reason
 
 
 _REJECTED_AUTH: dict[bytes, float] = {}
@@ -118,10 +125,10 @@ def decode_github_blob(payload: dict) -> str:
     try:
         data = base64.b64decode("".join(str(payload.get("content", "")).split()), validate=True)
         if len(data) > MAX_COLLECTED_FILE_BYTES:
-            raise CollectionError("文件超过 2 MiB 限制")
+            raise FileCollectionError("文件超过 2 MiB 限制", 'file_size')
         return data.decode("utf-8-sig")
     except (binascii.Error, UnicodeError) as exc:
-        raise CollectionError("文件不是有效 UTF-8 文本") from exc
+        raise FileCollectionError("文件不是有效 UTF-8 文本", 'encoding') from exc
 
 
 def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSources:
@@ -156,7 +163,26 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     raise CollectionError("GitHub 文件列表响应格式无效")
                 candidates = [i for i in payload.get("tree", []) if i.get("type") == "blob" and is_supported_source_path(str(i.get("path", "")))]
                 candidates.sort(key=lambda i: source_priority(i["path"]))
+                version = str(payload.get('sha') or branch)
+                if len(candidates) > 32 or payload.get('truncated'):
+                    try:
+                        deadline.control.emit(stage='下载仓库归档')
+                        archive = github_get(client, f'{url}/archive/{quote(version, safe="")}.zip', headers=headers,
+                                             max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
+                        archive_path = archive.extensions.get('archive_path')
+                        try:
+                            return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
+                        finally:
+                            if archive_path:
+                                deadline.control.storage.remove(archive_path)
+                    except (CollectionTimeout, GitHubAuthenticationError):
+                        raise
+                    except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
+                        last_error = exc
                 eligible = [i for i in candidates if int(i.get("size") or 0) <= MAX_COLLECTED_FILE_BYTES][:limit]
+                reasons = Counter(file_size=len(candidates) - len([i for i in candidates if int(i.get('size') or 0) <= MAX_COLLECTED_FILE_BYTES]))
+                reasons['file_limit'] = max(0, len(candidates) - reasons['file_size'] - len(eligible))
+                deadline.control.emit(candidate_files=None if payload.get('truncated') else len(candidates), processed_files=sum(reasons.values()), skipped_files=sum(reasons.values()), totals_final=False)
                 deadline.control.emit(stage="采集源码文件")
                 def fetch(item):
                     path = item["path"]
@@ -165,22 +191,24 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     file_error = None
                     if blob_url.startswith(api + "/git/blobs/"):
                         urls.append((blob_url, None))
-                    urls.append((f"{api}/contents/{quote(path, safe='/')}", {"ref": branch}))
+                    urls.append((f"{api}/contents/{quote(path, safe='/')}", {"ref": version}))
                     for target, params in urls:
                         try:
                             response = github_get(client, target, headers=headers, params=params,
                                                         max_bytes=MAX_COLLECTED_FILE_BYTES * 2, attempts=1, deadline=deadline)
                             content = decode_github_blob(response.json())
                             if not deadline.control.accept(len(content.encode('utf-8'))):
-                                raise CollectionError("采集文本达到 20 MiB 总量上限")
-                            deadline.control.emit(collected_delta=1)
-                            return (url, path, content)
+                                raise FileCollectionError("采集文本达到来源总量上限", 'text_budget')
+                            document = deadline.control.publish((url, path, content))
+                            deadline.control.emit(collected_delta=1, processed_delta=1)
+                            return document
                         except (CollectionTimeout, GitHubAuthenticationError, GitHubRateLimitError):
                             raise
                         except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:
                             file_error = exc
                             continue
-                    raise CollectionError(f"未能读取 {path}：{describe_http_error(file_error)}")
+                    deadline.control.emit(processed_delta=1, skipped_delta=1)
+                    raise FileCollectionError(f"未能读取 {path}：{describe_http_error(file_error)}", getattr(file_error, 'reason', 'download_failure'))
                 completed, timed_out = concurrent_collect(eligible, fetch, 2 if limit <= 6 else 4, deadline)
                 docs = [result for _, result in completed if not isinstance(result, Exception)]
                 auth_error = next((result for _, result in completed if isinstance(result, GitHubAuthenticationError)), None)
@@ -196,8 +224,13 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                         diagnostics.append({"code": "file_collection_errors", "message": "；".join(errors[:3])})
                     if timed_out:
                         diagnostics.append({"code": "collection_timeout", "message": "采集达到时间预算，已保留完成的文件。"})
+                    for _, value in completed:
+                        if isinstance(value, Exception):
+                            reasons[getattr(value, 'reason', 'download_failure')] += 1
+                    reasons['cancelled' if deadline.control.cancelled.is_set() else 'timeout'] += max(0, len(eligible) - len(completed))
+                    deadline.control.emit(processed_files=len(candidates), skipped_files=skipped, analysis_total=len(docs), totals_final=True)
                     return CollectedSources(docs, limit=limit, candidates=None if payload.get("truncated") else len(candidates),
-                                            skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics)
+                                            skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
                 if timed_out:
                     raise CollectionTimeout("GitHub 文件采集超时")
                 if auth_error:
@@ -215,8 +248,13 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
             try:
                 deadline.control.emit(stage="下载仓库归档")
                 archive = github_get(client, f"{url}/archive/refs/heads/{quote(branch, safe='')}.zip", headers=headers,
-                                     max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline)
-                docs = collect_from_zip_bytes(archive.content, url, max_files=limit, deadline=deadline)
+                                     max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
+                archive_path = archive.extensions.get('archive_path')
+                try:
+                    docs = collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
+                finally:
+                    if archive_path:
+                        deadline.control.storage.remove(archive_path)
                 if docs:
                     return docs
             except (CollectionTimeout, GitHubAuthenticationError):
@@ -263,11 +301,16 @@ def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
                     try:
                         deadline.control.emit(stage="下载 PyPI 发行包")
                         response = get_with_retries(client, url, max_bytes=MAX_ARCHIVE_BYTES, deadline=deadline,
-                                                    attempts=1 if index == 0 and len(options) > 1 else 3)
-                        if filename.endswith((".zip", ".whl")):
-                            docs = collect_from_zip_bytes(response.content, f"pypi:{name}", strip_root=not filename.endswith(".whl"), deadline=deadline)
-                        else:
-                            docs = collect_from_tar_bytes(response.content, f"pypi:{name}", deadline=deadline)
+                                                    attempts=1 if index == 0 and len(options) > 1 else 3, spool=True)
+                        archive_path = response.extensions.get('archive_path')
+                        try:
+                            if filename.endswith((".zip", ".whl")):
+                                docs = collect_from_zip_bytes(archive_path or response.content, f"pypi:{name}", strip_root=not filename.endswith(".whl"), deadline=deadline)
+                            else:
+                                docs = collect_from_tar_bytes(archive_path or response.content, f"pypi:{name}", deadline=deadline)
+                        finally:
+                            if archive_path:
+                                deadline.control.storage.remove(archive_path)
                         if docs:
                             return docs
                     except CollectionTimeout:

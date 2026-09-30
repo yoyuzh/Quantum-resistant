@@ -17,14 +17,14 @@ class ApiBoundaryTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/scan/files", files=[("wrong", ("a.py", b"x=1"))]).status_code, 400)
 
     def test_encoding_suffix_and_count(self):
-        for files, status in [([("files", ("a.py", b"\xff"))], 400), ([("files", ("a.exe", b"x"))], 400), ([("files", ("a.py", b"x"))] * 81, 413)]:
+        for files, status in [([("files", ("a.py", b"\xff"))], 400), ([("files", ("a.exe", b"x"))], 400), ([("files", ("a.py", b"x"))] * 81, 200), ([("files", ("a.py", b"x"))] * 5001, 413)]:
             self.assertEqual(self.client.post("/api/scan/files", files=files).status_code, status)
 
     def test_upload_size_limits(self):
-        with patch("backend.main.MAX_TOTAL_UPLOAD_BYTES", 10):
+        with patch("backend.upload_stream.MAX_UPLOAD_BYTES", 10):
             response = self.client.post("/api/scan/files", content=iter([b"x" * 6, b"y" * 6]), headers={"Content-Type": "multipart/form-data; boundary=x"})
             self.assertEqual(response.status_code, 413)
-        with patch("backend.uploads.MAX_SOURCE_BYTES", 2):
+        with patch("backend.upload_stream.MAX_COLLECTED_FILE_BYTES", 2):
             self.assertEqual(self.client.post("/api/scan/files", files=[("files", ("a.py", b"xxx"))]).status_code, 413)
 
     def test_snippet_byte_limit_and_empty(self):
