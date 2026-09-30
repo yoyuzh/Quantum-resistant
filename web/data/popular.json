@@ -1,9 +1,9 @@
 {
-  "scanned_at": "2026-09-29T20:36:18+08:00",
+  "scanned_at": "2026-09-30T12:22:08+08:00",
   "repos": [
     {
       "full_name": "OpenMined/PySyft",
-      "star_count": 10039,
+      "star_count": 10041,
       "url": "https://github.com/OpenMined/PySyft",
       "migration_score": 0,
       "finding_count": 0,
@@ -14,21 +14,65 @@
       "coverage": {
         "scanned_files": 6,
         "file_limit": 6,
-        "candidate_files": 605,
-        "skipped_files": 599,
+        "candidate_files": 640,
+        "skipped_files": 634,
         "partial": true
       },
       "diagnostics": [
         {
-          "code": "files_skipped",
-          "message": "归档中有 599 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+          "code": "partial_collection",
+          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
         }
       ],
-      "details_truncated": false
+      "details_truncated": false,
+      "error_code": null
+    },
+    {
+      "full_name": "pyca/cryptography",
+      "star_count": 7790,
+      "url": "https://github.com/pyca/cryptography",
+      "migration_score": 45,
+      "finding_count": 1,
+      "algorithms": [
+        "ECDSA"
+      ],
+      "findings": [
+        {
+          "line": 31,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "ec.ECDSA",
+          "detection_method": "ast_call",
+          "library": "cryptography",
+          "resolved_api": "cryptography.hazmat.primitives.asymmetric.ec.ECDSA",
+          "source_id": "src_2a6455c40f3e",
+          "file_name": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
+          "source_type": "github_repository"
+        }
+      ],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 880,
+        "skipped_files": 874,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "partial_collection",
+          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
+        }
+      ],
+      "details_truncated": false,
+      "error_code": null
     },
     {
       "full_name": "RsaCtfTool/RsaCtfTool",
-      "star_count": 7150,
+      "star_count": 7152,
       "url": "https://github.com/RsaCtfTool/RsaCtfTool",
       "migration_score": 0,
       "finding_count": 0,
@@ -37,16 +81,16 @@
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 5,
+        "scanned_files": 6,
         "file_limit": 6,
         "candidate_files": 123,
-        "skipped_files": 118,
+        "skipped_files": 117,
         "partial": true
       },
       "diagnostics": [
         {
           "code": "partial_collection",
-          "message": "仅扫描已采集的 5 个文件，存在未扫描文件。"
+          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
         },
         {
           "code": "unknown_pem_algorithm",
@@ -55,16 +99,22 @@
         },
         {
           "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/multi_keys/hastads.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_4f850ae030ed"
+        },
+        {
+          "code": "unknown_pem_algorithm",
           "message": "src/RsaCtfTool/attacks/multi_keys/same_n_huge_e.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
-          "source_id": "src_544db3fc161a"
+          "source_id": "src_c8f9a650dd79"
         },
         {
           "code": "unknown_pem_algorithm",
           "message": "src/RsaCtfTool/attacks/single_key/SQUFOF.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
-          "source_id": "src_95f14e5b665d"
+          "source_id": "src_b01d9f6d12cc"
         }
       ],
-      "details_truncated": false
+      "details_truncated": false,
+      "error_code": null
     },
     {
       "full_name": "epsylon/ufonet",
@@ -77,19 +127,20 @@
       "success": true,
       "error": null,
       "coverage": {
-        "scanned_files": 2,
+        "scanned_files": 6,
         "file_limit": 6,
         "candidate_files": 184,
-        "skipped_files": 182,
+        "skipped_files": 178,
         "partial": true
       },
       "diagnostics": [
         {
           "code": "partial_collection",
-          "message": "仅扫描已采集的 2 个文件，存在未扫描文件。"
+          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
         }
       ],
-      "details_truncated": false
+      "details_truncated": false,
+      "error_code": null
     },
     {
       "full_name": "TryCatchHCF/Cloakify",
@@ -139,485 +190,21 @@
           "source_id": "src_3064d76b7de6"
         }
       ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "ashutosh1206/Crypton",
-      "star_count": 1624,
-      "url": "https://github.com/ashutosh1206/Crypton",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 225,
-        "skipped_files": 219,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 219 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        },
-        {
-          "code": "syntax_fallback",
-          "message": "Authenticated-Encryption/AE-with-MACs/Encrypt-and-MAC/enc-and-mac.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_c5ae173408cf"
-        },
-        {
-          "code": "syntax_fallback",
-          "message": "Authenticated-Encryption/AE-with-MACs/Encrypt-then-MAC/encrypt-then-mac.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_00696227c7c3"
-        },
-        {
-          "code": "syntax_fallback",
-          "message": "Authenticated-Encryption/AE-with-MACs/MAC-then-Encrypt/mac-then-encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_09ab8eeb36be"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "hellman/xortool",
-      "star_count": 1486,
-      "url": "https://github.com/hellman/xortool",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 10,
-        "skipped_files": 4,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 4 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "susam/mintotp",
-      "star_count": 1400,
-      "url": "https://github.com/susam/mintotp",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 6,
-        "skipped_files": 0,
-        "partial": false
-      },
-      "diagnostics": [],
-      "details_truncated": false
-    },
-    {
-      "full_name": "jvdsn/crypto-attacks",
-      "star_count": 1286,
-      "url": "https://github.com/jvdsn/crypto-attacks",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 126,
-        "skipped_files": 120,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 120 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "tf-encrypted/tf-encrypted",
-      "star_count": 1241,
-      "url": "https://github.com/tf-encrypted/tf-encrypted",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 185,
-        "skipped_files": 179,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 179 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "nccgroup/featherduster",
-      "star_count": 1136,
-      "url": "https://github.com/nccgroup/featherduster",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 70,
-        "skipped_files": 64,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 64 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        },
-        {
-          "code": "syntax_fallback",
-          "message": "cryptanalib/classical.py 无法完成 Python AST 分析，已使用有限的文本规则。",
-          "source_id": "src_1431f9e46989"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "tlsfuzzer/python-ecdsa",
-      "star_count": 975,
-      "url": "https://github.com/tlsfuzzer/python-ecdsa",
-      "migration_score": 100,
-      "finding_count": 14,
-      "algorithms": [
-        "ECC",
-        "ECDSA"
-      ],
-      "findings": [
-        {
-          "line": 301,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 313,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 329,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 341,
-          "algorithm": "ECC",
-          "risk_level": "高风险",
-          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
-          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
-          "evidence": "PEM EC key header",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 350,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 363,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 370,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 428,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 499,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 513,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 515,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 522,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 542,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 585,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "src_5e6f3d63d09b",
-          "file_name": "README.md",
-          "source_type": "github_repository"
-        }
-      ],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 50,
-        "skipped_files": 44,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 44 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "pyca/pyopenssl",
-      "star_count": 944,
-      "url": "https://github.com/pyca/pyopenssl",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 27,
-        "skipped_files": 21,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 21 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        }
-      ],
-      "details_truncated": false
-    },
-    {
-      "full_name": "XTraceAI/cuhepy",
-      "star_count": 916,
-      "url": "https://github.com/XTraceAI/cuhepy",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": [],
-      "success": true,
-      "error": null,
-      "coverage": {
-        "scanned_files": 6,
-        "file_limit": 6,
-        "candidate_files": 118,
-        "skipped_files": 112,
-        "partial": true
-      },
-      "diagnostics": [
-        {
-          "code": "files_skipped",
-          "message": "归档中有 112 个候选文件因采集上限、大小、路径或编码限制未扫描。"
-        }
-      ],
-      "details_truncated": false
+      "details_truncated": false,
+      "error_code": null
     }
   ],
   "meta": {
-    "total_repos": 13,
-    "requested_count": 30,
+    "total_repos": 5,
+    "requested_count": 5,
     "query": "topic:cryptography language:python sort:stars",
     "scan_mode": "concurrent",
-    "workers": 5,
+    "workers": 3,
     "max_files": 6,
-    "timed_out": true,
-    "failed_count": 17
+    "timed_out": false,
+    "failed_count": 0,
+    "incomplete": false,
+    "saved_snapshot": true
   },
-  "failures": [
-    {
-      "full_name": "pyca/cryptography",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "binref/refinery",
-      "error": "远程扫描已超时，请缩小扫描范围后重试"
-    },
-    {
-      "full_name": "blacklanternsecurity/badsecrets",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "google/paranoid_crypto",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "tarcisio-marinho/GonnaCry",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "Coldcard/firmware",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "nucypher/nucypher",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "ragibson/Steganography",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "TryCatchHCF/PacketWhisper",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "JHUISI/charm",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "yaron4u/EnigmaCracker",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "data61/python-paillier",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "Bitwise-01/Loki",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "mimoo/Diffie-Hellman_Backdoor",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "Nour833/StegoForge",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "mufeedvh/basecrack",
-      "error": "扫描超时或未完成"
-    },
-    {
-      "full_name": "hdwallet-io/python-hdwallet",
-      "error": "扫描超时或未完成"
-    }
-  ]
+  "failures": []
 }
