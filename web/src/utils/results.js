@@ -18,8 +18,18 @@ export function filterFindings(findings, { algorithm = '', sourceId = '', query 
       (!algorithm || f.algorithm === algorithm) &&
       (!sourceId || f.source_id === sourceId) &&
       (!text ||
-        [f.file_name, f.algorithm, f.evidence, f.recommendation].some((v) =>
-          String(v).toLowerCase().includes(text),
+        [
+          f.file_name,
+          f.source_id,
+          f.algorithm,
+          f.evidence,
+          f.library,
+          f.resolved_api,
+          f.recommendation,
+        ].some((v) =>
+          String(v ?? '')
+            .toLowerCase()
+            .includes(text),
         )),
   );
 }

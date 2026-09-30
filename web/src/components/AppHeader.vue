@@ -1,4 +1,5 @@
 <script setup>
+import AppIcon from './AppIcon.vue';
 defineProps({ theme: String });
 defineEmits(['toggle-theme']);
 </script>
@@ -6,7 +7,7 @@ defineEmits(['toggle-theme']);
 <template>
   <header class="app-header">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">Q</span>
+      <span class="brand-mark"><AppIcon name="shield" :size="26" /></span>
       <div>
         <h1>抗量子迁移风险扫描平台</h1>
         <p>发现密码算法 · 定位代码证据 · 辅助迁移决策</p>
@@ -17,7 +18,8 @@ defineEmits(['toggle-theme']);
       @click="$emit('toggle-theme')"
       :aria-label="theme === 'light' ? '切换深色模式' : '切换浅色模式'"
     >
-      {{ theme === 'light' ? '◐ 深色' : '☀ 浅色' }}
+      <AppIcon :name="theme === 'light' ? 'moon' : 'sun'" :size="17" />
+      {{ theme === 'light' ? '深色' : '浅色' }}
     </button>
   </header>
 </template>

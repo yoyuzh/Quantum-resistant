@@ -1,12 +1,27 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { filterFindings, findingKey, paginate } from '../utils/results.js';
 import FindingCard from './FindingCard.vue';
 import SelectControl from './SelectControl.vue';
-const props = defineProps({ findings: Array, sources: Array });
-const algorithm = ref('');
-const sourceId = ref('');
-const query = ref('');
+const props = defineProps({
+  findings: Array,
+  sources: Array,
+  filters: Object,
+  matching: Array,
+  selectedKey: String,
+});
+const emit = defineEmits(['update:filters']);
+const local = reactive({ algorithm: '', sourceId: '', query: '' });
+function field(name) {
+  return computed({
+    get: () => (props.filters || local)[name],
+    set: (value) =>
+      props.filters ? emit('update:filters', { [name]: value }) : (local[name] = value),
+  });
+}
+const algorithm = field('algorithm');
+const sourceId = field('sourceId');
+const query = field('query');
 const page = ref(1);
 const list = ref(null);
 async function changePage(delta) {
@@ -30,15 +45,17 @@ const fileOptions = computed(() => [
   { value: '', label: '全部文件' },
   ...props.sources.map((source, index) => ({
     value: source.source_id,
-    label: `${index + 1}. ${source.file_name}`,
+    label: `${index + 1}. ${source.file_name} · ${source.source_id.slice(-6)}`,
   })),
 ]);
-const filtered = computed(() =>
-  filterFindings(props.findings, {
-    algorithm: algorithm.value,
-    sourceId: sourceId.value,
-    query: query.value,
-  }),
+const filtered = computed(
+  () =>
+    props.matching ||
+    filterFindings(props.findings, {
+      algorithm: algorithm.value,
+      sourceId: sourceId.value,
+      query: query.value,
+    }),
 );
 const pagination = computed(() => paginate(filtered.value, page.value));
 watch([algorithm, sourceId, query], () => {
@@ -47,11 +64,18 @@ watch([algorithm, sourceId, query], () => {
 watch(
   () => props.findings,
   () => {
-    algorithm.value = '';
-    sourceId.value = '';
-    query.value = '';
+    if (!props.filters) Object.assign(local, { algorithm: '', sourceId: '', query: '' });
     page.value = 1;
   },
+);
+watch(
+  [() => props.selectedKey, filtered],
+  () => {
+    if (!props.selectedKey) return;
+    const index = filtered.value.findIndex((finding) => findingKey(finding) === props.selectedKey);
+    if (index >= 0) page.value = Math.floor(index / 50) + 1;
+  },
+  { immediate: true },
 );
 </script>
 
@@ -64,7 +88,7 @@ watch(
       <SelectControl v-model="algorithm" label="算法" :options="algorithmOptions" />
       <SelectControl v-model="sourceId" label="文件" :options="fileOptions" />
       <label class="search"
-        >搜索<input v-model="query" type="search" placeholder="文件、证据或迁移建议"
+        >搜索<input v-model="query" type="search" placeholder="文件、API、证据或迁移建议"
       /></label>
     </div>
     <p v-if="!filtered.length" class="notice">
@@ -75,6 +99,7 @@ watch(
       :key="findingKey(finding)"
       :finding="finding"
       :sources="sources"
+      :initial-expanded="findingKey(finding) === selectedKey"
     />
     <div v-if="pagination.pages > 1" class="toolbar pagination">
       <button class="button secondary" :disabled="pagination.current <= 1" @click="changePage(-1)">

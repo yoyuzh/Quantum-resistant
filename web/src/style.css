@@ -20,6 +20,7 @@ textarea {
 }
 button {
   touch-action: manipulation;
+  border: 0;
 }
 a {
   color: var(--accent);
@@ -85,13 +86,13 @@ textarea::placeholder {
   color: var(--text-secondary);
 }
 .app-main {
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 1.25rem 1.5rem 0.75rem;
 }
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
   gap: 1.25rem;
   align-items: stretch;
 }
@@ -166,6 +167,10 @@ textarea::placeholder {
   align-items: center;
 }
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
   min-height: 44px;
   border: 0;
   border-radius: var(--radius);
@@ -238,8 +243,13 @@ textarea::placeholder {
   margin: auto;
 }
 .empty-mark {
-  display: block;
-  font-size: 3.5rem;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  background: var(--accent-soft);
+  border-radius: 24px;
+  margin: 0 auto 1.5rem;
   color: var(--accent);
 }
 .empty.compact {
@@ -251,7 +261,7 @@ footer {
   color: var(--text-secondary);
   font-size: 0.72rem;
 }
-@media (min-width: 1025px) and (min-height: 720px) {
+@media (min-width: 1024px) and (min-height: 800px) {
   #app {
     height: 100dvh;
     display: grid;
@@ -273,7 +283,7 @@ footer {
   }
   .input-body > .snippet-input {
     flex: 1;
-    min-height: 260px;
+    min-height: 380px;
   }
   .snippet-input .editor-label {
     display: flex;
@@ -284,7 +294,6 @@ footer {
   .snippet-input .editor {
     flex: 1;
     min-height: 160px;
-    height: 100%;
     resize: none;
   }
 }
@@ -296,13 +305,41 @@ footer {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .workspace-grid {
     grid-template-columns: 1fr;
   }
   .app-main {
     padding: 1rem;
   }
+}
+.content-enter-active {
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+.content-enter-from {
+  opacity: 0;
+  transform: translateY(5px);
+}
+.result-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+.result-tabs .button {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.result-tabs .active {
+  background: var(--accent-soft);
+  color: var(--accent-dim);
+}
+.analysis-card {
+  padding: 1rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
 }
 @media (max-width: 600px) {
   .panel {

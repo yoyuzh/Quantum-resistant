@@ -4,6 +4,8 @@ import { formatStars, formatTime, sortRepos } from '../utils/results.js';
 import ScanStatus from './ScanStatus.vue';
 import PopularDetail from './PopularDetail.vue';
 import SelectControl from './SelectControl.vue';
+import ScanLoading from './ScanLoading.vue';
+import AppIcon from './AppIcon.vue';
 const topOptions = [5, 8, 10, 20, 30].map((value) => ({ value, label: `${value} 个仓库` }));
 const props = defineProps({ state: Object });
 defineEmits(['refresh', 'reload', 'update:top']);
@@ -72,7 +74,8 @@ watch(
               ><span class="repo-info"
                 ><strong>{{ repo.full_name }}</strong
                 ><small
-                  >★ {{ formatStars(repo.star_count) }} · {{ repo.finding_count }} 项发现</small
+                  ><AppIcon name="star" :size="13" /> {{ formatStars(repo.star_count) }} ·
+                  {{ repo.finding_count }} 项发现</small
                 ></span
               ><span class="tag">{{ repo.migration_score }}</span>
             </button>
@@ -90,7 +93,12 @@ watch(
         </div>
       </div>
     </section>
-    <PopularDetail :key="selected" :repo="activeRepo" />
+    <section v-if="state.busy" class="panel results" aria-label="热门扫描进度">
+      <ScanLoading mode="popular" :elapsed="state.elapsed" :has-result="!!state.result" />
+    </section>
+    <Transition v-else name="content" appear>
+      <PopularDetail :key="selected" :repo="activeRepo" />
+    </Transition>
   </div>
 </template>
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import AppIcon from './AppIcon.vue';
 import { request } from '../api/client.js';
 import { ACCEPT, fileKey, mergeFiles } from '../utils/files.js';
 const props = defineProps({ files: Array, disabled: Boolean });
@@ -54,7 +55,7 @@ async function samples() {
       @dragover.prevent
       @drop.prevent="add($event.dataTransfer.files)"
     >
-      <span class="upload-icon" aria-hidden="true">↑</span>
+      <span class="upload-icon"><AppIcon name="upload" :size="32" /></span>
       <strong>选择文件或拖放到这里</strong>
       <span class="muted small">源码、配置及 PEM 文本 · UTF-8 编码</span>
     </button>

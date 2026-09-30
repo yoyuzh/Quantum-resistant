@@ -6,9 +6,9 @@ import SnippetInput from './components/SnippetInput.vue';
 import FileUpload from './components/FileUpload.vue';
 import RemoteInput from './components/RemoteInput.vue';
 import ScanStatus from './components/ScanStatus.vue';
-import ScanResults from './components/ScanResults.vue';
+import ResultsWorkspace from './components/ResultsWorkspace.vue';
+import AppIcon from './components/AppIcon.vue';
 import PopularView from './components/PopularView.vue';
-import KnowledgePanel from './components/KnowledgePanel.vue';
 import { useScan } from './composables/useScan.js';
 import { usePopular } from './composables/usePopular.js';
 import { useTheme } from './composables/useTheme.js';
@@ -29,7 +29,8 @@ const inputBody = ref(null);
 watch(
   () => current.value?.error,
   (error) => {
-    if (error) inputBody.value?.querySelector('[role="alert"]')?.scrollIntoView({ block: 'nearest' });
+    if (error)
+      inputBody.value?.querySelector('[role="alert"]')?.scrollIntoView({ block: 'nearest' });
   },
   { flush: 'post' },
 );
@@ -101,6 +102,7 @@ function submit() {
           </div>
           <div class="panel-actions stack">
             <button type="submit" class="button primary" :disabled="current.busy">
+              <AppIcon name="scan" :size="18" />
               {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
             </button>
             <p class="muted small">
@@ -109,23 +111,7 @@ function submit() {
           </div>
         </form>
       </section>
-      <section class="panel results" aria-label="扫描结果区域">
-        <ScanResults v-if="current.result" :key="mode" :result="current.result" />
-        <div v-else class="panel-body stack welcome-body" role="region" tabindex="0" aria-label="扫描指引与迁移知识">
-          <div class="empty">
-            <span class="empty-mark" aria-hidden="true">⌕</span>
-            <h2>{{ current.busy ? '正在分析，请稍候' : '从一段代码开始' }}</h2>
-            <p>
-              {{
-                current.busy
-                  ? '完成后，这里会显示发现、位置及迁移建议。'
-                  : '选择来源并开始扫描，查看密码算法的代码证据和迁移方向。'
-              }}
-            </p>
-          </div>
-          <KnowledgePanel />
-        </div>
-      </section>
+      <ResultsWorkspace :key="mode" :state="current" :mode="mode" />
     </div>
     <footer>抗量子迁移前置分析原型 · 扫描范围有限，结果需结合实际用途复核</footer>
   </main>

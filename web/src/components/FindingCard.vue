@@ -1,24 +1,44 @@
 <script setup>
-import { ref } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import CodePreview from './CodePreview.vue';
-defineProps({ finding: Object, sources: { type: Array, default: () => [] } });
-const expanded = ref(false);
+import { methodLabel } from '../utils/analysis.js';
+const props = defineProps({
+  finding: Object,
+  sources: { type: Array, default: () => [] },
+  initialExpanded: Boolean,
+});
+const expanded = ref(props.initialExpanded);
+const article = ref(null);
+async function reveal() {
+  if (!props.initialExpanded) return;
+  expanded.value = true;
+  await nextTick();
+  article.value?.scrollIntoView({ block: 'nearest' });
+}
+onMounted(reveal);
+watch(() => props.initialExpanded, reveal);
 </script>
 
 <template>
-  <article class="finding">
+  <article ref="article" class="finding">
     <div class="toolbar">
       <span class="tag">{{ finding.algorithm }}</span
       ><span class="risk">{{ finding.risk_level }}</span
       ><span class="muted small">第 {{ finding.line }} 行</span>
     </div>
     <p class="filename">{{ finding.file_name }}</p>
+    <p class="small muted">{{ methodLabel(finding.detection_method) }} · {{ finding.source_id }}</p>
     <p class="evidence">{{ finding.evidence }}</p>
     <p class="small">{{ finding.recommendation }}</p>
     <button class="button secondary small" @click="expanded = !expanded" :aria-expanded="expanded">
       {{ expanded ? '收起详情' : '查看原因与源码' }}
     </button>
     <div v-if="expanded" class="stack detail">
+      <p class="small muted">
+        密码库：{{ finding.library || '未记录' }}<br />完整 API：{{
+          finding.resolved_api || '未记录'
+        }}
+      </p>
       <p class="small muted">{{ finding.reason }}</p>
       <CodePreview :sources="sources" :finding="finding" />
     </div>

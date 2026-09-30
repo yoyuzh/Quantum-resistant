@@ -1,47 +1,50 @@
 <script setup>
-import { onUnmounted, ref, watch } from 'vue';
-import { request } from '../api/client.js';
+import { computed, nextTick, ref, watch } from 'vue';
 import { formatTime } from '../utils/results.js';
+import { useResultSelection } from '../composables/useResultSelection.js';
 import CoverageNotice from './CoverageNotice.vue';
 import ScanSummary from './ScanSummary.vue';
 import FindingsList from './FindingsList.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
+import AnalysisOverview from './AnalysisOverview.vue';
+import AssetInventory from './AssetInventory.vue';
+import MigrationChecklist from './MigrationChecklist.vue';
+import ExportMenu from './ExportMenu.vue';
+import AppIcon from './AppIcon.vue';
 const props = defineProps({ result: Object });
-const exporting = ref(false);
-const exportError = ref('');
-const downloadUrl = ref('');
 const body = ref(null);
-watch(() => props.result, () => body.value?.scrollTo({ top: 0 }), { flush: 'post' });
-function clearDownload() {
-  if (downloadUrl.value) URL.revokeObjectURL(downloadUrl.value);
-  downloadUrl.value = '';
+const { tab, filters, findings, selectedKey, reset, select, reveal } = useResultSelection(
+  computed(() => props.result),
+);
+const tabs = [
+  ['overview', '分析概览', 'graph'],
+  ['assets', '资产清单', 'file'],
+  ['findings', '发现明细', 'code'],
+  ['migration', '迁移待办', 'list'],
+];
+const hasFilters = computed(() => Object.values(filters).some(Boolean));
+watch(tab, () => body.value?.scrollTo({ top: 0 }), { flush: 'post' });
+async function selectEvidence(value) {
+  select({ query: '', ...value });
+  await nextTick();
+  body.value?.focus({ preventScroll: true });
 }
-watch(() => props.result, clearDownload);
-onUnmounted(clearDownload);
-async function exportReport() {
-  if (exporting.value) return;
-  exporting.value = true;
-  exportError.value = '';
-  try {
-    const content = await request('/api/report/markdown', {
-      method: 'POST',
-      body: props.result,
-      text: true,
-    });
-    clearDownload();
-    const url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
-    downloadUrl.value = url;
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'quantum-scan-report.md';
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-  } catch (error) {
-    exportError.value = error.message;
-  } finally {
-    exporting.value = false;
-  }
+async function revealEvidence(asset, location) {
+  reveal(asset, location);
+  await nextTick();
+  body.value?.focus({ preventScroll: true });
+}
+function tabKeys(event, index) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  event.preventDefault();
+  const next =
+    event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? tabs.length - 1
+        : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  tab.value = tabs[next][0];
+  event.currentTarget.parentElement.children[next].focus();
 }
 </script>
 
@@ -51,37 +54,89 @@ async function exportReport() {
     <div class="panel-heading">
       <div class="result-heading">
         <div>
-          <h2>扫描结果</h2>
+          <p class="eyebrow">扫描已完成</p>
+          <h2>密码资产与迁移分析</h2>
           <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
         </div>
-        <button class="button secondary" :disabled="exporting" @click="exportReport">
-          {{ exporting ? '正在导出…' : '导出 Markdown' }}
+        <ExportMenu :result="result" />
+      </div>
+      <div class="result-tabs" role="tablist" aria-label="分析视图">
+        <button
+          v-for="([value, label, icon], index) in tabs"
+          :id="`tab-${value}`"
+          :key="value"
+          class="button"
+          :class="{ active: tab === value }"
+          role="tab"
+          :aria-selected="tab === value"
+          aria-controls="result-panel"
+          :tabindex="tab === value ? 0 : -1"
+          @click="tab = value"
+          @keydown="tabKeys($event, index)"
+        >
+          <AppIcon :name="icon" :size="17" />{{ label }}
         </button>
       </div>
-      <p v-if="exportError" class="notice error export-feedback" role="alert">{{ exportError }}</p>
-      <p v-if="downloadUrl" class="notice export-feedback" role="status">
-        报告已生成。如未自动下载，可
-        <a :href="downloadUrl" download="quantum-scan-report.md">保存 Markdown 报告</a>。
-      </p>
     </div>
-    <div ref="body" class="panel-body stack" role="region" tabindex="0" aria-label="扫描结果内容">
+    <div
+      id="result-panel"
+      ref="body"
+      class="panel-body stack"
+      role="tabpanel"
+      tabindex="0"
+      :aria-labelledby="`tab-${tab}`"
+    >
       <ScanSummary :summary="result.summary" />
       <CoverageNotice :coverage="result.coverage" :diagnostics="result.diagnostics" />
-      <FindingsList :findings="result.findings" :sources="result.sources" />
-      <KnowledgePanel />
+      <div
+        v-if="hasFilters && (tab === 'assets' || tab === 'findings')"
+        class="filter-notice toolbar"
+      >
+        <span class="small"
+          >当前筛选：{{ filters.algorithm || '全部算法'
+          }}{{ filters.sourceId ? ' · ' + filters.sourceId : ''
+          }}{{ filters.target ? ' · ' + filters.target : ''
+          }}{{ filters.query ? ' · ' + filters.query : '' }}</span
+        >
+        <button class="button secondary" @click="reset">
+          <AppIcon name="close" :size="14" />清除筛选
+        </button>
+      </div>
+      <AnalysisOverview v-if="tab === 'overview'" :result="result" @select="selectEvidence" />
+      <AssetInventory
+        v-else-if="tab === 'assets'"
+        :analysis="result.analysis"
+        :findings="findings"
+        @reveal="revealEvidence"
+      />
+      <FindingsList
+        v-else-if="tab === 'findings'"
+        :findings="result.findings"
+        :sources="result.sources"
+        :filters="filters"
+        :matching="findings"
+        :selected-key="selectedKey"
+        @update:filters="Object.assign(filters, $event)"
+      />
+      <MigrationChecklist v-else :analysis="result.analysis" @select="selectEvidence" />
+      <KnowledgePanel v-if="tab === 'overview' || tab === 'migration'" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.export-feedback {
-  margin-top: 0.75rem;
-}
 .result-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.7rem;
+}
+.filter-notice {
+  background: var(--accent-soft);
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius);
+  justify-content: space-between;
+  overflow-wrap: anywhere;
 }
 </style>

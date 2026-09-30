@@ -1,26 +1,27 @@
 <script setup>
+import AppIcon from './AppIcon.vue';
 defineProps({ modelValue: String });
 defineEmits(['update:modelValue']);
 const modes = [
-  ['snippet', '代码片段'],
-  ['files', '文件上传'],
-  ['github', 'GitHub 仓库'],
-  ['pypi', 'PyPI 包'],
-  ['popular', '热门榜单'],
+  ['snippet', '代码片段', 'code'],
+  ['files', '文件上传', 'upload'],
+  ['github', 'GitHub 仓库', 'repository'],
+  ['pypi', 'PyPI 包', 'package'],
+  ['popular', '热门榜单', 'chart'],
 ];
 </script>
 
 <template>
   <nav class="mode-tabs" aria-label="选择扫描来源">
     <button
-      v-for="[value, label] in modes"
+      v-for="[value, label, icon] in modes"
       :key="value"
       class="button"
       :class="{ active: modelValue === value }"
       :aria-pressed="modelValue === value"
       @click="$emit('update:modelValue', value)"
     >
-      {{ label }}
+      <AppIcon :name="icon" :size="18" />{{ label }}
     </button>
   </nav>
 </template>
