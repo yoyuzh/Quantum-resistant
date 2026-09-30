@@ -24,9 +24,10 @@ function Resolve-PythonCommand {
 }
 
 $PythonExe = Resolve-PythonCommand
-$Arguments = @("start.py", "--host", $HostAddress, "--port", $Port)
+$Arguments = @("-u", "start.py", "--host", $HostAddress, "--port", $Port)
 if ($StrictPort) {
     $Arguments += "--strict-port"
 }
 
 & $PythonExe @Arguments
+exit $LASTEXITCODE

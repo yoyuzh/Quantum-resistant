@@ -1,1339 +1,623 @@
 {
-  "scanned_at": "2026-05-23T14:26:53+08:00",
+  "scanned_at": "2026-09-29T20:36:18+08:00",
   "repos": [
     {
       "full_name": "OpenMined/PySyft",
-      "star_count": 9893,
+      "star_count": 10039,
       "url": "https://github.com/OpenMined/PySyft",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
-    },
-    {
-      "full_name": "pyca/cryptography",
-      "star_count": 7600,
-      "url": "https://github.com/pyca/cryptography",
-      "migration_score": 100,
-      "finding_count": 10,
-      "algorithms": [
-        "DSA",
-        "ECDSA",
-        "RSA",
-        "X25519",
-        "X448"
-      ],
-      "findings": [
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 605,
+        "skipped_files": 599,
+        "partial": true
+      },
+      "diagnostics": [
         {
-          "line": 25,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "rsa.generate_private_key",
-          "source_id": "pyca/cryptography",
-          "file_name": "docs/development/custom-vectors/rsa-oaep-sha2/generate_rsa_oaep_sha2.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 31,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "ec.ECDSA",
-          "source_id": "pyca/cryptography",
-          "file_name": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 51,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "SigningKey.generate",
-          "source_id": "pyca/cryptography",
-          "file_name": "docs/development/custom-vectors/secp256k1/generate_secp256k1.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 57,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "sigdecode_der",
-          "source_id": "pyca/cryptography",
-          "file_name": "docs/development/custom-vectors/secp256k1/generate_secp256k1.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 285,
-          "algorithm": "DSA",
-          "risk_level": "高风险",
-          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
-          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
-          "evidence": "算法标识: DSA",
-          "source_id": "pyca/cryptography",
-          "file_name": "src/cryptography/hazmat/_oid.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 286,
-          "algorithm": "DSA",
-          "risk_level": "高风险",
-          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
-          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
-          "evidence": "算法标识: DSA",
-          "source_id": "pyca/cryptography",
-          "file_name": "src/cryptography/hazmat/_oid.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 287,
-          "algorithm": "DSA",
-          "risk_level": "高风险",
-          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
-          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
-          "evidence": "算法标识: DSA",
-          "source_id": "pyca/cryptography",
-          "file_name": "src/cryptography/hazmat/_oid.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 310,
-          "algorithm": "DSA",
-          "risk_level": "高风险",
-          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
-          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
-          "evidence": "算法标识: DSA",
-          "source_id": "pyca/cryptography",
-          "file_name": "src/cryptography/hazmat/_oid.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 313,
-          "algorithm": "X25519",
-          "risk_level": "高风险",
-          "reason": "X25519 属于椭圆曲线 Diffie-Hellman 密钥交换，量子计算可高效求解其离散对数基础。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM，或在过渡期使用经评估的混合密钥交换。",
-          "evidence": "算法标识: X25519",
-          "source_id": "pyca/cryptography",
-          "file_name": "src/cryptography/hazmat/_oid.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 314,
-          "algorithm": "X448",
-          "risk_level": "高风险",
-          "reason": "X448 属于椭圆曲线 Diffie-Hellman 密钥交换，量子计算可高效求解其离散对数基础。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM，或在过渡期使用经评估的混合密钥交换。",
-          "evidence": "算法标识: X448",
-          "source_id": "pyca/cryptography",
-          "file_name": "src/cryptography/hazmat/_oid.py",
-          "source_type": "github_repository"
+          "code": "files_skipped",
+          "message": "归档中有 599 个候选文件因采集上限、大小、路径或编码限制未扫描。"
         }
-      ]
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "RsaCtfTool/RsaCtfTool",
-      "star_count": 6954,
+      "star_count": 7150,
       "url": "https://github.com/RsaCtfTool/RsaCtfTool",
-      "migration_score": 100,
-      "finding_count": 57,
-      "algorithms": [
-        "RSA"
-      ],
-      "findings": [
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 5,
+        "file_limit": 6,
+        "candidate_files": 123,
+        "skipped_files": 118,
+        "partial": true
+      },
+      "diagnostics": [
         {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "examples/masked.pem",
-          "source_type": "github_repository"
+          "code": "partial_collection",
+          "message": "仅扫描已采集的 5 个文件，存在未扫描文件。"
         },
         {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "examples/partial_d.pem",
-          "source_type": "github_repository"
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/multi_keys/common_modulus_related_message.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_3b6060d5e697"
         },
         {
-          "line": 25,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/SQUFOF.py",
-          "source_type": "github_repository"
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/multi_keys/same_n_huge_e.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_544db3fc161a"
         },
         {
-          "line": 27,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/fermat.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 27,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/kraitchik.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 27,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/lehmer.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 28,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/hart.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 28,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/lehman.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 28,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/smallq.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 29,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/carmichael.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 29,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/fibonacci_gcd.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 29,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/lucas_gcd.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 29,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/pollard_rho.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 30,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/fermat_numbers_gcd.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 31,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/dixon.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 31,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/londahl.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 32,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/pollard_p_1.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 33,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/wiener.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 34,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/mersenne_pm1_gcd.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 37,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "RsaCtfTool/RsaCtfTool",
-          "file_name": "src/RsaCtfTool/attacks/single_key/factorial_pm1_gcd.py",
-          "source_type": "github_repository"
+          "code": "unknown_pem_algorithm",
+          "message": "src/RsaCtfTool/attacks/single_key/SQUFOF.py 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_95f14e5b665d"
         }
-      ]
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "epsylon/ufonet",
-      "star_count": 2468,
+      "star_count": 2531,
       "url": "https://github.com/epsylon/ufonet",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 2,
+        "file_limit": 6,
+        "candidate_files": 184,
+        "skipped_files": 182,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "partial_collection",
+          "message": "仅扫描已采集的 2 个文件，存在未扫描文件。"
+        }
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "TryCatchHCF/Cloakify",
-      "star_count": 1663,
+      "star_count": 1683,
       "url": "https://github.com/TryCatchHCF/Cloakify",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 34,
+        "skipped_files": 28,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "partial_collection",
+          "message": "仅扫描已采集的 6 个文件，存在未扫描文件。"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "cloakify.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_ffd4f02fd7f4"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "cloakifyFactory.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_94f156b7d04a"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "decloakify.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_32b79fe0874f"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "noiseTools/prependEmoji.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_dcbf7400d333"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "noiseTools/prependID.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_3064d76b7de6"
+        }
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "ashutosh1206/Crypton",
-      "star_count": 1608,
+      "star_count": 1624,
       "url": "https://github.com/ashutosh1206/Crypton",
-      "migration_score": 100,
-      "finding_count": 4,
-      "algorithms": [
-        "DSA",
-        "RSA"
-      ],
-      "findings": [
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 225,
+        "skipped_files": 219,
+        "partial": true
+      },
+      "diagnostics": [
         {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "ashutosh1206/Crypton",
-          "file_name": "RSA-encryption/Attack-Coppersmith/Challenges/stereotypes/pubkey.txt",
-          "source_type": "github_repository"
+          "code": "files_skipped",
+          "message": "归档中有 219 个候选文件因采集上限、大小、路径或编码限制未扫描。"
         },
         {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "ashutosh1206/Crypton",
-          "file_name": "RSA-encryption/Factorisation-Pollard's_p-1/Challenges/handicraft_rsa/output.txt",
-          "source_type": "github_repository"
+          "code": "syntax_fallback",
+          "message": "Authenticated-Encryption/AE-with-MACs/Encrypt-and-MAC/enc-and-mac.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_c5ae173408cf"
         },
         {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "ashutosh1206/Crypton",
-          "file_name": "RSA-encryption/Intro-Challenges/C4-reloaded/publickey.pem",
-          "source_type": "github_repository"
+          "code": "syntax_fallback",
+          "message": "Authenticated-Encryption/AE-with-MACs/Encrypt-then-MAC/encrypt-then-mac.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_00696227c7c3"
         },
         {
-          "line": 46,
-          "algorithm": "DSA",
-          "risk_level": "高风险",
-          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
-          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
-          "evidence": "算法标识: DSA",
-          "source_id": "ashutosh1206/Crypton",
-          "file_name": "Digital-Signatures/ElGamal-Signatures/Challenges/Nonsense/encrypt.py",
-          "source_type": "github_repository"
+          "code": "syntax_fallback",
+          "message": "Authenticated-Encryption/AE-with-MACs/MAC-then-Encrypt/mac-then-encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_09ab8eeb36be"
         }
-      ]
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "hellman/xortool",
-      "star_count": 1481,
+      "star_count": 1486,
       "url": "https://github.com/hellman/xortool",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 10,
+        "skipped_files": 4,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 4 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+        }
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "susam/mintotp",
-      "star_count": 1403,
+      "star_count": 1400,
       "url": "https://github.com/susam/mintotp",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 6,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "diagnostics": [],
+      "details_truncated": false
     },
     {
       "full_name": "jvdsn/crypto-attacks",
-      "star_count": 1262,
+      "star_count": 1286,
       "url": "https://github.com/jvdsn/crypto-attacks",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 126,
+        "skipped_files": 120,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 120 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+        }
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "tf-encrypted/tf-encrypted",
-      "star_count": 1244,
+      "star_count": 1241,
       "url": "https://github.com/tf-encrypted/tf-encrypted",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 185,
+        "skipped_files": 179,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 179 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+        }
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "nccgroup/featherduster",
-      "star_count": 1130,
+      "star_count": 1136,
       "url": "https://github.com/nccgroup/featherduster",
-      "migration_score": 95,
-      "finding_count": 3,
-      "algorithms": [
-        "RSA"
-      ],
-      "findings": [
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 70,
+        "skipped_files": 64,
+        "partial": true
+      },
+      "diagnostics": [
         {
-          "line": 13,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "nccgroup/featherduster",
-          "file_name": "tests/test_ciphertext_analysis.py",
-          "source_type": "github_repository"
+          "code": "files_skipped",
+          "message": "归档中有 64 个候选文件因采集上限、大小、路径或编码限制未扫描。"
         },
         {
-          "line": 20,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "nccgroup/featherduster",
-          "file_name": "tests/test_ciphertext_analysis.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 28,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "nccgroup/featherduster",
-          "file_name": "tests/test_ciphertext_analysis.py",
-          "source_type": "github_repository"
+          "code": "syntax_fallback",
+          "message": "cryptanalib/classical.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_1431f9e46989"
         }
-      ]
+      ],
+      "details_truncated": false
     },
     {
       "full_name": "tlsfuzzer/python-ecdsa",
       "star_count": 975,
       "url": "https://github.com/tlsfuzzer/python-ecdsa",
       "migration_score": 100,
-      "finding_count": 90,
+      "finding_count": 14,
       "algorithms": [
         "ECC",
-        "ECDH",
-        "ECDSA",
-        "Ed25519",
-        "RSA"
-      ],
-      "findings": [
-        {
-          "line": 5,
-          "algorithm": "Ed25519",
-          "risk_level": "高风险",
-          "reason": "Ed25519 属于椭圆曲线签名算法，量子攻击下其离散对数安全假设不再成立。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA；长期归档或高安全等级场景可评估 FIPS 205 SLH-DSA。",
-          "evidence": "算法标识: ssh-ed25519",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/ssh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 47,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 48,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 51,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Public_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 52,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Private_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 63,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "ecdsa.SigningKey.generate",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "speed.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 63,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 64,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 73,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 81,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Public_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 86,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 97,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 100,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Public_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 101,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Public_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 105,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 113,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 114,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Public_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 115,
-          "algorithm": "ECDSA",
-          "risk_level": "高风险",
-          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
-          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "Public_key",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdsa.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 123,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 125,
-          "algorithm": "ECDH",
-          "risk_level": "高风险",
-          "reason": "ECDH 建立在椭圆曲线离散对数问题之上，量子计算可高效求解。",
-          "recommendation": "密钥交换迁移到 FIPS 203 ML-KEM。",
-          "evidence": "ECDH",
-          "source_id": "tlsfuzzer/python-ecdsa",
-          "file_name": "src/ecdsa/test_ecdh.py",
-          "source_type": "github_repository"
-        }
-      ]
-    },
-    {
-      "full_name": "pyca/pyopenssl",
-      "star_count": 940,
-      "url": "https://github.com/pyca/pyopenssl",
-      "migration_score": 100,
-      "finding_count": 27,
-      "algorithms": [
-        "ECC",
-        "RSA"
-      ],
-      "findings": [
-        {
-          "line": 131,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 236,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "rsa.generate_private_key",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_ssl.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 244,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 255,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "rsa.generate_private_key",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_ssl.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 279,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "rsa.generate_private_key",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_ssl.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 313,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 383,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 452,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 507,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 529,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 540,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "rsa.generate_private_key",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_ssl.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 547,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 560,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 602,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 656,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 662,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 668,
-          "algorithm": "ECC",
-          "risk_level": "高风险",
-          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
-          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
-          "evidence": "PEM EC key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 692,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 697,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 713,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "pyca/pyopenssl",
-          "file_name": "tests/test_crypto.py",
-          "source_type": "github_repository"
-        }
-      ]
-    },
-    {
-      "full_name": "binref/refinery",
-      "star_count": 843,
-      "url": "https://github.com/binref/refinery",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": []
-    },
-    {
-      "full_name": "google/paranoid_crypto",
-      "star_count": 802,
-      "url": "https://github.com/google/paranoid_crypto",
-      "migration_score": 0,
-      "finding_count": 0,
-      "algorithms": [],
-      "findings": []
-    },
-    {
-      "full_name": "blacklanternsecurity/badsecrets",
-      "star_count": 798,
-      "url": "https://github.com/blacklanternsecurity/badsecrets",
-      "migration_score": 100,
-      "finding_count": 199,
-      "algorithms": [
-        "ECC",
-        "RSA"
-      ],
-      "findings": [
-        {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_private.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 1,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_public.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 2,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_private.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 2,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_public.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_private.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_public.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 4,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_private.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 4,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_public.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 5,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_public.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 6,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/jwt_rsakeys_private.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3267,
-          "algorithm": "ECC",
-          "risk_level": "高风险",
-          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
-          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
-          "evidence": "PEM EC key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3268,
-          "algorithm": "ECC",
-          "risk_level": "高风险",
-          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
-          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
-          "evidence": "PEM EC key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3280,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3281,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3282,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3283,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3284,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3285,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3286,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 3287,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "blacklanternsecurity/badsecrets",
-          "file_name": "badsecrets/resources/flask_secret_keys.txt",
-          "source_type": "github_repository"
-        }
-      ]
-    },
-    {
-      "full_name": "tarcisio-marinho/GonnaCry",
-      "star_count": 778,
-      "url": "https://github.com/tarcisio-marinho/GonnaCry",
-      "migration_score": 100,
-      "finding_count": 3,
-      "algorithms": [
-        "RSA"
-      ],
-      "findings": [
-        {
-          "line": 21,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "tarcisio-marinho/GonnaCry",
-          "file_name": "src/Server/old_server.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 22,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "RSA.generate",
-          "source_id": "tarcisio-marinho/GonnaCry",
-          "file_name": "src/GonnaCry/asymmetric.py",
-          "source_type": "github_repository"
-        },
-        {
-          "line": 50,
-          "algorithm": "RSA",
-          "risk_level": "高风险",
-          "reason": "RSA 依赖大整数分解，Shor 算法可在容错量子计算环境下高效破解。",
-          "recommendation": "密钥建立迁移到 FIPS 203 ML-KEM；签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "PEM RSA key header",
-          "source_id": "tarcisio-marinho/GonnaCry",
-          "file_name": "src/Server/old_server.py",
-          "source_type": "github_repository"
-        }
-      ]
-    },
-    {
-      "full_name": "Coldcard/firmware",
-      "star_count": 713,
-      "url": "https://github.com/Coldcard/firmware",
-      "migration_score": 45,
-      "finding_count": 1,
-      "algorithms": [
         "ECDSA"
       ],
       "findings": [
         {
-          "line": 63,
+          "line": 301,
           "algorithm": "ECDSA",
           "risk_level": "高风险",
           "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
           "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
-          "evidence": "randrange_from_seed__trytryagain",
-          "source_id": "Coldcard/firmware",
-          "file_name": "cli/signit.py",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 313,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 329,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 341,
+          "algorithm": "ECC",
+          "risk_level": "高风险",
+          "reason": "ECC 家族依赖椭圆曲线离散对数问题，量子算法可系统性破坏其安全假设。",
+          "recommendation": "按用途迁移到 FIPS 203 ML-KEM 或 FIPS 204 ML-DSA。",
+          "evidence": "PEM EC key header",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 350,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 363,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 370,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 428,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 499,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 513,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 515,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 522,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 542,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
+          "source_type": "github_repository"
+        },
+        {
+          "line": 585,
+          "algorithm": "ECDSA",
+          "risk_level": "高风险",
+          "reason": "ECDSA 的安全性依赖椭圆曲线离散对数问题，量子攻击下存在根本风险。",
+          "recommendation": "签名迁移到 FIPS 204 ML-DSA。",
+          "evidence": "SigningKey.generate",
+          "source_id": "src_5e6f3d63d09b",
+          "file_name": "README.md",
           "source_type": "github_repository"
         }
-      ]
+      ],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 50,
+        "skipped_files": 44,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 44 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+        }
+      ],
+      "details_truncated": false
     },
     {
-      "full_name": "nucypher/nucypher",
-      "star_count": 706,
-      "url": "https://github.com/nucypher/nucypher",
+      "full_name": "pyca/pyopenssl",
+      "star_count": 944,
+      "url": "https://github.com/pyca/pyopenssl",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 27,
+        "skipped_files": 21,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 21 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+        }
+      ],
+      "details_truncated": false
     },
     {
-      "full_name": "ragibson/Steganography",
-      "star_count": 651,
-      "url": "https://github.com/ragibson/Steganography",
+      "full_name": "XTraceAI/cuhepy",
+      "star_count": 916,
+      "url": "https://github.com/XTraceAI/cuhepy",
       "migration_score": 0,
       "finding_count": 0,
       "algorithms": [],
-      "findings": []
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 6,
+        "candidate_files": 118,
+        "skipped_files": 112,
+        "partial": true
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 112 个候选文件因采集上限、大小、路径或编码限制未扫描。"
+        }
+      ],
+      "details_truncated": false
     }
   ],
   "meta": {
-    "total_repos": 20,
-    "requested_count": 20,
-    "query": "topic:cryptography language:python sort:stars"
-  }
+    "total_repos": 13,
+    "requested_count": 30,
+    "query": "topic:cryptography language:python sort:stars",
+    "scan_mode": "concurrent",
+    "workers": 5,
+    "max_files": 6,
+    "timed_out": true,
+    "failed_count": 17
+  },
+  "failures": [
+    {
+      "full_name": "pyca/cryptography",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "binref/refinery",
+      "error": "远程扫描已超时，请缩小扫描范围后重试"
+    },
+    {
+      "full_name": "blacklanternsecurity/badsecrets",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "google/paranoid_crypto",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "tarcisio-marinho/GonnaCry",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "Coldcard/firmware",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "nucypher/nucypher",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "ragibson/Steganography",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "TryCatchHCF/PacketWhisper",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "JHUISI/charm",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "yaron4u/EnigmaCracker",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "data61/python-paillier",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "Bitwise-01/Loki",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "mimoo/Diffie-Hellman_Backdoor",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "Nour833/StegoForge",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "mufeedvh/basecrack",
+      "error": "扫描超时或未完成"
+    },
+    {
+      "full_name": "hdwallet-io/python-hdwallet",
+      "error": "扫描超时或未完成"
+    }
+  ]
 }
