@@ -1,12 +1,14 @@
 import { onUnmounted } from 'vue';
 import { request } from '../api/client.js';
 import { followTask } from '../utils/remoteTasks.js';
+import { uploadRequest } from '../api/upload.js';
 
 export function useRemoteTask(kind, state) {
   const key = `quantum-task-${kind}`;
   let cancelController;
   let disposed = false;
   let pendingSubmission = null;
+  let submissionController;
   function saved() {
     try {
       return sessionStorage.getItem(key) || '';
@@ -22,21 +24,30 @@ export function useRemoteTask(kind, state) {
     }
   }
   async function execute(body, signal, resumeId = '') {
-    const signature = JSON.stringify(body);
+    const signature = body instanceof FormData
+      ? JSON.stringify([...body.entries()].map(([name, file]) => [name, file.name, file.size, file.lastModified]))
+      : JSON.stringify(body);
     if (!resumeId && pendingSubmission?.signature !== signature)
       pendingSubmission = { signature, requestId: crypto.randomUUID() };
     state.progress = null;
     state.connection = '';
     state.taskNote = '';
     state.taskId = resumeId;
+    submissionController = new AbortController();
+    const stop = () => submissionController.abort();
+    signal.addEventListener('abort', stop, { once: true });
     try {
       const { result, status } = await followTask({
-        request,
+        request: (path, args) => args?.body instanceof FormData
+          ? uploadRequest(path, { ...args, signal: submissionController.signal, timeout: 600000,
+              onProgress: (progress) => { if (!signal.aborted) state.progress = progress; } })
+          : request(path, args),
         kind,
         body,
-        signal,
+        signal: submissionController.signal,
         id: resumeId,
         requestId: pendingSubmission?.requestId,
+        includeContent: false,
         onId: (id) => {
           pendingSubmission = null;
           state.taskId = id;
@@ -67,11 +78,13 @@ export function useRemoteTask(kind, state) {
       )
         state.previous = state.result;
       save('');
+      result.task_id = status.id || state.taskId;
       return result;
     } catch (error) {
       if (!signal.aborted) save('');
       throw error;
     } finally {
+      signal.removeEventListener('abort', stop);
       if (!signal.aborted) {
         state.taskId = '';
         state.connection = '';
@@ -79,6 +92,10 @@ export function useRemoteTask(kind, state) {
     }
   }
   async function cancel() {
+    if (!state.taskId && kind === 'files') {
+      submissionController?.abort();
+      return;
+    }
     if (!state.taskId || state.cancelling) return;
     state.cancelling = true;
     cancelController = new AbortController();

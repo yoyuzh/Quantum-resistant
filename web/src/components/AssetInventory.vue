@@ -14,7 +14,7 @@ const assets = computed(() => {
     keys.has(JSON.stringify([asset.source_id, asset.algorithm])),
   );
 });
-const pagination = computed(() => paginate(assets.value, page.value, 20));
+const pagination = computed(() => paginate(assets.value, page.value, 50));
 watch(assets, () => {
   page.value = 1;
 });

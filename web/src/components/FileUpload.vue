@@ -1,5 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { paginate } from '../utils/results.js';
+import { scanLimits } from '../composables/useScanConfig.js';
 import AppIcon from './AppIcon.vue';
 import { request } from '../api/client.js';
 import { ACCEPT, fileKey, mergeFiles } from '../utils/files.js';
@@ -8,6 +10,9 @@ const emit = defineEmits(['update:files']);
 const picker = ref(null);
 const errors = ref([]);
 const loading = ref(false);
+const page = ref(1);
+const pagination = computed(() => paginate(props.files, page.value, 100));
+watch(() => props.files, () => { page.value = 1; });
 function add(files) {
   if (props.disabled) return;
   const result = mergeFiles(props.files, Array.from(files));
@@ -60,7 +65,8 @@ async function samples() {
       <span class="muted small">源码、配置及 PEM 文本 · UTF-8 编码</span>
     </button>
     <p class="muted small">
-      单文件 2 MiB，合计 10 MiB（含表单开销），最多 80 个文件。同名不同版本可同时扫描。
+      单文件 {{ scanLimits.max_file_bytes / 1048576 }} MiB，源码合计 {{ scanLimits.max_text_bytes / 1048576 }} MiB，
+      上传请求 {{ scanLimits.max_upload_bytes / 1048576 }} MiB，最多 {{ scanLimits.max_files }} 个文件。同名不同版本可同时扫描。
     </p>
     <div class="toolbar">
       <button
@@ -76,7 +82,7 @@ async function samples() {
       <p v-for="error in errors" :key="error">{{ error }}</p>
     </div>
     <ul class="file-list">
-      <li v-for="(file, index) in files" :key="fileKey(file)">
+      <li v-for="file in pagination.items" :key="fileKey(file)">
         <span
           >{{ file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
         ><button
@@ -87,7 +93,7 @@ async function samples() {
           @click="
             $emit(
               'update:files',
-              files.filter((_, i) => i !== index),
+              files.filter((item) => item !== file),
             )
           "
         >
@@ -95,6 +101,11 @@ async function samples() {
         </button>
       </li>
     </ul>
+    <div v-if="pagination.pages > 1" class="toolbar">
+      <button type="button" class="button secondary" :disabled="pagination.current <= 1" @click="page--">上一页</button>
+      <span class="small">{{ pagination.current }} / {{ pagination.pages }} · 每页100个文件</span>
+      <button type="button" class="button secondary" :disabled="pagination.current >= pagination.pages" @click="page++">下一页</button>
+    </div>
   </div>
 </template>
 

@@ -6,6 +6,7 @@ const props = defineProps({
   finding: Object,
   sources: { type: Array, default: () => [] },
   initialExpanded: Boolean,
+  loadSource: Function,
 });
 const expanded = ref(props.initialExpanded);
 const article = ref(null);
@@ -40,7 +41,7 @@ watch(() => props.initialExpanded, reveal);
         }}
       </p>
       <p class="small muted">{{ finding.reason }}</p>
-      <CodePreview :sources="sources" :finding="finding" />
+      <CodePreview :sources="sources" :finding="finding" :load-source="loadSource" />
     </div>
   </article>
 </template>

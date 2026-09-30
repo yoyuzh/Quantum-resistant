@@ -27,7 +27,7 @@ export function useExport(result) {
     try {
       const content = await request(`/api/report/${format}`, {
         method: 'POST',
-        body: result.value,
+        body: { ...result.value, sources: result.value.sources.map((source) => ({ ...source, content: '' })) },
         text: true,
         signal: controller.signal,
       });

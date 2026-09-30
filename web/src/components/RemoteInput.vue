@@ -1,4 +1,5 @@
 <script setup>
+import { scanLimits } from '../composables/useScanConfig.js';
 defineProps({ mode: String, modelValue: String, disabled: Boolean });
 defineEmits(['update:modelValue']);
 </script>
@@ -18,12 +19,13 @@ defineEmits(['update:modelValue']);
     </label>
     <div class="notice">
       <p v-if="mode === 'github'">
-        优先读取默认分支的文件树，按密码相关文件名优先采集；必要时回退源码归档。
+        固定默认分支版本；超过32个候选文件时优先读取源码归档，失败回退逐文件采集。关键词只影响顺序。
       </p>
       <p v-else>优先读取 PyPI 源码发行包，必要时回退 wheel。只分析文本，不安装或执行包内代码。</p>
       <p>
-        最多采集 80 个文件，单文件 2 MiB、文本总量 20 MiB。后台任务预算 180
-        秒，可取消；慢网络下优先保留已完成部分。
+        最多采集 {{ scanLimits.max_files }} 个文件，单文件 {{ scanLimits.max_file_bytes / 1048576 }} MiB、
+        文本总量 {{ scanLimits.max_text_bytes / 1048576 }} MiB。后台任务预算 {{ scanLimits.scan_timeout_seconds / 60 }}
+        分钟，可取消；持续显示实际完成数量。
       </p>
     </div>
   </div>

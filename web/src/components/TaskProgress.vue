@@ -1,25 +1,17 @@
 <script setup>
+import ProgressDetails from './ProgressDetails.vue';
 defineProps({ state: Object });
 defineEmits(['cancel']);
 </script>
 <template>
-  <div v-if="state.busy && state.taskId" class="task-progress stack" aria-label="后台任务状态">
+  <div v-if="state.busy && (state.taskId || state.progress)" class="task-progress stack" aria-label="后台任务状态">
     <p v-if="state.progress?.target" class="small muted">当前任务：{{ state.progress.target }}</p>
-    <p role="status">
-      <strong>{{ state.progress?.stage || '正在恢复任务' }}</strong>
-    </p>
-    <p class="small muted">
-      已采集 {{ state.progress?.collected_files || 0 }} 个文件 · 已分析
-      {{ state.progress?.analyzed_files || 0 }} 个文件
-      <span v-if="state.progress?.kind === 'popular'">
-        · 已结束 {{ state.progress?.completed_repos || 0 }} 个仓库</span
-      >
-    </p>
+    <ProgressDetails :progress="state.progress" />
     <p v-if="state.connection" class="notice" role="status">{{ state.connection }}</p>
     <button
       type="button"
       class="button secondary"
-      :disabled="state.cancelling || state.progress?.cancel_requested"
+      :disabled="state.cancelling || state.progress?.cancel_requested || ['succeeded', 'partial', 'failed', 'cancelled'].includes(state.progress?.state)"
       @click="$emit('cancel')"
     >
       {{

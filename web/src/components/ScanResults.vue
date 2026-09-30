@@ -12,7 +12,9 @@ import MigrationChecklist from './MigrationChecklist.vue';
 import ExportMenu from './ExportMenu.vue';
 import AppIcon from './AppIcon.vue';
 import { methodLabel } from '../utils/analysis.js';
+import { useSourceContent } from '../composables/useSourceContent.js';
 const props = defineProps({ result: Object });
+const loadSource = useSourceContent(computed(() => props.result));
 const body = ref(null);
 const { tab, filters, findings, selectedKey, reset, select, reveal } = useResultSelection(
   computed(() => props.result),
@@ -118,6 +120,7 @@ function tabKeys(event, index) {
         :filters="filters"
         :matching="findings"
         :selected-key="selectedKey"
+        :load-source="loadSource"
         @update:filters="Object.assign(filters, $event)"
       />
       <MigrationChecklist v-else :analysis="result.analysis" @select="selectEvidence" />

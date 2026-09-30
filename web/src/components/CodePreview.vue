@@ -1,13 +1,38 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import { codeLines } from '../utils/results.js';
-const props = defineProps({ sources: Array, finding: Object });
-const lines = computed(() => codeLines(props.sources, props.finding.source_id, props.finding.line));
+const props = defineProps({ sources: Array, finding: Object, loadSource: Function });
+const loaded = ref(null);
+const loading = ref(false);
+const error = ref('');
+let sequence = 0;
+async function load() {
+  const id = ++sequence;
+  loaded.value = null;
+  error.value = '';
+  if (!props.loadSource) return;
+  loading.value = true;
+  try {
+    const source = await props.loadSource(props.finding.source_id);
+    if (id === sequence) loaded.value = codeLines([source], props.finding.source_id, props.finding.line);
+  } catch (err) {
+    if (id === sequence) error.value = err.message;
+  } finally {
+    if (id === sequence) loading.value = false;
+  }
+}
+watch(() => [props.finding.source_id, props.finding.line], load, { immediate: true });
+onUnmounted(() => { sequence++; });
+const lines = computed(() => loaded.value ?? codeLines(props.sources, props.finding.source_id, props.finding.line));
 </script>
 
 <template>
+  <p v-if="loading" class="muted small" role="status">正在读取源码…</p>
+  <div v-else-if="error" class="notice error" role="alert">
+    <p>{{ error }}</p><button class="button secondary" @click="load">重试读取源码</button>
+  </div>
   <div
-    v-if="lines.length"
+    v-else-if="lines.length"
     class="code-view"
     tabindex="0"
     :aria-label="`${finding.file_name} 第 ${finding.line} 行附近源码`"

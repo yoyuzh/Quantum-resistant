@@ -10,6 +10,7 @@ const props = defineProps({
   filters: Object,
   matching: Array,
   selectedKey: String,
+  loadSource: Function,
 });
 const emit = defineEmits(['update:filters']);
 const local = reactive({ algorithm: '', sourceId: '', query: '', method: '' });
@@ -110,6 +111,7 @@ watch(
       :finding="finding"
       :sources="sources"
       :initial-expanded="findingKey(finding) === selectedKey"
+      :load-source="loadSource"
     />
     <div v-if="pagination.pages > 1" class="toolbar pagination">
       <button class="button secondary" :disabled="pagination.current <= 1" @click="changePage(-1)">

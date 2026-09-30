@@ -28,14 +28,14 @@ test('files: duplicate identity, same names and limits', () => {
       [],
       Array.from({ length: 81 }, (_, i) => ({ name: `${i}.py`, size: 10 })),
     ).files.length,
-    80,
+    81,
   );
   assert.equal(
     mergeFiles(
       [],
       Array.from({ length: 6 }, (_, i) => ({ name: `${i}.py`, size: MAX_FILE_BYTES })),
     ).files.length,
-    4,
+    6,
   );
 });
 

@@ -34,10 +34,23 @@ def collect(value, **kwargs):
     if deadline:
         deadline.control.emit(stage='采集离线 fixture')
         deadline.pause(.2)
-        deadline.control.emit(collected_delta=8 if 'slow' in value else 1)
-    if 'slow' in value:
-        return CollectedSources([(value, f'package/module_{i}.py', CODE) for i in range(8)], candidates=8)
-    return CollectedSources([(value, "package/crypto.py", CODE)], limit=kwargs.get("max_files", 80),
+    if 'slow' in value or 'large' in value:
+        count = 120 if 'large' in value else 8
+        docs = []
+        if deadline:
+            deadline.control.emit(candidate_files=count, processed_files=0)
+        for i in range(count):
+            try:
+                document = (value, f'package/module_{i}.py', CODE)
+                docs.append(deadline.control.publish(document) if deadline else document)
+                if deadline:
+                    deadline.control.emit(collected_delta=1, processed_delta=1)
+            except CollectionTimeout:
+                break
+        return CollectedSources(docs, candidates=count, skipped=count-len(docs), partial=len(docs)<count)
+    if deadline:
+        deadline.control.emit(collected_delta=1)
+    return CollectedSources([(value, "package/crypto.py", CODE)], limit=kwargs.get("max_files", 5000),
                             candidates=3, skipped=2, partial=True,
                             diagnostics=[{"code": "partial_collection", "message": "模拟部分采集：两个文件未完成。"}])
 
@@ -57,7 +70,10 @@ def task_search(top=8, **kwargs):
     refreshes += 1
     if refreshes == 2:
         raise CollectionError('模拟刷新失败；上次结果已保留')
+    if top == 30:
+        return [RepoInfo(f'demo/slow-{i}', f'https://github.com/demo/slow-{i}', 1200-i) for i in range(30)]
     return [RepoInfo('demo/slow', 'https://github.com/demo/slow', 1200),
+            RepoInfo('demo/slow-second', 'https://github.com/demo/slow-second', 1000),
             RepoInfo('demo/failure', 'https://github.com/demo/failure', 800)]
 
 
@@ -89,6 +105,7 @@ if __name__ == "__main__":
              patch.object(main, "scan_popular", popular), \
              patch.object(task_routes, 'fetch_popular_repos', task_search), \
              patch.object(scanning, 'analyze_source', slow_analyze), \
+             patch('backend.pipeline.analyze_source', slow_analyze), \
              patch('backend.popular.analyze_source', slow_analyze), \
              patch("backend.popular.collect_github_sources", collect):
             uvicorn.run(main.app, host="127.0.0.1", port=8018)

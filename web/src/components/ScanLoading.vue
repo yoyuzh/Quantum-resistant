@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
+import ProgressDetails from './ProgressDetails.vue';
+import { elapsedSeconds } from '../utils/progress.js';
 const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object });
 const description = computed(
   () =>
@@ -14,29 +16,32 @@ const description = computed(
 );
 </script>
 <template>
-  <div class="scan-loading" role="status" aria-live="polite" aria-busy="true">
-    <div class="scan-art" aria-hidden="true">
-      <div class="scan-emblem"><AppIcon name="scan" :size="26" /></div>
-      <div class="code-paper">
-        <div class="paper-heading"><i></i><i></i><i></i></div>
-        <div class="code-lines"><span v-for="n in 7" :key="n" :style="{ '--i': n }"></span></div>
-        <div class="scan-beam"></div>
+  <div class="scan-loading" :class="{ 'scan-loading--popular': mode === 'popular' }"
+       role="region" aria-label="扫描等待状态" tabindex="0" aria-busy="true">
+    <div class="loading-content">
+      <div class="scan-art" aria-hidden="true">
+        <div class="scan-emblem"><AppIcon name="scan" :size="26" /></div>
+        <div class="code-paper">
+          <div class="paper-heading"><i></i><i></i><i></i></div>
+          <div class="code-lines"><span v-for="n in 7" :key="n" :style="{ '--i': n }"></span></div>
+          <div class="scan-beam"></div>
+        </div>
+        <div class="scan-dots"><i></i><i></i><i></i></div>
       </div>
-      <div class="scan-dots"><i></i><i></i><i></i></div>
+      <div class="loading-heading">
+        <p class="eyebrow">密码资产分析</p>
+        <h2>正在寻找代码中的密码线索</h2>
+      </div>
+      <p v-if="!progress" class="description">{{ description }}</p>
+      <ProgressDetails :progress="progress" />
+      <span class="elapsed" aria-live="off">
+        {{ progress?.state === 'queued' ? '排队等待' : '已等待' }}
+        {{ elapsedSeconds(progress?.elapsed ?? elapsed) }} 秒
+      </span>
+      <p class="small muted">
+        {{ hasResult ? '上次结果已保留，完成后更新。' : '分析过程不会执行输入代码。' }}
+      </p>
     </div>
-    <p class="eyebrow">密码资产分析</p>
-    <h2>正在寻找代码中的密码线索</h2>
-    <p class="description">{{ progress?.stage || description }}</p>
-    <p v-if="progress" class="small muted">
-      已采集 {{ progress.collected_files }} · 已分析 {{ progress.analyzed_files }} 个文件
-    </p>
-    <span class="elapsed" aria-live="off"
-      >{{ progress?.state === 'queued' ? '排队等待' : '已等待' }}
-      {{ Math.floor(progress?.elapsed || elapsed || 0) }} 秒</span
-    >
-    <p class="small muted">
-      {{ hasResult ? '上次结果已保留，完成后更新。' : '分析过程不会执行输入代码。' }}
-    </p>
   </div>
 </template>
 <style scoped>
@@ -45,19 +50,59 @@ const description = computed(
   min-height: 440px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 2rem;
-  gap: 0.8rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding: clamp(1rem, 3vw, 2rem);
   background: radial-gradient(ellipse at 50% 38%, var(--accent-soft), transparent 65%);
   border-radius: inherit;
 }
+.loading-content {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 36rem;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.8rem;
+}
+.loading-content > * {
+  flex-shrink: 0;
+}
+.loading-heading {
+  display: grid;
+  gap: 0.4rem;
+}
 .scan-art {
+  flex: none;
   width: 240px;
   height: 220px;
   position: relative;
   margin-bottom: 1rem;
+}
+.scan-loading--popular .scan-art {
+  width: 200px;
+  height: 160px;
+  margin-bottom: 0;
+}
+.scan-loading--popular .code-paper {
+  inset: 24px 16px 20px;
+  padding: 14px;
+}
+.scan-loading--popular .paper-heading {
+  margin-bottom: 12px;
+}
+.scan-loading--popular .code-lines {
+  gap: 6px;
+}
+.scan-loading--popular .code-lines span {
+  height: 4px;
+}
+.scan-loading--popular .scan-emblem {
+  width: 44px;
+  height: 44px;
+  right: 0;
 }
 .code-paper {
   position: absolute;
@@ -150,6 +195,12 @@ const description = computed(
   font-size: 0.75rem;
   color: var(--accent-dim);
   font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1024px) and (min-height: 800px) {
+  .scan-loading {
+    min-height: 0;
+    flex-basis: 0;
+  }
 }
 @keyframes scan {
   0% {

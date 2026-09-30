@@ -76,19 +76,22 @@ function submit() {
             tabindex="0"
             aria-label="扫描输入内容"
           >
+            <p v-if="current.restored" class="notice">
+              {{ current.busy ? '正在恢复后台任务，草稿未跨刷新保存。' : '已恢复任务结果；再次扫描请确认并提供当前输入。' }}
+            </p>
             <SnippetInput
-              v-if="mode === 'snippet'"
+              v-if="mode === 'snippet' && !(current.restored && current.busy)"
               v-model:filename="drafts.snippet.filename"
               v-model:content="drafts.snippet.content"
               :disabled="current.busy"
             />
             <FileUpload
-              v-else-if="mode === 'files'"
+              v-else-if="mode === 'files' && !(current.restored && current.busy)"
               v-model:files="drafts.files.files"
               :disabled="current.busy"
             />
             <RemoteInput
-              v-else
+              v-else-if="(mode === 'github' || mode === 'pypi') && !(current.restored && current.busy)"
               :key="mode"
               v-model="drafts[mode].value"
               :mode="mode"
@@ -97,7 +100,7 @@ function submit() {
             <ScanStatus
               :busy="current.busy"
               :error="current.error"
-              :elapsed="current.elapsed"
+              :elapsed="current.progress?.elapsed ?? current.elapsed"
               :has-result="!!current.result"
               @retry="submit"
             />
@@ -109,7 +112,7 @@ function submit() {
               {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
             </button>
             <p class="muted small">
-              只做静态分析，不执行输入代码。当前输入和扫描结果仅保存在本次页面会话中。
+              只做静态分析，不执行输入代码。草稿保存在当前页面；后台源码在本机临时保存，任务结束后最多保留15分钟。
             </p>
           </div>
         </form>

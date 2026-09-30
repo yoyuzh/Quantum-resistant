@@ -1,6 +1,13 @@
-export const MAX_FILE_BYTES = 2 * 1024 * 1024;
-export const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
-export const MAX_FILES = 80;
+export let MAX_FILE_BYTES = 2 * 1024 * 1024;
+export let MAX_TOTAL_BYTES = 110 * 1024 * 1024;
+export let MAX_TEXT_BYTES = 100 * 1024 * 1024;
+export let MAX_FILES = 5000;
+export function configureLimits(config) {
+  MAX_FILE_BYTES = config.max_file_bytes;
+  MAX_TOTAL_BYTES = config.max_upload_bytes;
+  MAX_TEXT_BYTES = config.max_text_bytes;
+  MAX_FILES = config.max_files;
+}
 export const ACCEPT =
   '.py,.pyw,.cs,.csproj,.xaml,.xml,.md,.java,.js,.jsx,.ts,.tsx,.go,.rs,.txt,.pem,.yml,.yaml,.json,.cfg,.ini,.toml';
 const suffixes = new Set(ACCEPT.split(','));
@@ -16,17 +23,21 @@ export function mergeFiles(existing, incoming) {
   const files = [...existing];
   const seen = new Set(files.map(fileKey));
   const errors = [];
+  let estimated = uploadBytes(files);
+  let textBytes = files.reduce((sum, file) => sum + file.size, 0);
   for (const file of incoming) {
     if (seen.has(fileKey(file))) continue;
     const suffix = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
     if (!suffixes.has(suffix)) errors.push(`${file.name}：不支持的文件格式`);
     else if (file.size > MAX_FILE_BYTES) errors.push(`${file.name}：超过单文件 2 MiB 限制`);
-    else if (files.length >= MAX_FILES) errors.push('单次最多上传 80 个文件');
-    else if (uploadBytes([...files, file]) > MAX_TOTAL_BYTES)
-      errors.push(`${file.name}：总量超过 10 MiB（含表单开销）`);
+    else if (files.length >= MAX_FILES) errors.push(`单次最多上传 ${MAX_FILES} 个文件`);
+    else if (textBytes + file.size > MAX_TEXT_BYTES || estimated + file.size + 512 + new TextEncoder().encode(file.name).length > MAX_TOTAL_BYTES)
+      errors.push(`${file.name}：超过源码或上传总量上限`);
     else {
       seen.add(fileKey(file));
       files.push(file);
+      textBytes += file.size;
+      estimated += file.size + 512 + new TextEncoder().encode(file.name).length;
     }
   }
   return { files, errors: [...new Set(errors)] };

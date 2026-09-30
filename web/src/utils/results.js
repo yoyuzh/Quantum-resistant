@@ -44,7 +44,7 @@ export function codeLines(sources, sourceId, line) {
   const source = sources.find((s) => s.source_id === sourceId);
   if (!source) return [];
   const start = Math.max(0, line - 4);
-  return source.content
+  return (source.content || '')
     .split('\n')
     .slice(start, line + 3)
     .map((text, i) => ({ number: start + i + 1, text, target: start + i + 1 === line }));

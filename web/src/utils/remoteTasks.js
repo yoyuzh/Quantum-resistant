@@ -30,6 +30,7 @@ export async function followTask({
   onProgress = () => {},
   onConnection = () => {},
   delay = abortableDelay,
+  includeContent = true,
 }) {
   let retries = 0;
   while (!id) {
@@ -61,7 +62,7 @@ export async function followTask({
         throw new Error('任务状态格式不完整');
       onProgress(status);
       if (TERMINAL.has(status.state) && status.has_result)
-        result = await request(`/api/tasks/${id}/result`, { signal, timeout: 15000 });
+        result = await request(`/api/tasks/${id}/result${includeContent ? '' : '?include_content=false'}`, { signal, timeout: 60000 });
       onConnection('');
       retries = 0;
     } catch (error) {

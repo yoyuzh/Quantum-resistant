@@ -1,4 +1,5 @@
 <script setup>
+import { elapsedSeconds } from '../utils/progress.js';
 defineProps({
   busy: Boolean,
   error: String,
@@ -15,7 +16,7 @@ defineEmits(['retry']);
     <div>
       <strong>{{ label }}</strong>
       <p>
-        已等待 {{ elapsed }} 秒，完成后自动显示结果。{{ hasResult ? '已保留上次结果。' : '' }}
+        已等待 {{ elapsedSeconds(elapsed) }} 秒，完成后自动显示结果。{{ hasResult ? '已保留上次结果。' : '' }}
       </p>
     </div>
   </div>

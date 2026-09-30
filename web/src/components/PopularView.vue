@@ -8,6 +8,7 @@ import ScanLoading from './ScanLoading.vue';
 import AppIcon from './AppIcon.vue';
 import TaskProgress from './TaskProgress.vue';
 import PopularOverview from './PopularOverview.vue';
+import { scanLimits } from '../composables/useScanConfig.js';
 const topOptions = [5, 8, 10, 20, 30].map((value) => ({ value, label: `${value} 个仓库` }));
 const props = defineProps({ state: Object });
 defineEmits(['refresh', 'reload', 'update:top', 'cancel']);
@@ -63,13 +64,14 @@ watch(
           {{ state.busy ? '正在扫描…' : state.result ? '重新扫描热门仓库' : '开始热门扫描' }}
         </button>
         <p class="small muted">
-          每仓库最多采集 6 个文件；后台任务时间预算 120 秒。失败或超时的仓库单独列出。
+          每仓库最多 {{ scanLimits.max_files }} 个文件；批次时间预算 {{ scanLimits.popular_timeout_seconds / 60 }} 分钟。
+          文本预算按仓库均分，最多100 MiB/仓库；失败或超时单独列出。
         </p>
         <ScanStatus
           :busy="state.busy || state.loading"
           :label="state.loading ? '正在加载上次结果' : '正在检索与扫描仓库'"
           :error="state.error"
-          :elapsed="state.elapsed"
+          :elapsed="state.progress?.elapsed ?? state.elapsed"
           :has-result="!!state.result"
           @retry="$emit(state.retryRefresh ? 'refresh' : 'reload')"
         />
