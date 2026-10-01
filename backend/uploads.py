@@ -1,69 +1,29 @@
 from __future__ import annotations
 
-from email import policy
-from email.parser import BytesParser
 from pathlib import PurePath
 from fastapi import HTTPException
-from backend.collectors import is_supported_source_path
-from backend.models import MAX_SOURCE_BYTES
-from backend.collection_config import MAX_COLLECTED_FILES, MAX_UPLOAD_BYTES, MAX_TEXT_BYTES
+from backend.collection_config import MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES, MAX_TEXT_BYTES, MAX_UPLOAD_BYTES
 
-MAX_TOTAL_UPLOAD_BYTES = MAX_UPLOAD_BYTES
 MAX_UPLOAD_FILES = MAX_COLLECTED_FILES
+MAX_SOURCE_BYTES = MAX_COLLECTED_FILE_BYTES
+MAX_TOTAL_UPLOAD_BYTES = MAX_UPLOAD_BYTES
 
-def normalize_filename(filename: str, fallback: str = "snippet.py") -> str:
-    cleaned = filename.replace("\\", "/").split("/")[-1].strip()
-    cleaned = PurePath(cleaned).name
-    return cleaned or fallback
+
+def normalize_filename(filename: str, fallback: str = 'snippet.py') -> str:
+    cleaned = filename.replace(chr(92), '/').split('/')[-1].strip()
+    return PurePath(cleaned).name or fallback
 
 
 def parse_multipart_files(content_type: str, body: bytes) -> list[tuple[str, str]]:
-    if "multipart/form-data" not in content_type:
-        raise HTTPException(status_code=415, detail="请使用 multipart/form-data 上传文件")
+    """Compatibility adapter; validation is shared with the streamed endpoint."""
+    from backend.multipart import MultipartParser, decode_file
     if len(body) > MAX_TOTAL_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="上传请求超过 110 MiB 限制")
-
-    raw_message = (
-        f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode("utf-8") + body
-    )
-    message = BytesParser(policy=policy.default).parsebytes(raw_message)
-    if not message.is_multipart():
-        raise HTTPException(status_code=400, detail="上传数据格式不正确")
-
-    documents: list[tuple[str, str]] = []
-    text_bytes = 0
-    for part in message.iter_parts():
-        filename = part.get_filename()
-        if not filename:
-            continue
-        if part.get_param("name", header="content-disposition") != "files":
-            raise HTTPException(400, "上传文件字段必须为 files")
-        if len(documents) >= MAX_UPLOAD_FILES:
-            raise HTTPException(413, "单次最多上传 5000 个文件")
-        normalized_filename = normalize_filename(filename, "uploaded.py")
-        if not is_supported_source_path(normalized_filename):
-            raise HTTPException(
-                status_code=400,
-                detail=f"{normalized_filename} 不是受支持的文本文件",
-            )
-
-        payload = part.get_payload(decode=True) or b""
-        if len(payload) > MAX_SOURCE_BYTES:
-            raise HTTPException(status_code=413, detail=f"{filename} 超过 2 MiB 限制")
-
-        try:
-            content = payload.decode("utf-8-sig")
-        except UnicodeDecodeError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"{filename} 不是有效 UTF-8 文本",
-            ) from exc
-
-        documents.append((normalized_filename, content))
-        text_bytes += len(content.encode('utf-8'))
-        if text_bytes > MAX_TEXT_BYTES:
-            raise HTTPException(413, "源码文本超过 100 MiB 限制")
-
-    if not documents:
-        raise HTTPException(status_code=400, detail="未上传文件")
+        raise HTTPException(413, '上传请求超过 110 MiB 限制')
+    parser = MultipartParser(content_type, max_file_bytes=MAX_SOURCE_BYTES, max_files=MAX_UPLOAD_FILES)
+    documents, text_bytes = [], 0
+    for events in (parser.feed(body), parser.finish()):
+        for name, data in events:
+            content, encoded = decode_file(name, data, MAX_TEXT_BYTES - text_bytes)
+            documents.append((name, content))
+            text_bytes += len(encoded)
     return documents

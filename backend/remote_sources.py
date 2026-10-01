@@ -271,7 +271,7 @@ def pypi_candidate_score(item: dict) -> tuple:
 
 def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
     last_error: Exception | None = None
-    options = [{"follow_redirects": True, "trust_env": False}]
+    options = [{"follow_redirects": False, "trust_env": False}]
     proxy_options = remote_client_options()
     if proxy_options.get("proxy") or any(os.environ.get(key) for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")):
         options.append(proxy_options)

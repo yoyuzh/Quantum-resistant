@@ -179,7 +179,7 @@ class HttpCollectionTests(unittest.TestCase):
             calls.append(request)
             return httpx.Response(503 if len(calls) == 1 else 200, content=b"done")
         with httpx.Client(transport=httpx.MockTransport(handle)) as client, patch("backend.collection_common.time.sleep"):
-            self.assertEqual(get_with_retries(client, "https://example.test", deadline=Deadline.after(2)).content, b"done")
+            self.assertEqual(get_with_retries(client, "https://api.github.com/fixture", deadline=Deadline.after(2)).content, b"done")
         self.assertEqual(len(calls), 2)
         self.assertLessEqual(calls[0].extensions["timeout"]["read"], 2)
 
@@ -191,13 +191,13 @@ class HttpCollectionTests(unittest.TestCase):
                 return response
             with httpx.Client(transport=httpx.MockTransport(handle)) as client:
                 with self.assertRaises((httpx.HTTPStatusError, CollectionError)):
-                    get_with_retries(client, "https://example.test", max_bytes=3)
+                    get_with_retries(client, "https://api.github.com/fixture", max_bytes=3)
             self.assertEqual(len(calls), 1)
 
     def test_expired_deadline_never_connects(self):
         with httpx.Client(transport=httpx.MockTransport(lambda r: self.fail("network attempted"))) as client:
             with self.assertRaises(CollectionTimeout):
-                get_with_retries(client, "https://example.test", deadline=Deadline.after(-1))
+                get_with_retries(client, "https://api.github.com/fixture", deadline=Deadline.after(-1))
 
     def test_deadline_stops_scheduling(self):
         release = threading.Event()

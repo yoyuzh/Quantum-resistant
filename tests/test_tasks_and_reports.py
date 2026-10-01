@@ -159,7 +159,7 @@ class ReliabilityTests(unittest.TestCase):
     def test_compressed_response_decoded_exactly_once(self):
         encoded = gzip.compress(b'{"ok":true}')
         with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, headers={'Content-Encoding': 'gzip', 'ETag': 'v1'}, content=encoded))) as client:
-            response = get_with_retries(client, 'https://example.test')
+            response = get_with_retries(client, 'https://api.github.com/fixture')
         self.assertEqual(response.json(), {'ok': True})
         self.assertEqual(response.headers['etag'], 'v1')
 
@@ -179,7 +179,7 @@ class ReliabilityTests(unittest.TestCase):
                 active -= 1
             return httpx.Response(200, content=b'ok')
         with httpx.Client(transport=httpx.MockTransport(handle)) as client, ThreadPoolExecutor(max_workers=12) as executor:
-            futures = [executor.submit(get_with_retries, client, 'https://example.test', deadline=Deadline.after(5)) for _ in range(12)]
+            futures = [executor.submit(get_with_retries, client, 'https://api.github.com/fixture', deadline=Deadline.after(5)) for _ in range(12)]
             try:
                 self.assertTrue(reached.wait(1))
                 self.assertEqual(peak, 8)
@@ -204,7 +204,7 @@ class ReliabilityTests(unittest.TestCase):
             calls.append(request)
             return httpx.Response(429, headers={'Retry-After': '2'}) if len(calls) == 1 else httpx.Response(200, headers={'ETag': 'abc'}, content=b'ok')
         with httpx.Client(transport=httpx.MockTransport(handle)) as client, patch.object(Deadline, 'pause') as pause:
-            response = get_with_retries(client, 'https://example.test', deadline=Deadline.after(10))
+            response = get_with_retries(client, 'https://api.github.com/fixture', deadline=Deadline.after(10))
         pause.assert_called_once_with(2)
         self.assertEqual(response.headers['etag'], 'abc')
         self.assertEqual(len(calls), 2)
@@ -216,7 +216,7 @@ class ReliabilityTests(unittest.TestCase):
             return httpx.Response(429, headers={'Retry-After': '60'})
         with httpx.Client(transport=httpx.MockTransport(handle)) as client:
             with self.assertRaises(httpx.HTTPStatusError):
-                get_with_retries(client, 'https://example.test', deadline=Deadline.after(2))
+                get_with_retries(client, 'https://api.github.com/fixture', deadline=Deadline.after(2))
         self.assertEqual(len(calls), 1)
 
     def test_archive_cancellation_keeps_completed_file(self):

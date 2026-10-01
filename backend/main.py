@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 from threading import Lock
 
@@ -9,23 +8,24 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.concurrency import run_in_threadpool
 
-from backend.collectors import CollectionError, CollectionTimeout, collect_github_sources, collect_pypi_sources, is_supported_source_path
+from backend.collectors import collect_github_sources, collect_pypi_sources
 from backend.knowledge import knowledge_graph
-from backend.models import *
-from backend.popular import scan_popular, batch_incomplete
-from backend.reporting import build_markdown_report
-from backend.report_exports import build_csv_report, build_json_report
-from backend.html_report import build_html_report
+from backend.models import MAX_SOURCE_BYTES, SampleSourceRecord
+from backend.popular import scan_popular
 from backend.task_routes import router as task_router
 from backend import task_routes
 from backend.task_store import TaskStore
 from contextlib import asynccontextmanager
-from backend.scanning import build_scan_response
+from backend.scan_routes import router as scan_router
+from backend.request_boundary import RequestBoundary
+from backend.report_routes import router as report_router
 from backend.storage import write_results
-from backend.uploads import MAX_TOTAL_UPLOAD_BYTES, normalize_filename, parse_multipart_files
-from backend.collection_config import MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_ARCHIVE_BYTES, SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS
+from backend.uploads import MAX_TOTAL_UPLOAD_BYTES
+from backend.collection_config import (MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_ARCHIVE_BYTES,
+                                       SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS,
+                                       MAX_ARCHIVE_MEMBERS, MAX_ARCHIVE_METADATA_BYTES, MAX_ARCHIVE_EXPANDED_BYTES)
+from backend.upload_stream import UPLOAD_TIMEOUT_SECONDS, UPLOAD_IDLE_SECONDS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
@@ -40,8 +40,11 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.3.0", lifespan=lifespan)
+app.add_middleware(RequestBoundary)
 app.include_router(task_router)
-app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+app.include_router(report_router)
+app.include_router(scan_router)
+app.mount("/static/assets", StaticFiles(directory=WEB_DIR / "assets"), name="assets")
 
 
 @app.exception_handler(RequestValidationError)
@@ -60,9 +63,14 @@ def scan_config() -> dict:
     return {'max_files': MAX_COLLECTED_FILES, 'max_file_bytes': MAX_SOURCE_BYTES,
             'max_text_bytes': MAX_TEXT_BYTES, 'max_upload_bytes': MAX_TOTAL_UPLOAD_BYTES,
             'max_archive_bytes': MAX_ARCHIVE_BYTES, 'scan_timeout_seconds': SCAN_TIMEOUT_SECONDS,
-            'popular_timeout_seconds': POPULAR_TIMEOUT_SECONDS, 'minimum_loading_ms': 1500}
+            'popular_timeout_seconds': POPULAR_TIMEOUT_SECONDS, 'minimum_loading_ms': 1500,
+            'upload_timeout_seconds': UPLOAD_TIMEOUT_SECONDS, 'upload_idle_seconds': UPLOAD_IDLE_SECONDS,
+            'max_archive_members': MAX_ARCHIVE_MEMBERS, 'max_archive_metadata_bytes': MAX_ARCHIVE_METADATA_BYTES,
+            'max_archive_expanded_bytes': MAX_ARCHIVE_EXPANDED_BYTES}
 
 
+@app.get("/static/", include_in_schema=False)
+@app.get("/static/index.html", include_in_schema=False)
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html", headers={"Cache-Control": "no-store"})
@@ -82,87 +90,10 @@ def list_sample_sources() -> list[SampleSourceRecord]:
     return samples
 
 
-@app.post("/api/scan/snippet", response_model=ScanResponse)
-def scan_snippet(payload: SnippetScanRequest) -> ScanResponse:
-    if not payload.content.strip():
-        raise HTTPException(400, "请先输入待扫描内容")
-    return build_scan_response([(normalize_filename(payload.filename), payload.content)], "snippet")
-
-
-@app.post("/api/scan/files", response_model=ScanResponse)
-async def scan_files(request: Request) -> ScanResponse:
-    # The legacy response remains complete; ingestion uses the same bounded spool.
-    from backend.upload_stream import read_upload
-    from backend.collection_common import Deadline
-    storage = task_routes.store.storage
-    folder = storage.folder()
-    budget = Deadline.after()
-    budget.control.storage, budget.control.folder = storage, folder
-    try:
-        documents, _ = await read_upload(request, storage, folder)
-        result = await run_in_threadpool(task_routes.local_work, documents, 'manual_upload', budget)
-        for source in result['sources']:
-            source['content'] = budget.control.source_paths[source['source_id']].read_text(encoding='utf-8')
-            source['content_available'] = None
-        return ScanResponse(**result)
-    finally:
-        storage.remove_folder(folder)
-
-
-def remote_scan(collector, value: str, source_type: SourceType) -> ScanResponse:
-    from backend.collection_common import Deadline
-    budget = Deadline.after()
-    storage = task_routes.store.storage
-    folder = storage.folder()
-    budget.control.storage, budget.control.folder = storage, folder
-    try:
-        result = task_routes.remote_work('github' if source_type == 'github_repository' else 'pypi', value, budget, collector=collector)
-        for source in result['sources']:
-            source['content'] = budget.control.source_paths[source['source_id']].read_text(encoding='utf-8')
-            source['content_available'] = None
-        return ScanResponse(**result)
-    except CollectionTimeout as exc:
-        raise HTTPException(504, str(exc)) from exc
-    except CollectionError as exc:
-        raise HTTPException(404 if str(exc) == '未找到可扫描的文本文件' else 502, str(exc)) from exc
-    finally:
-        storage.remove_folder(folder)
-
-
-@app.post("/api/scan/github", response_model=ScanResponse)
-def scan_github(payload: GitHubScanRequest) -> ScanResponse:
-    return remote_scan(collect_github_sources, payload.repository_url, "github_repository")
-
-
-@app.post("/api/scan/pypi", response_model=ScanResponse)
-def scan_pypi(payload: PyPIScanRequest) -> ScanResponse:
-    return remote_scan(collect_pypi_sources, payload.package_name, "pypi_package")
-
-
 app.get("/api/knowledge/graph")(knowledge_graph)
 
 
-@app.post("/api/popular/scan")
-def trigger_popular_scan(payload: PopularScanRequest = PopularScanRequest()) -> dict:
-    if not POPULAR_SCAN_LOCK.acquire(blocking=False):
-        raise HTTPException(409, "热门仓库正在扫描，请等待本次扫描完成")
-    try:
-        result = scan_popular(top=payload.top)
-        if batch_incomplete(result):
-            result.meta.update(incomplete=True, saved_snapshot=False)
-            return asdict(result)
-        write_results(result, WEB_DIR / "data/popular.json")
-        return asdict(result)
-    except CollectionTimeout as exc:
-        raise HTTPException(504, str(exc)) from exc
-    except CollectionError as exc:
-        raise HTTPException(502, str(exc)) from exc
-    except OSError as exc:
-        raise HTTPException(500, "无法保存扫描结果，请检查数据目录权限；上次结果已保留") from exc
-    finally:
-        POPULAR_SCAN_LOCK.release()
-
-
+@app.get("/static/data/popular.json", include_in_schema=False)
 @app.get("/api/popular/results")
 def get_popular_results() -> Response:
     path = WEB_DIR / "data/popular.json"
@@ -181,35 +112,3 @@ def get_popular_results() -> Response:
     except (ValueError, UnicodeError) as exc:
         raise HTTPException(502, "热门仓库数据文件损坏，请重新运行批量扫描脚本") from exc
     return Response(content, media_type="application/json", headers={"Cache-Control": "no-store"})
-
-
-@app.post("/api/report/markdown")
-def export_markdown_report(payload: ReportRequest) -> Response:
-    report = build_markdown_report(
-        sources=[s.model_dump() for s in payload.sources],
-        findings=[f.model_dump() for f in payload.findings],
-        source_type=payload.source_type, scanned_at=payload.scanned_at,
-        coverage=payload.coverage.model_dump() if payload.coverage else None,
-        diagnostics=[d.model_dump() for d in payload.diagnostics],
-    )
-    return Response(report, media_type="text/markdown", headers={"Content-Disposition": 'attachment; filename="quantum-scan-report.md"'})
-
-
-@app.post("/api/report/json")
-def export_json_report(payload: ReportRequest) -> Response:
-    report = build_json_report(**payload.model_dump())
-    return Response(json.dumps(report, ensure_ascii=False, indent=2), media_type="application/json",
-                    headers={"Content-Disposition": 'attachment; filename="quantum-scan-report.json"'})
-
-
-@app.post("/api/report/csv")
-def export_csv_report(payload: ReportRequest) -> Response:
-    report = build_csv_report([finding.model_dump() for finding in payload.findings])
-    return Response(report, media_type="text/csv",
-                    headers={"Content-Disposition": 'attachment; filename="quantum-scan-findings.csv"'})
-
-
-@app.post('/api/report/html')
-def export_html_report(payload: ReportRequest) -> Response:
-    return Response(build_html_report(**payload.model_dump()), media_type='text/html',
-                    headers={'Content-Disposition': 'attachment; filename="quantum-scan-report.html"'})

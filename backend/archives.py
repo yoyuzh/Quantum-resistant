@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import io
+import gzip
+import bz2
 import tarfile
 import zipfile
 from collections import Counter
 from pathlib import Path
 from pathlib import PurePosixPath
 
-from backend.collection_common import CollectedSources, CollectionTimeout, Deadline
-from backend.collection_config import ALLOWED_SOURCE_SUFFIXES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
+from backend.collection_common import CollectedSources, CollectionTimeout, Deadline, CollectionError
+from backend.collection_config import (ALLOWED_SOURCE_SUFFIXES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES,
+                                       MAX_ARCHIVE_MEMBERS, MAX_ARCHIVE_METADATA_BYTES, MAX_ARCHIVE_EXPANDED_BYTES)
+from backend.archive_limits import ArchiveLimit, ExpandedReader, zip_preflight
 
 
 class DeadlineReader:
@@ -88,6 +92,10 @@ def _collect(entries, read, origin, limit, root, deadline):
             diagnostics.append({'code': 'collection_interrupted', 'message': '归档读取中断，已保留读完的文件。'})
             reasons['cancelled' if deadline.control.cancelled.is_set() else 'timeout'] += len(candidates) - len(documents) - sum(reasons.values())
             break
+        except ArchiveLimit:
+            diagnostics.append({"code": "archive_budget", "message": "归档展开数据达到安全上限，已保留完成部分。"})
+            reasons["archive_budget"] += len(candidates) - len(documents) - sum(reasons.values())
+            break
         except (OSError, RuntimeError, zipfile.BadZipFile):
             reasons['read_failure'] += 1
             deadline.control.emit(processed_delta=1, skipped_delta=1)
@@ -112,31 +120,116 @@ def _collect(entries, read, origin, limit, root, deadline):
     return CollectedSources(documents, limit=limit, candidates=len(candidates), skipped=skipped, partial=bool(skipped), diagnostics=diagnostics, skip_reasons=dict(reasons))
 
 
+def limited_collection(result, extra_candidates=0):
+    result.coverage['partial'] = True
+    if extra_candidates is None:
+        result.coverage['candidate_files'] = None
+    else:
+        result.coverage['candidate_files'] += extra_candidates
+        result.coverage['skipped_files'] += extra_candidates
+        reasons = result.coverage['skip_reasons']
+        reasons['archive_budget'] = reasons.get('archive_budget', 0) + extra_candidates
+    result.diagnostics.append({'code': 'archive_budget', 'message': '归档成员、元数据或展开数据达到安全上限，存在未扫描部分。'})
+    return result
+
+
 def collect_from_zip_bytes(data: bytes, origin: str, *, max_files: int = MAX_COLLECTED_FILES, strip_root: bool = True, deadline: Deadline | None = None) -> CollectedSources:
     budget = deadline or Deadline.after()
-    with zipfile.ZipFile(data if isinstance(data, Path) else io.BytesIO(data)) as archive:
-        entries = [(i, i.filename, i.file_size) for i in archive.infolist() if not i.is_dir()]
-        root = _root([name for _, name, _ in entries], strip_root)
-        def read(info):
-            with archive.open(info) as stream:
-                return stream.read(MAX_COLLECTED_FILE_BYTES + 1)
-        return _collect(entries, read, origin, max_files, root, budget)
+    with data.open('rb') if isinstance(data, Path) else io.BytesIO(data) as raw:
+        zip_preflight(raw, budget)
+        with zipfile.ZipFile(raw) as archive:
+            entries, expanded, metadata = [], 0, 0
+            infos = archive.infolist()
+            cut = len(infos)
+            for index, info in enumerate(infos):
+                budget.remaining()
+                expanded += info.file_size
+                metadata += len(info.filename.encode('utf-8', errors='replace')) + len(info.extra) + len(info.comment) + 46
+                if index >= MAX_ARCHIVE_MEMBERS or expanded > MAX_ARCHIVE_EXPANDED_BYTES or metadata > MAX_ARCHIVE_METADATA_BYTES:
+                    cut = index
+                    break
+                if not info.is_dir():
+                    entries.append((info, info.filename, info.file_size))
+            root = _root([name for _, name, _ in entries], strip_root)
+            def read(info):
+                budget.remaining()
+                with archive.open(info) as stream:
+                    return stream.read(MAX_COLLECTED_FILE_BYTES + 1)
+            result = _collect(entries, read, origin, max_files, root, budget)
+            if cut < len(infos):
+                extra = sum(not i.is_dir() and PurePosixPath(i.filename).suffix.lower() in ALLOWED_SOURCE_SUFFIXES for i in infos[cut:])
+                result = limited_collection(result, extra)
+            return result
+
+
+def tar_stream(raw, budget):
+    signature = raw.read(6)
+    raw.seek(0)
+    if signature.startswith(b'\x1f\x8b'):
+        return gzip.GzipFile(fileobj=DeadlineReader(raw, budget))
+    if signature.startswith(b'BZh'):
+        return bz2.BZ2File(raw)
+    if signature.startswith(b'\xfd7zXZ\x00'):
+        raise CollectionError('不支持 XZ 归档压缩，请使用 gzip、bzip2 或未压缩 TAR')
+    return raw
+
+
+class BoundedTarInfo(tarfile.TarInfo):
+    def _proc_member(self, archive):
+        archive.metadata_bytes = getattr(archive, 'metadata_bytes', 0) + 512
+        archive.member_count = getattr(archive, 'member_count', 0) + 1
+        if self.type in {tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.GNUTYPE_LONGNAME, tarfile.GNUTYPE_LONGLINK}:
+            archive.metadata_bytes += self.size
+        if archive.metadata_bytes > MAX_ARCHIVE_METADATA_BYTES or archive.member_count > MAX_ARCHIVE_MEMBERS:
+            raise ArchiveLimit('归档成员数量或元数据超过限制')
+        return super()._proc_member(archive)
 
 
 def collect_from_tar_bytes(data: bytes, origin: str, *, max_files: int = MAX_COLLECTED_FILES, deadline: Deadline | None = None) -> CollectedSources:
     budget = deadline or Deadline.after()
-    with data.open('rb') if isinstance(data, Path) else io.BytesIO(data) as raw:
-        with tarfile.open(fileobj=DeadlineReader(raw, budget), mode="r:*") as archive:
-            entries = []
-            for member in archive:
-                budget.remaining()
-                if member.isfile():
-                    entries.append((member, member.name, member.size))
-            root = _root([name for _, name, _ in entries], True)
-            def read(member):
-                stream = archive.extractfile(member)
-                if stream is None:
-                    raise OSError("无法读取归档文件")
-                with stream:
-                    return stream.read(MAX_COLLECTED_FILE_BYTES + 1)
-            return _collect(entries, read, origin, max_files, root, budget)
+    entries, limited = [], False
+    # Index without retaining file bodies, then stream selected files using the
+    # same expanded-byte allowance. This preserves root stripping and memory bounds.
+    expanded_bytes = 0
+    def open_raw():
+        return data.open('rb') if isinstance(data, Path) else io.BytesIO(data)
+    with open_raw() as raw:
+        expanded = tar_stream(raw, budget)
+        reader = ExpandedReader(expanded, budget)
+        try:
+            with tarfile.open(fileobj=reader, mode='r|', tarinfo=BoundedTarInfo) as archive:
+                try:
+                    for member in archive:
+                        budget.remaining()
+                        if member.isfile():
+                            entries.append((member, member.name, member.size))
+                except ArchiveLimit:
+                    limited = True
+            expanded_bytes = reader.bytes
+        finally:
+            if expanded is not raw:
+                expanded.close()
+    root = _root([name for _, name, _ in entries], True)
+    with open_raw() as raw:
+        expanded = tar_stream(raw, budget)
+        reader = ExpandedReader(expanded, budget)
+        reader.bytes = expanded_bytes
+        try:
+            with tarfile.open(fileobj=reader, mode='r|', tarinfo=BoundedTarInfo) as archive:
+                def read(member):
+                    current = archive.next()
+                    while current is not None and current.offset < member.offset:
+                        budget.remaining()
+                        current = archive.next()
+                    if current is None or current.offset != member.offset:
+                        raise OSError('归档文件未读取')
+                    stream = archive.extractfile(current)
+                    if stream is None:
+                        raise OSError('无法读取归档文件')
+                    with stream:
+                        return stream.read(MAX_COLLECTED_FILE_BYTES + 1)
+                result = _collect(entries, read, origin, max_files, root, budget)
+                return limited_collection(result, None) if limited else result
+        finally:
+            if expanded is not raw:
+                expanded.close()

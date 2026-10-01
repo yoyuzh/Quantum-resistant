@@ -153,7 +153,7 @@ class CollectedSources(list[SourceDocument]):
 
 def remote_client_options() -> dict:
     """Use explicit proxy variables, then the Windows static system proxy."""
-    options = {"follow_redirects": True, "trust_env": True}
+    options = {"follow_redirects": False, "trust_env": True}
     if any(os.environ.get(key) for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")):
         return options
     if os.name == "nt":
@@ -236,7 +236,8 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
                 if spool:
                     total = int(length) if length.isdigit() and not response.headers.get('content-encoding') else None
                     budget.control.emit(download_bytes=0, download_total=total)
-                for chunk in response.iter_bytes():
+                from backend.http_safety import decoded_chunks
+                for chunk in decoded_chunks(response, budget, max_bytes):
                     budget.remaining()
                     size += len(chunk)
                     if max_bytes is not None and size > max_bytes:
@@ -280,8 +281,6 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
 
 @contextmanager
 def bounded_stream(client, url, budget, socket_timeout, **kwargs):
-    with http_slot(budget):
-        timeout = min(socket_timeout, budget.remaining())
-        with client.stream('GET', url, **kwargs,
-                           timeout=httpx.Timeout(timeout, connect=min(4, timeout), pool=min(2, timeout))) as response:
-            yield response
+    from backend.http_safety import safe_stream
+    with safe_stream(client, url, budget, socket_timeout, **kwargs) as response:
+        yield response

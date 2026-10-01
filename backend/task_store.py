@@ -5,7 +5,6 @@ import json
 import logging
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from threading import RLock, Timer
 from typing import Callable
@@ -17,6 +16,7 @@ from backend.collection_common import CollectionControl, CollectionTimeout, Dead
 from backend.reporting import beijing_now_iso
 from backend.temp_storage import TemporaryStorage
 from backend.collection_config import RESULT_CACHE_BYTES, SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS
+from backend.scheduler import ScanScheduler, Admission
 
 TERMINAL = {'succeeded', 'partial', 'failed', 'cancelled'}
 logger = logging.getLogger(__name__)
@@ -47,11 +47,13 @@ class Job:
     repo_progress: dict = field(default_factory=dict)
     readers: int = 0
     expiry: object = None
+    admission: Admission | None = None
 
 
 class TaskStore:
     def __init__(self, workers=2, queue=4, ttl=900, max_results=8, max_bytes=RESULT_CACHE_BYTES, now=time.monotonic):
-        self.executor = ThreadPoolExecutor(max_workers=workers, thread_name_prefix='scan-job')
+        self.scheduler = ScanScheduler(workers, queue)
+        self.executor = self.scheduler.executor
         self.capacity = workers + queue
         self.ttl, self.max_results, self.max_bytes, self.now = ttl, max_results, max_bytes, now
         self.lock = RLock()
@@ -59,6 +61,12 @@ class TaskStore:
         self.closed = False
         self.storage = TemporaryStorage()
         self.storage.on_pressure = self._reclaim
+        self.scheduler.on_idle = self._close_storage_if_idle
+
+    def _close_storage_if_idle(self):
+        with self.lock:
+            if self.closed and not self.scheduler.used and not any(j.readers for j in self.jobs.values()):
+                self.storage.close()
 
     def _reclaim(self, size):
         with self.lock:
@@ -92,31 +100,63 @@ class TaskStore:
             job.expiry.daemon = True
             job.expiry.start()
 
-    def submit(self, kind: str, payload: dict, request_id: str, work: Callable, reservation=None, *, folder=None) -> dict:
+    def reserve(self) -> Admission:
+        return self.scheduler.reserve()
+
+    def run_sync(self, work: Callable, admission: Admission | None = None):
+        return self.scheduler.run(work, admission)
+
+    def submit(self, kind: str, payload: dict, request_id: str, work: Callable, reservation=None, *, folder=None, admission=None) -> dict:
+        ticket = admission
+        try:
+            return self._submit(kind, payload, request_id, work, reservation, folder, ticket)
+        except BaseException:
+            if ticket:
+                ticket.release()
+            if folder:
+                self.storage.remove_folder(folder)
+            raise
+
+    def _submit(self, kind, payload, request_id, work, reservation, folder, admission):
         with self.lock:
             self._prune()
+            if self.closed:
+                raise HTTPException(503, '服务正在关闭，请稍后重试')
             for existing in self.jobs.values():
                 if existing.request_id == request_id:
                     if existing.kind != kind or existing.payload != payload:
                         raise HTTPException(409, '请求标识已用于其他扫描')
+                    if admission:
+                        admission.release()
+                    if folder and folder != existing.folder:
+                        self.storage.remove_folder(folder)
                     return self._snapshot(existing)
-            if sum(j.state not in TERMINAL for j in self.jobs.values()) >= self.capacity:
-                raise HTTPException(429, '扫描队列已满，请等待已有任务完成', headers={'Retry-After': '5'})
-            if reservation and not reservation.acquire(blocking=False):
-                raise HTTPException(409, '热门仓库正在扫描，请等待本次扫描完成')
-            job = Job(uuid.uuid4().hex, kind, payload, request_id, reservation=reservation)
-            job.folder = folder or self.storage.folder()
-            job.control.storage, job.control.folder = self.storage, job.folder
-            self.jobs[job.id] = job
-            job.control.grace_seconds = 2
-            job.control.report = lambda **values: self._progress(job, **values)
+            ticket = admission or self.reserve()
+            acquired = False
+            job = None
             try:
-                job.future = self.executor.submit(self._run, job, work)
-            except RuntimeError:
-                del self.jobs[job.id]
                 if reservation:
+                    acquired = reservation.acquire(blocking=False)
+                    if not acquired:
+                        raise HTTPException(409, '热门仓库正在扫描，请等待本次扫描完成')
+                job = Job(uuid.uuid4().hex, kind, payload, request_id, reservation=reservation, admission=ticket)
+                job.folder = folder or self.storage.folder()
+                job.control.storage, job.control.folder = self.storage, job.folder
+                self.jobs[job.id] = job
+                job.control.grace_seconds = 2
+                job.control.report = lambda **values: self._progress(job, **values)
+                job.future = self.executor.submit(self._run, job, work)
+            except BaseException as exc:
+                if job:
+                    self.jobs.pop(job.id, None)
+                    if job.folder:
+                        self.storage.remove_folder(job.folder)
+                ticket.release()
+                if acquired:
                     reservation.release()
-                raise HTTPException(503, '服务正在关闭，请稍后重试')
+                if isinstance(exc, RuntimeError):
+                    raise HTTPException(503, '服务正在关闭，请稍后重试') from exc
+                raise
             return self._snapshot(job)
 
     def _progress(self, job, stage=None, collected_delta=0, analyzed_delta=0, repos_delta=0, scope=None, **values):
@@ -196,8 +236,7 @@ class TaskStore:
                     job.reservation.release()
                     job.reservation = None
                 self._prune()
-                if self.closed and all(j.state in TERMINAL for j in self.jobs.values()):
-                    self.storage.close()
+                job.admission.release()
 
     def _snapshot(self, job):
         end = job.ended if job.ended is not None else self.now()
@@ -252,6 +291,7 @@ class TaskStore:
             with self.lock:
                 job.readers -= 1
                 self._prune()
+                self._close_storage_if_idle()
 
     def cancel(self, identity):
         with self.lock:
@@ -270,6 +310,7 @@ class TaskStore:
                     if job.reservation:
                         job.reservation.release()
                         job.reservation = None
+                    job.admission.release()
             return self._snapshot(job)
 
     def close(self):
@@ -282,7 +323,4 @@ class TaskStore:
                     job.expiry.cancel()
                 if job.state not in TERMINAL:
                     self.cancel(job.id)
-        self.executor.shutdown(wait=False, cancel_futures=True)
-        # Running cooperative workers retain their directories until they finish.
-        if all(job.future.done() for job in self.jobs.values()):
-            self.storage.close()
+        self.scheduler.close()

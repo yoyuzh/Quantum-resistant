@@ -25,6 +25,7 @@ class ScanPipeline:
         self.condition = Condition()
         self.queued_bytes = 0
         self.closed = False
+        self.finished = False
         self.records = []
         self.findings = []
         self.diagnostics = []
@@ -119,6 +120,8 @@ class ScanPipeline:
                 self.queue.task_done()
 
     def finish(self):
+        if self.finished:
+            return self
         with self.condition:
             self.closed = True
             self.condition.notify_all()
@@ -127,4 +130,5 @@ class ScanPipeline:
         if getattr(self.budget.control, 'pipeline', None) is self:
             self.budget.control.pipeline = None
             self.budget.control.publisher = closed_publish
+        self.finished = True
         return self

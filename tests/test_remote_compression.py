@@ -65,7 +65,7 @@ class RemoteCompressionTests(unittest.TestCase):
 
         with httpx.Client(transport=httpx.MockTransport(handle)) as client:
             with self.assertRaises(httpx.DecodingError) as raised:
-                get_with_retries(client, 'https://example.test', deadline=Deadline.after(3))
+                get_with_retries(client, 'https://api.github.com/fixture', deadline=Deadline.after(3))
         self.assertEqual(len(calls), 1)
         self.assertIn('解压失败', describe_http_error(raised.exception))
 

@@ -31,6 +31,7 @@ class TemporaryStorage:
         self.bytes = 0
         self.on_pressure = None
         self.source_streams = {}
+        self.unusable_paths: set[Path] = set()
         self.finalizer = weakref.finalize(self, self.finish_directory, self.lease, self.directory, self.source_streams)
 
     @staticmethod
@@ -52,12 +53,30 @@ class TemporaryStorage:
                 self.source_streams[folder] = (path, stream)
                 self.sizes[path] = 0
             path, stream = self.source_streams[folder]
+            if path in self.unusable_paths:
+                raise OSError('临时源码文件写入失败，不能继续使用')
             offset = stream.tell()
-            stream.write(data)
-            stream.flush()
+            self._append_checked(path, stream, data, offset)
             self.bytes += len(data)
             self.sizes[path] += len(data)
             return StoredContent(path, offset, len(data))
+
+    def _append_checked(self, path, stream, data, offset):
+        try:
+            if stream.write(data) != len(data):
+                raise OSError('临时文件写入不完整')
+            stream.flush()
+        except BaseException:
+            try:
+                stream.seek(offset)
+                stream.truncate(offset)
+                stream.flush()
+            except (OSError, ValueError):
+                # Charge the maximum possible residue and fail closed on reuse.
+                self.unusable_paths.add(path)
+                self.sizes[path] = self.sizes.get(path, 0) + len(data)
+                self.bytes += len(data)
+            raise
 
     @staticmethod
     def lock_lease(stream, unlock=False):
@@ -104,7 +123,8 @@ class TemporaryStorage:
                 raise RuntimeError("临时存储容量不足，已保留可用部分；请等待其他任务结束后重试")
             path = folder / (uuid.uuid4().hex + suffix)
             try:
-                path.write_bytes(data)
+                if path.write_bytes(data) != len(data):
+                    raise OSError('临时文件写入不完整')
             except OSError:
                 path.unlink(missing_ok=True)
                 raise
@@ -126,7 +146,8 @@ class TemporaryStorage:
                     with self.lock:
                         if self.bytes + len(buffer) > self.max_bytes:
                             raise RuntimeError("临时存储容量不足，无法保存任务结果；上次结果已保留")
-                        stream.write(buffer)
+                        if stream.write(buffer) != len(buffer):
+                            raise OSError('临时结果写入不完整')
                         self.sizes[path] = self.sizes.get(path, 0) + len(buffer)
                         self.bytes += len(buffer)
                     buffer.clear()
@@ -134,7 +155,8 @@ class TemporaryStorage:
                 with self.lock:
                     if self.bytes + len(buffer) > self.max_bytes:
                         raise RuntimeError('临时存储容量不足，无法保存任务结果')
-                    stream.write(buffer)
+                    if stream.write(buffer) != len(buffer):
+                        raise OSError('临时结果写入不完整')
                     self.sizes[path] = self.sizes.get(path, 0) + len(buffer)
                     self.bytes += len(buffer)
             return path
@@ -147,8 +169,11 @@ class TemporaryStorage:
         with self.lock:
             if self.bytes + len(data) > self.max_bytes:
                 raise RuntimeError('临时存储容量不足，已保留可用部分')
-            with path.open('ab') as stream:
-                stream.write(data)
+            if path in self.unusable_paths:
+                raise OSError('临时文件写入失败，不能继续使用')
+            with path.open('r+b') as stream:
+                stream.seek(0, 2)
+                self._append_checked(path, stream, data, self.sizes[path])
             self.sizes[path] += len(data)
             self.bytes += len(data)
 
@@ -156,6 +181,7 @@ class TemporaryStorage:
         with self.lock:
             path.unlink(missing_ok=True)
             self.bytes -= self.sizes.pop(path, 0)
+            self.unusable_paths.discard(path)
 
     def discard_sources(self, folder):
         with self.lock:
@@ -175,13 +201,12 @@ class TemporaryStorage:
             for path in list(self.sizes):
                 if path.parent == folder:
                     self.bytes -= self.sizes.pop(path)
+                    self.unusable_paths.discard(path)
             shutil.rmtree(folder, ignore_errors=True)
 
     def close(self) -> None:
-        for _, stream in self.source_streams.values():
-            stream.close()
-        self.source_streams.clear()
-        self.finalizer()
+        with self.lock:
+            self.finalizer()
 
 
 class StoredContent:
