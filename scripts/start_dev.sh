@@ -35,6 +35,11 @@ if [[ ! -d "web/node_modules" ]]; then
   (cd web && npm install)
 fi
 
+export QUANTUM_ALLOWED_ORIGINS="${QUANTUM_ALLOWED_ORIGINS:+${QUANTUM_ALLOWED_ORIGINS},}http://${FRONTEND_HOST}:${FRONTEND_PORT}"
+if [[ "${FRONTEND_HOST}" == "127.0.0.1" || "${FRONTEND_HOST}" == "localhost" ]]; then
+  export QUANTUM_ALLOWED_ORIGINS="${QUANTUM_ALLOWED_ORIGINS},http://127.0.0.1:${FRONTEND_PORT},http://localhost:${FRONTEND_PORT}"
+fi
+
 echo "Starting backend on http://${BACKEND_HOST}:${BACKEND_PORT}"
 "${PYTHON_BIN}" start.py --host "${BACKEND_HOST}" --port "${BACKEND_PORT}" --strict-port &
 BACKEND_PID="$!"

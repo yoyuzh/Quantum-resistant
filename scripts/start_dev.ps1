@@ -13,6 +13,7 @@ $BackendProcess = $null
 $FrontendProcess = $null
 $PythonExe = $null
 $PreviousBackendUrl = $env:BACKEND_URL
+$PreviousAllowedOrigins = $env:QUANTUM_ALLOWED_ORIGINS
 
 function Resolve-PythonCommand {
     $VenvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
@@ -47,6 +48,11 @@ try {
         Pop-Location
     }
 
+    $DevOrigins = @("http://$FrontendHost`:$FrontendPort")
+    if ($FrontendHost -in @("127.0.0.1", "localhost")) {
+        $DevOrigins += "http://127.0.0.1:$FrontendPort", "http://localhost:$FrontendPort"
+    }
+    $env:QUANTUM_ALLOWED_ORIGINS = (@($PreviousAllowedOrigins) + $DevOrigins | Where-Object { $_ }) -join ","
     Write-Host "Starting backend on http://$BackendHost`:$BackendPort"
     $BackendProcess = Start-Process `
         -FilePath $PythonExe `
@@ -83,6 +89,7 @@ try {
 }
 finally {
     $env:BACKEND_URL = $PreviousBackendUrl
+    $env:QUANTUM_ALLOWED_ORIGINS = $PreviousAllowedOrigins
     Stop-ChildProcess $FrontendProcess
     Stop-ChildProcess $BackendProcess
 }
