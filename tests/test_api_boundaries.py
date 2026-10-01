@@ -41,7 +41,7 @@ class ApiBoundaryTests(unittest.TestCase):
         report = self.client.post("/api/report/markdown", json=data)
         self.assertEqual(report.status_code, 200)
         self.assertIn("需要复核", report.text)
-        self.assertIn("实际扫描 2 个文件", report.text)
+        self.assertIn("| 已分析文件 | 2 |", report.text)
 
     @patch("backend.main.collect_github_sources")
     def test_partial_collection_and_timeout(self, collect):

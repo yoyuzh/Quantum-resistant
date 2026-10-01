@@ -29,88 +29,86 @@ def build_summary(sources: list[dict[str, Any]], findings: list[dict[str, Any]])
 
 def markdown_table_cell(value: object) -> str:
     text = escape(str(value), quote=False)
-    return text.replace("|", "\\|").replace("\n", "<br>")
+    return text.replace("|", "\\|").replace("\n", " ↵ ")
 
 
 def build_markdown_report(
-    sources: list[dict[str, Any]],
-    findings: list[dict[str, Any]],
-    source_type: str,
-    scanned_at: Optional[str] = None,
-    coverage: dict | None = None,
+    sources: list[dict[str, Any]], findings: list[dict[str, Any]], source_type: str,
+    scanned_at: Optional[str] = None, coverage: dict | None = None,
     diagnostics: list[dict] | None = None,
 ) -> str:
-    generated_at = scanned_at or beijing_now_iso()
+    from backend.report_presentation import BOUNDARIES, key_conclusions, scope_status
+    import json
+    import re
     summary = build_summary(sources, findings)
-
-    lines = [
-        "# 量子脆弱密码算法扫描报告",
-        "",
-        f"- 扫描时间：{generated_at}",
-        f"- 输入来源：{SOURCE_LABELS.get(source_type, source_type)}",
-        f"- 文件数量：{summary['source_count']}",
-        f"- 风险发现总数：{summary['finding_count']}",
-        f"- 迁移评分：{summary['migration_score']['score']}/100",
-        f"- 迁移优先级：{summary['migration_score']['priority']}",
-        "",
-    ]
-
-    coverage_lines = ["## 扫描范围与诊断", "", "迁移评分是启发式优先级，不代表风险概率。"]
-    if coverage:
-        coverage_lines.append(f"实际扫描 {coverage['scanned_files']} 个文件；候选数量：{coverage.get('candidate_files') if coverage.get('candidate_files') is not None else '未知'}；跳过 {coverage.get('skipped_files', 0)} 个文件。")
-        coverage_lines.append("存在未扫描部分，零发现不代表整个项目没有相关用法。" if coverage.get("partial") else "结果仅对应本次输入的受支持规则范围。")
-    else:
-        coverage_lines.append("扫描范围未知。")
-    coverage_lines.extend(f"- {markdown_table_cell(d['message'])}" for d in diagnostics or [])
-    lines.extend([*coverage_lines, "", "## 算法统计", ""])
-
-    if summary["algorithm_counts"]:
-        lines.extend(["| 算法 | 数量 |", "| --- | ---: |"])
-        for algorithm, count in summary["algorithm_counts"].items():
-            lines.append(f"| {markdown_table_cell(algorithm)} | {count} |")
-    else:
-        lines.append("未发现已知量子脆弱公钥算法用法。")
-
     analysis = build_analysis(findings)
     insights = analysis["insights"]
-    lines.extend(["", "## 本次扫描解读", "", *[f"- {markdown_table_cell(c)}" for c in insights["conclusions"]]])
-    for title, key in [("受影响文件 Top 8", "files"), ("识别方式", "methods"), ("用途分类", "purposes")]:
-        lines.extend(["", f"### {title}", "", "| 项目 | 发现数 |", "| --- | ---: |"])
-        for row in insights[key]:
-            label = row['label'] + (f" ({row['key']})" if key == 'files' else '')
-            lines.append(f"| {markdown_table_cell(label)} | {row['count']} |")
-    lines.append(f"其余 {insights['other_files']} 个命中文件，共 {insights['other_findings']} 项发现。统计分母为本次全部 {len(findings)} 项发现。")
-    lines.extend(["", "本报告是本次输入的静态证据清单，不是完整供应链或标准化 CBOM。", ""])
-    if analysis["assets"]:
-        lines.extend(["## 密码资产清单", "", "| 文件（身份） | 算法 | 命中 | 识别方式 | 密码库 / API |", "| --- | --- | ---: | --- | --- |"])
-        for asset in analysis["assets"]:
-            cells = [f"{asset['file_name']} ({asset['source_id']})", asset["algorithm"], asset["finding_count"],
-                     " / ".join(METHOD_LABELS.get(m, "未记录") for m in asset["detection_methods"]),
-                     " / ".join(asset["resolved_apis"] or asset["libraries"]) or "未记录"]
-            lines.append("| " + " | ".join(markdown_table_cell(c) for c in cells) + " |")
-        lines.extend(["", "## 迁移待办", "", "按受影响文件数、发现数排序；用途和实际迁移方案需人工确认。", ""])
-        for item in analysis["migrations"]:
-            lines.extend([f"### {markdown_table_cell(item['algorithm'])} · {item['affected_files']} 个文件 / {item['finding_count']} 项发现",
-                          "", f"用途：{item['purpose']}；参考方向：{' / '.join(item['targets'])}。"])
-            lines.extend(f"- {step['title']}：{step['description']}" for step in item["actions"])
-            lines.extend([f"[NIST 标准参考]({item['reference_url']})", ""])
-
-    lines.extend(["", "## 发现明细", ""])
-
+    cell = markdown_table_cell
+    lines = ["# 量子脆弱密码算法扫描报告", "",
+             f"{cell(SOURCE_LABELS.get(source_type, source_type))} · {cell(scanned_at or beijing_now_iso())}（北京时间）", "",
+             "## 摘要与关键结论", "",
+             f"- 风险发现总数：{summary['finding_count']} · 受影响文件：{insights['affected_files']}",
+             f"- 文件数量：{summary['source_count']} · 算法种类：{len(summary['algorithm_counts'])}",
+             f"- 迁移评分：{summary['migration_score']['score']}/100 · 迁移优先级：{cell(summary['migration_score']['priority'])}",
+             *[f"- {cell(line)}" for line in key_conclusions(analysis)], "", scope_status(coverage), "",
+             "## 扫描范围", ""]
+    def rows(headers, values):
+        lines.extend(["| " + " | ".join(headers) + " |", "| " + " | ".join("---" for _ in headers) + " |"])
+        lines.extend("| " + " | ".join(cell(v) for v in row) + " |" for row in values)
+        lines.append("")
+    if coverage:
+        rows(["项目", "本次数据"], [["已分析文件", coverage.get('scanned_files', summary['source_count'])],
+             ["候选文件", coverage.get('candidate_files') if coverage.get('candidate_files') is not None else '未知'],
+             ["跳过文件", coverage.get('skipped_files', 0)]])
+    else:
+        lines.extend(["扫描范围未知。", ""])
+    lines.extend(["## 主要统计", "", f"统计分母：本次全部 {len(findings)} 项发现。", ""])
+    for title, key in [("算法", "algorithms"), ("受影响文件 Top 8", "files"), ("用途", "purposes")]:
+        lines.extend([f"### {title}", ""])
+        rows(["项目", "发现数"], [[r['label'] + (f" ({r['key']})" if key == 'files' else ''), r['count']] for r in insights[key]])
+    if insights['other_files']:
+        lines.extend([f"其余 {insights['other_files']} 个命中文件，共 {insights['other_findings']} 项发现。", ""])
+    lines.extend(["## 密码资产清单", ""])
+    rows(["文件（身份）", "算法 / 用途", "命中", "识别方式", "密码库", "完整 API", "迁移参考"], [
+        [f"{a['file_name']} ({a['source_id']})", f"{a['algorithm']} / {a['purpose']}", a['finding_count'],
+         ' / '.join(METHOD_LABELS.get(m, '未记录') for m in a['detection_methods']),
+         ' / '.join(a['libraries']) or '未记录', ' / '.join(a['resolved_apis']) or '未记录', ' / '.join(a['targets'])]
+        for a in analysis['assets']])
+    lines.extend(["## 发现明细", ""])
     if not findings:
-        lines.append("未发现已知量子脆弱公钥算法用法。")
-        return "\n".join(lines)
-
+        lines.extend(["未发现已知量子脆弱公钥算法用法。", ""])
     for index, finding in enumerate(findings, 1):
+        lines.extend([f"### {index}. {cell(finding['algorithm'])} · 第 {cell(finding['line'])} 行 · {cell(finding['risk_level'])}", "",
+                      f"文件：{cell(finding['file_name'])}", ""])
+        # A longer fence preserves arbitrary evidence containing backticks and newlines.
+        evidence = str(finding['evidence'])
+        longest = max((len(run) for run in re.findall(r'`+', evidence)), default=0)
+        fence = '`' * max(3, longest + 1)
+        lines.extend([fence + 'text', evidence, fence, ""])
+        method = METHOD_LABELS.get(finding.get('detection_method'), '未记录')
+        if finding.get('detection_method'):
+            method += f" ({finding['detection_method']})"
         lines.extend([
-            f"### {index}. {markdown_table_cell(finding['algorithm'])} · 第 {finding['line']} 行", "",
-            f"- 文件：{markdown_table_cell(finding['file_name'])}",
-            f"- 文件身份：{markdown_table_cell(finding['source_id'])}",
-            f"- 识别方式：{METHOD_LABELS.get(finding.get('detection_method'), '未记录')}",
-            f"- 已确认 API：{markdown_table_cell(finding.get('resolved_api') or '未记录')}",
-            f"- 风险等级：{markdown_table_cell(finding['risk_level'])}",
-            f"- 证据：{markdown_table_cell(finding['evidence'])}",
-            f"- 原因：{markdown_table_cell(finding['reason'])}",
-            f"- 迁移参考：{markdown_table_cell(finding['recommendation'])}", "",
+            f"- 文件身份：{cell(finding['source_id'])} · 来源：{cell(finding.get('source_type') or '未记录')}",
+            f"- 识别方式：{cell(method)} · 密码库：{cell(finding.get('library') or '未记录')}",
+            f"- 完整 API：{cell(finding.get('resolved_api') or '未记录')}", "",
+            f"原因：{cell(finding['reason'])}", "",
+            f"迁移参考：{cell(finding['recommendation'])}", "",
         ])
+    lines.extend(["## 迁移待办", ""])
+    for item in analysis['migrations']:
+        lines.extend([f"### {cell(item['algorithm'])} · {item['affected_files']} 个文件 / {item['finding_count']} 项发现", "",
+                      f"{cell(item['purpose'])} · 参考：{cell(' / '.join(item['targets']))}", ""])
+        lines.extend(f"- **{cell(step['title'])}**：{cell(step['description'])}" for step in item['actions'])
+        lines.extend([f"[NIST 标准参考]({item['reference_url']})", ""])
+    if not analysis['migrations']:
+        lines.extend(["无迁移待办。", ""])
+    lines.extend(["## 附录", "", "### 评分与能力边界", "", *[f"- {line}" for line in BOUNDARIES], "", "### 识别依据", ""])
+    rows(["识别方式", "发现数"], [[r['label'], r['count']] for r in insights['methods']])
+    lines.extend(["### 范围详情", ""])
+    rows(["字段", "值"], [[k, json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v] for k, v in (coverage or {}).items()])
+    lines.extend(["### 文件元信息", ""])
+    rows(["文件", "元信息"], [[s.get('file_name', ''), json.dumps({k: v for k, v in s.items() if k != 'content'}, ensure_ascii=False)] for s in sources])
+    lines.extend(["### 扫描诊断", ""])
+    rows(["提示", "完整诊断"], [[d.get('message', ''), json.dumps(d, ensure_ascii=False)] for d in diagnostics or []])
     return "\n".join(lines)

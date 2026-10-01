@@ -278,9 +278,12 @@ class ReportInsightTests(unittest.TestCase):
         html = client.post('/api/report/html', json=data)
         structured = client.post('/api/report/json', json=data).json()
         self.assertEqual(html.status_code, 200)
-        for conclusion in structured['analysis']['insights']['conclusions']:
+        self.assertIn('主要算法：RSA', html.text)
+        self.assertIn(str(structured['summary']['finding_count']), html.text)
+        for finding in structured['findings']:
             from html import escape
-            self.assertIn(escape(conclusion, quote=True), html.text)
+            for field in ('source_id', 'file_name', 'evidence', 'reason', 'recommendation'):
+                self.assertIn(escape(finding[field], quote=True), html.text)
 
     def test_top_files_total_and_mutually_exclusive_purpose(self):
         base = build_scan_response([('a.py', CODE)], 'snippet').model_dump()['findings'][0]
