@@ -17,7 +17,7 @@ const total = computed(() => rows.value.reduce((sum, row) => sum + row.count, 0)
   <details class="popular-overview">
     <summary>本次批次概览 · {{ rows.length }} 个可用仓库</summary>
     <p class="small muted">
-      范围内完整采集 {{ rows.length - partial }} 个 · 部分采集 {{ partial }} 个 · 失败/未完成
+      可用 {{ rows.length }} 个 · 部分扫描 {{ partial }} 个 · 失败/未完成
       {{ result.failures?.length || 0 }} 个
     </p>
     <EvidenceBars
@@ -28,7 +28,7 @@ const total = computed(() => rows.value.reduce((sum, row) => sum + row.count, 0)
       @select="$emit('select', $event.key)"
     />
     <p class="small muted">
-      按各仓库汇总数对比，不从截断的代表性发现推算完整资产。采集范围不同，不宜据此比较整个仓库的安全性。
+      各仓库范围不同，发现数不用于比较整体安全性。
     </p>
   </details>
 </template>

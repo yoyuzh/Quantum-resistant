@@ -23,7 +23,6 @@ defineEmits(['update:filename', 'update:content']);
         placeholder="粘贴 Python 代码、配置或 PEM 内容"
       ></textarea>
     </label>
-    <p class="muted small">文件名后缀用于选择分析方式。单份内容不超过 2 MiB。</p>
   </div>
 </template>
 

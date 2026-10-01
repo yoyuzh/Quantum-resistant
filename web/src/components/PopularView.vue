@@ -8,10 +8,10 @@ import ScanLoading from './ScanLoading.vue';
 import AppIcon from './AppIcon.vue';
 import TaskProgress from './TaskProgress.vue';
 import PopularOverview from './PopularOverview.vue';
-import { scanLimits } from '../composables/useScanConfig.js';
+import ScanHelp from './ScanHelp.vue';
 const topOptions = [5, 8, 10, 20, 30].map((value) => ({ value, label: `${value} 个仓库` }));
 const props = defineProps({ state: Object });
-defineEmits(['refresh', 'reload', 'update:top', 'cancel']);
+defineEmits(['refresh', 'reload', 'update:top', 'cancel', 'scan-repository']);
 const previous = ref(false);
 const displayed = computed(() =>
   previous.value && props.state.previous ? props.state.previous : props.state.result,
@@ -51,7 +51,7 @@ watch(
       <div class="panel-body stack" role="region" tabindex="0" aria-label="热门仓库扫描与列表">
         <SelectControl
           label="扫描仓库数量"
-          :model-value="state.top"
+          :model-value="state.busy && state.progress?.total_repos != null ? state.progress.total_repos : state.top"
           :options="topOptions"
           :disabled="state.busy || state.loading"
           @update:model-value="$emit('update:top', $event)"
@@ -63,10 +63,7 @@ watch(
         >
           {{ state.busy ? '正在扫描…' : state.result ? '重新扫描热门仓库' : '开始热门扫描' }}
         </button>
-        <p class="small muted">
-          每仓库最多 {{ scanLimits.max_files }} 个文件；批次时间预算 {{ scanLimits.popular_timeout_seconds / 60 }} 分钟。
-          文本预算按仓库均分，最多100 MiB/仓库；失败或超时单独列出。
-        </p>
+        <ScanHelp mode="popular" />
         <ScanStatus
           :busy="state.busy || state.loading"
           :label="state.loading ? '正在加载上次结果' : '正在检索与扫描仓库'"
@@ -83,7 +80,7 @@ watch(
             }}（北京时间）
           </p>
           <p v-if="displayed.meta?.incomplete" class="notice">
-            本次批次未完整结束或未保存；上次榜单快照未覆盖。{{ displayed.meta.save_error }}
+            本次结果不完整，上次快照已保留。{{ displayed.meta.save_error }}
           </p>
           <button
             v-if="state.result?.meta?.incomplete"
@@ -111,9 +108,9 @@ watch(
                 ><strong>{{ repo.full_name }}</strong
                 ><small
                   ><AppIcon name="star" :size="13" /> {{ formatStars(repo.star_count) }} ·
-                  {{ repo.finding_count }} 项发现</small
+                  {{ repo.finding_count }} 项发现 · {{ !repo.coverage ? '范围未知' : repo.coverage.partial ? '部分扫描' : repo.coverage.candidate_files == null ? '总数未知' : `${repo.coverage.scanned_files} 个文件` }}</small
                 ></span
-              ><span class="tag">{{ repo.migration_score }}</span>
+              ><span class="tag" :aria-label="`迁移评分 ${repo.migration_score}`">{{ repo.migration_score }} 分</span>
             </button>
           </div>
           <details v-if="displayed.failures?.length" class="notice">
@@ -138,7 +135,7 @@ watch(
       />
     </section>
     <Transition v-else name="content" appear>
-      <PopularDetail :key="selected" :repo="activeRepo" />
+      <PopularDetail :key="selected" :repo="activeRepo" @scan-repository="$emit('scan-repository', $event)" />
     </Transition>
   </div>
 </template>

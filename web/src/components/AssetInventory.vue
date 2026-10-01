@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue';
 import { paginate } from '../utils/results.js';
 import { methodLabel } from '../utils/analysis.js';
 import AppIcon from './AppIcon.vue';
+import DisclosurePanel from './DisclosurePanel.vue';
+import { fileLabel } from '../utils/presentation.js';
 const props = defineProps({ analysis: Object, findings: Array });
 defineEmits(['reveal']);
 const page = ref(1);
@@ -21,11 +23,7 @@ watch(assets, () => {
 </script>
 <template>
   <section class="stack" aria-label="密码资产清单">
-    <p class="small muted">
-      按文件身份与算法聚合，共
-      {{ assets.length }} 项资产。数量与位置为该资产的全部命中；这是本次静态证据清单，不是完整
-      CBOM。
-    </p>
+    <h3>密码资产 <span class="small muted">{{ assets.length }} 项</span></h3>
     <p v-if="!analysis" class="notice">此历史结果未记录资产分析，请在发现明细中查看证据。</p>
     <p v-else-if="!assets.length" class="notice">当前范围内没有密码资产。</p>
     <article
@@ -34,28 +32,31 @@ watch(assets, () => {
       class="analysis-card stack"
     >
       <div class="toolbar">
-        <AppIcon name="file" :size="18" /><strong class="asset-file">{{ asset.file_name }}</strong
+        <AppIcon name="file" :size="18" /><strong class="asset-file">{{ fileLabel(asset, analysis.assets) }}</strong
         ><span class="tag">{{ asset.algorithm }}</span>
       </div>
-      <p class="small muted">
-        {{ asset.source_id }} · {{ asset.finding_count }} 项命中 · {{ asset.purpose }}
+      <p>
+        <strong>{{ asset.finding_count }} 项命中</strong> · {{ asset.purpose }}
       </p>
-      <dl>
-        <dt>识别方式</dt>
-        <dd>{{ asset.detection_methods.map(methodLabel).join(' / ') }}</dd>
-        <dt>密码库</dt>
-        <dd>{{ asset.libraries.join(' / ') || '未记录' }}</dd>
-        <dt>完整 API</dt>
-        <dd class="api">{{ asset.resolved_apis.join(' / ') || '未记录' }}</dd>
-        <dt>迁移参考</dt>
-        <dd>{{ asset.targets.join(' / ') }} · 按用途评估</dd>
-      </dl>
+      <DisclosurePanel title="资产详情">
+        <dl>
+          <dt>文件身份</dt><dd>{{ asset.source_id }}</dd>
+          <dt>识别方式</dt>
+          <dd>{{ asset.detection_methods.map(methodLabel).join(' / ') }}</dd>
+          <dt>密码库</dt>
+          <dd>{{ asset.libraries.join(' / ') || '未记录' }}</dd>
+          <dt>完整 API</dt>
+          <dd class="api">{{ asset.resolved_apis.join(' / ') || '未记录' }}</dd>
+          <dt>迁移参考</dt>
+          <dd>{{ asset.targets.join(' / ') }} · 按用途评估</dd>
+        </dl>
+      </DisclosurePanel>
       <div class="toolbar" aria-label="证据位置">
         <button
           v-for="(location, index) in asset.locations.slice(0, 8)"
           :key="index"
           class="button secondary"
-          :aria-label="`查看 ${asset.file_name} 第 ${location.line} 行 ${asset.algorithm} 证据`"
+          :aria-label="`查看 ${fileLabel(asset, analysis.assets)} 第 ${location.line} 行 ${asset.algorithm} 证据`"
           @click="$emit('reveal', asset, location)"
         >
           第 {{ location.line }} 行
@@ -90,7 +91,7 @@ dl {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.5rem 1rem;
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
 }
 dt {
   color: var(--text-secondary);

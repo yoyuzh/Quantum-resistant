@@ -11,6 +11,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   line-height: 1.6;
+  font-size: 0.875rem;
 }
 button,
 input,
@@ -46,11 +47,11 @@ p {
   margin: 0;
 }
 h2 {
-  font-size: 1.12rem;
+  font-size: 1.25rem;
   overflow-wrap: anywhere;
 }
 h3 {
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 p + p {
   margin-top: 0.5rem;
@@ -59,7 +60,7 @@ label {
   display: grid;
   gap: 0.4rem;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   min-width: 0;
 }
 input,
@@ -175,7 +176,7 @@ textarea::placeholder {
   border: 0;
   border-radius: var(--radius);
   padding: 0.6rem 0.85rem;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   line-height: 1.4;
@@ -199,7 +200,7 @@ textarea::placeholder {
   color: var(--text-secondary);
 }
 .small {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
 }
 .eyebrow {
   color: var(--accent-dim);
@@ -211,7 +212,7 @@ textarea::placeholder {
   padding: 0.85rem;
   background: var(--bg-elevated);
   border-radius: var(--radius);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 .notice.error {

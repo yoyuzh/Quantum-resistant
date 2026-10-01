@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
 import ProgressDetails from './ProgressDetails.vue';
-import { elapsedSeconds } from '../utils/progress.js';
 const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object });
 const description = computed(
   () =>
@@ -29,18 +28,10 @@ const description = computed(
         <div class="scan-dots"><i></i><i></i><i></i></div>
       </div>
       <div class="loading-heading">
-        <p class="eyebrow">密码资产分析</p>
-        <h2>正在寻找代码中的密码线索</h2>
+        <h2>{{ mode === 'popular' ? '正在扫描仓库' : '正在分析代码' }}</h2>
       </div>
       <p v-if="!progress" class="description">{{ description }}</p>
       <ProgressDetails :progress="progress" />
-      <span class="elapsed" aria-live="off">
-        {{ progress?.state === 'queued' ? '排队等待' : '已等待' }}
-        {{ elapsedSeconds(progress?.elapsed ?? elapsed) }} 秒
-      </span>
-      <p class="small muted">
-        {{ hasResult ? '上次结果已保留，完成后更新。' : '分析过程不会执行输入代码。' }}
-      </p>
     </div>
   </div>
 </template>
@@ -190,11 +181,6 @@ const description = computed(
   max-width: 28rem;
   color: var(--text-secondary);
   font-size: 0.85rem;
-}
-.elapsed {
-  font-size: 0.75rem;
-  color: var(--accent-dim);
-  font-variant-numeric: tabular-nums;
 }
 @media (min-width: 1024px) and (min-height: 800px) {
   .scan-loading {

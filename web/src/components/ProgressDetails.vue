@@ -10,28 +10,28 @@ function amount(value, label) {
 </script>
 <template>
   <div v-if="progress" class="progress-details stack">
-    <p class="small" role="status">
+    <p role="status">
       {{ ['succeeded', 'partial', 'cancelled', 'failed'].includes(progress.state)
         ? '分析已结束，正在呈现结果' : progress.stage || '正在提交任务' }}
     </p>
     <div v-for="row in rows" :key="row.label" class="progress-row">
-      <div class="progress-label small">
+      <div class="progress-label">
         <span>{{ row.label }} {{ amount(row.value, row.label) }}<template v-if="row.total != null"> / {{ amount(row.total, row.label) }}</template></span>
         <span v-if="row.percent != null">{{ row.percent }}%</span>
       </div>
       <progress v-if="row.percent != null" :value="row.percent" max="100" :aria-label="row.label" />
     </div>
     <p class="small muted">
-      已采集 {{ progress.collected_files || 0 }} 个 · 已分析 {{ progress.analyzed_files || 0 }} 个
+      已采集 {{ progress.collected_files || 0 }} 个
       <span v-if="progress.skipped_files"> · 跳过 {{ progress.skipped_files }} 个</span>
       <span v-if="progress.kind === 'popular'"> · 仓库已结束 {{ progress.completed_repos || 0 }} / {{ progress.total_repos ?? '待确认' }}</span>
     </p>
     <details v-if="repositories.length" open>
-      <summary class="small">各仓库进度</summary>
+      <summary>各仓库进度</summary>
       <ul>
-        <li v-for="repo in repositories" :key="repo.name" class="small">
+        <li v-for="repo in repositories" :key="repo.name">
           <strong>{{ repo.name }}</strong> · {{ repo.completed_repos ? '已结束' : repo.stage || '准备扫描' }}
-          <span v-if="repo.processed_files != null">处理 {{ repo.processed_files }}<template v-if="repo.candidate_files != null"> / {{ repo.candidate_files }}</template> · 跳过 {{ repo.skipped_files || 0 }}</span>
+          <span v-if="repo.processed_files != null">处理 {{ repo.processed_files }}<template v-if="repo.candidate_files != null"> / {{ repo.candidate_files }}</template><template v-if="repo.skipped_files"> · 跳过 {{ repo.skipped_files }}</template></span>
           <span>采集 {{ repo.collected_files || 0 }} · 分析 {{ repo.analyzed_files || 0 }}<template v-if="repo.totals_final"> / {{ repo.analysis_total }}</template></span>
           <span v-if="repo.download_bytes != null">下载 {{ amount(repo.download_bytes, '字节') }}<template v-if="repo.download_total != null"> / {{ amount(repo.download_total, '字节') }}</template></span>
         </li>
@@ -72,5 +72,6 @@ li {
 li span {
   display: block;
   color: var(--text-secondary);
+  font-size: 0.75rem;
 }
 </style>

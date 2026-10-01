@@ -18,21 +18,17 @@ function save(format) {
       </summary>
       <div class="export-options">
         <button class="button secondary" :disabled="exporting" @click="save('html')">
-          HTML 图文报告
+          HTML · 阅读 / 打印
         </button>
-        <p class="small muted">离线阅读；浏览器打印可另存为 PDF</p>
         <button class="button secondary" :disabled="exporting" @click="save('markdown')">
-          Markdown 报告
+          Markdown · 编辑
         </button>
         <button class="button secondary" :disabled="exporting" @click="save('json')">
-          JSON 资产与证据
+          JSON · 完整数据
         </button>
         <button class="button secondary" :disabled="exporting" @click="save('csv')">
-          CSV 发现明细
+          CSV · 发现表格
         </button>
-        <p class="small muted">
-          Markdown 便于编辑；JSON 用于程序处理；CSV 可用表格软件打开。不附带完整源码。
-        </p>
       </div>
     </details>
     <p v-if="error" class="notice error" role="alert">{{ error }}</p>

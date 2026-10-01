@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-const props = defineProps({ title: String, rows: Array, total: Number, interactive: Boolean });
+import { fileLabel } from '../utils/presentation.js';
+const props = defineProps({ title: String, rows: Array, peers: Array, total: Number, interactive: Boolean });
 defineEmits(['select']);
 const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)));
 </script>
@@ -8,7 +9,6 @@ const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)
   <section class="evidence-bars stack" :aria-label="title">
     <div>
       <h3>{{ title }}</h3>
-      <p class="small muted">{{ total }} 项发现中的分布 · 数量不代表风险概率</p>
     </div>
     <p v-if="!rows?.length" class="small muted">本次没有可统计的发现。</p>
     <component
@@ -17,11 +17,11 @@ const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)
       :key="row.key"
       class="evidence-bar"
       :class="{ actionable: interactive }"
-      :aria-label="`${row.label}：${row.count} 项`"
+      :aria-label="`${fileLabel(row, peers || rows)}：${row.count} 项`"
       @click="interactive && $emit('select', row)"
     >
       <span class="bar-name"
-        >{{ row.label }}<small v-if="row.key.startsWith('src_')">{{ row.key }}</small></span
+        >{{ fileLabel(row, peers || rows) }}</span
       >
       <span class="bar-track" aria-hidden="true"
         ><i :style="{ width: `${(row.count / max) * 100}%` }"
@@ -48,13 +48,8 @@ const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)
   text-align: left;
 }
 .bar-name {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
-}
-small {
-  display: block;
-  color: var(--text-secondary);
-  font-size: 0.65rem;
 }
 .bar-track {
   height: 9px;

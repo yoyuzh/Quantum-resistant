@@ -5,9 +5,6 @@ defineEmits(['select']);
 </script>
 <template>
   <section class="stack" aria-label="迁移待办">
-    <p class="small muted">
-      按全部结果中的受影响文件数、发现数排序。以下是人工复核与迁移规划建议，不表示已经修复。
-    </p>
     <p v-if="!analysis" class="notice">此历史结果未记录迁移清单，请重新扫描。</p>
     <p v-else-if="!analysis.migrations.length" class="notice">
       本次没有需要生成迁移待办的算法证据。
@@ -21,9 +18,9 @@ defineEmits(['select']);
         <span class="tag">{{ item.algorithm }}</span
         ><strong>{{ item.purpose }}</strong>
       </div>
-      <p class="small muted">
+      <p>
         {{ item.affected_files }} 个文件 · {{ item.finding_count }} 项发现 ·
-        {{ item.targets.join(' / ') }}
+        <strong>参考：{{ item.targets.join(' / ') }}</strong>
       </p>
       <ol>
         <li v-for="action in item.actions" :key="action.title">
@@ -63,8 +60,8 @@ li::marker {
   font-size: 0.75rem;
 }
 li p {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 </style>

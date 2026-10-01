@@ -69,7 +69,7 @@ export function useRemoteTask(kind, state) {
         throw new Error('任务结果格式不完整，请重新扫描');
       state.taskNote =
         status.state === 'partial'
-          ? '本次为部分结果，仅包含完整分析的文件；请结合采集范围和诊断查看。'
+          ? status.cancel_requested ? '任务已取消，已保留完成部分。' : '部分结果：仅包含完整分析的文件。'
           : '';
       if (
         kind === 'popular' &&

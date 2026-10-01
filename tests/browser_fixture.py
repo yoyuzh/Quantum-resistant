@@ -20,6 +20,7 @@ from backend.reporting import beijing_now_iso
 from backend import task_routes, scanning
 from backend.scanning import build_scan_response
 from backend.html_report import build_html_report
+from backend.task_store import TaskStore
 from fastapi.responses import HTMLResponse
 
 CODE = "from cryptography.hazmat.primitives.asymmetric import rsa\n" + "rsa.generate_private_key(public_exponent=65537, key_size=2048)\n" * 55
@@ -50,6 +51,8 @@ def collect(value, **kwargs):
         return CollectedSources(docs, candidates=count, skipped=count-len(docs), partial=len(docs)<count)
     if deadline:
         deadline.control.emit(collected_delta=1)
+    if 'unknown' in value or 'legacy' in value:
+        return CollectedSources([(value, 'deep/' * 20 + 'crypto.py', CODE)], candidates=None, partial=True)
     return CollectedSources([(value, "package/crypto.py", CODE)], limit=kwargs.get("max_files", 5000),
                             candidates=3, skipped=2, partial=True,
                             diagnostics=[{"code": "partial_collection", "message": "模拟部分采集：两个文件未完成。"}])
@@ -57,6 +60,16 @@ def collect(value, **kwargs):
 
 refreshes = 0
 real_analyze = scanning.analyze_source
+real_result = TaskStore.result
+
+
+def fixture_result(self, identity, include_content=True):
+    result = real_result(self, identity, include_content)
+    if any('legacy' in (source.get('origin') or '') for source in result.get('sources', [])):
+        result.pop('analysis', None)
+        result['coverage'] = None
+        result['diagnostics'] = []
+    return result
 
 
 def slow_analyze(content, filename, *args, **kwargs):
@@ -78,10 +91,17 @@ def task_search(top=8, **kwargs):
 
 
 @main.app.get('/fixture/report', response_class=HTMLResponse)
-def example_report():
+def example_report(kind: str = 'normal'):
     result = build_scan_response([('authentication/crypto.py', CODE)], 'snippet').model_dump()
     result.pop('summary')
     result.pop('analysis')
+    if kind == 'zero':
+        result['findings'] = []
+    if kind == 'partial':
+        result['coverage'].update(partial=True, candidate_files=None)
+        result['diagnostics'] = [{'code': 'fixture_failure', 'message': '模拟文件读取失败'}]
+    if kind == 'unknown':
+        result['coverage'] = None
     return build_html_report(**result)
 
 
@@ -104,6 +124,7 @@ if __name__ == "__main__":
              patch.object(main, "collect_pypi_sources", collect), \
              patch.object(main, "scan_popular", popular), \
              patch.object(task_routes, 'fetch_popular_repos', task_search), \
+             patch.object(TaskStore, 'result', fixture_result), \
              patch.object(scanning, 'analyze_source', slow_analyze), \
              patch('backend.pipeline.analyze_source', slow_analyze), \
              patch('backend.popular.analyze_source', slow_analyze), \

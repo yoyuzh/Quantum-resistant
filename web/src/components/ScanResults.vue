@@ -4,6 +4,8 @@ import { formatTime } from '../utils/results.js';
 import { useResultSelection } from '../composables/useResultSelection.js';
 import CoverageNotice from './CoverageNotice.vue';
 import ScanSummary from './ScanSummary.vue';
+import ResultHelp from './ResultHelp.vue';
+import { fileLabel } from '../utils/presentation.js';
 import FindingsList from './FindingsList.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
 import AnalysisOverview from './AnalysisOverview.vue';
@@ -53,11 +55,10 @@ function tabKeys(event, index) {
 
 <template>
   <div class="result-layout">
-    <p class="sr-only" role="status">扫描完成，共 {{ result.summary.finding_count }} 项发现。</p>
+    <p class="sr-only" role="status">分析结束，共 {{ result.summary.finding_count }} 项发现。</p>
     <div class="panel-heading">
       <div class="result-heading">
         <div>
-          <p class="eyebrow">扫描已完成</p>
           <h2>密码资产与迁移分析</h2>
           <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
         </div>
@@ -89,7 +90,7 @@ function tabKeys(event, index) {
       tabindex="0"
       :aria-labelledby="`tab-${tab}`"
     >
-      <ScanSummary :summary="result.summary" />
+      <ScanSummary :summary="result.summary" :compact="tab !== 'overview'" />
       <CoverageNotice :coverage="result.coverage" :diagnostics="result.diagnostics" />
       <div
         v-if="hasFilters && (tab === 'assets' || tab === 'findings')"
@@ -97,7 +98,7 @@ function tabKeys(event, index) {
       >
         <span class="small"
           >当前筛选：{{ filters.algorithm || '全部算法'
-          }}{{ filters.sourceId ? ' · ' + filters.sourceId : ''
+          }}{{ filters.sourceId ? ' · ' + fileLabel(result.sources.find(s => s.source_id === filters.sourceId) || { file_name: filters.sourceId }, result.sources) : ''
           }}{{ filters.target ? ' · ' + filters.target : ''
           }}{{ filters.method ? ' · ' + methodLabel(filters.method) : ''
           }}{{ filters.query ? ' · ' + filters.query : '' }}</span
@@ -124,6 +125,7 @@ function tabKeys(event, index) {
         @update:filters="Object.assign(filters, $event)"
       />
       <MigrationChecklist v-else :analysis="result.analysis" @select="selectEvidence" />
+      <ResultHelp :score="result.summary.migration_score" />
       <KnowledgePanel v-if="tab === 'overview' || tab === 'migration'" />
     </div>
   </div>

@@ -7,6 +7,7 @@ import FileUpload from './components/FileUpload.vue';
 import RemoteInput from './components/RemoteInput.vue';
 import ScanStatus from './components/ScanStatus.vue';
 import TaskProgress from './components/TaskProgress.vue';
+import ScanHelp from './components/ScanHelp.vue';
 import ResultsWorkspace from './components/ResultsWorkspace.vue';
 import AppIcon from './components/AppIcon.vue';
 import PopularView from './components/PopularView.vue';
@@ -60,11 +61,11 @@ function submit() {
       @refresh="runPopular(true)"
       @reload="runPopular(false)"
       @cancel="cancelPopular"
+      @scan-repository="mode = 'github'; drafts.github.value = $event"
     />
     <div v-else class="workspace-grid">
       <section class="panel input-panel" aria-label="扫描输入区域">
         <div class="panel-heading">
-          <p class="eyebrow">扫描工作区</p>
           <h2>{{ titles[mode] }}</h2>
         </div>
         <form class="input-form" @submit.prevent="submit">
@@ -77,7 +78,7 @@ function submit() {
             aria-label="扫描输入内容"
           >
             <p v-if="current.restored" class="notice">
-              {{ current.busy ? '正在恢复后台任务，草稿未跨刷新保存。' : '已恢复任务结果；再次扫描请确认并提供当前输入。' }}
+              {{ current.busy ? '已恢复后台任务，输入草稿未保存。' : '已恢复结果，请确认输入后再扫描。' }}
             </p>
             <SnippetInput
               v-if="mode === 'snippet' && !(current.restored && current.busy)"
@@ -105,20 +106,18 @@ function submit() {
               @retry="submit"
             />
             <TaskProgress :state="current" @cancel="cancel(mode)" />
+            <ScanHelp :mode="mode" />
           </div>
           <div class="panel-actions stack">
             <button type="submit" class="button primary" :disabled="current.busy">
               <AppIcon name="scan" :size="18" />
               {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
             </button>
-            <p class="muted small">
-              只做静态分析，不执行输入代码。草稿保存在当前页面；后台源码在本机临时保存，任务结束后最多保留15分钟。
-            </p>
           </div>
         </form>
       </section>
       <ResultsWorkspace :key="mode" :state="current" :mode="mode" />
     </div>
-    <footer>抗量子迁移前置分析原型 · 扫描范围有限，结果需结合实际用途复核</footer>
+    <footer>抗量子迁移分析原型</footer>
   </main>
 </template>

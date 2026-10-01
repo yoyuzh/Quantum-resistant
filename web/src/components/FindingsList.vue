@@ -4,6 +4,7 @@ import { filterFindings, findingKey, paginate } from '../utils/results.js';
 import FindingCard from './FindingCard.vue';
 import SelectControl from './SelectControl.vue';
 import { methodLabel } from '../utils/analysis.js';
+import { fileLabel } from '../utils/presentation.js';
 const props = defineProps({
   findings: Array,
   sources: Array,
@@ -52,9 +53,9 @@ const algorithmOptions = computed(() => [
 ]);
 const fileOptions = computed(() => [
   { value: '', label: '全部文件' },
-  ...props.sources.map((source, index) => ({
+  ...props.sources.map((source) => ({
     value: source.source_id,
-    label: `${index + 1}. ${source.file_name} · ${source.source_id.slice(-6)}`,
+    label: fileLabel(source, props.sources),
   })),
 ]);
 const filtered = computed(

@@ -1,12 +1,10 @@
 <script setup>
-import ProgressDetails from './ProgressDetails.vue';
 defineProps({ state: Object });
 defineEmits(['cancel']);
 </script>
 <template>
   <div v-if="state.busy && (state.taskId || state.progress)" class="task-progress stack" aria-label="后台任务状态">
-    <p v-if="state.progress?.target" class="small muted">当前任务：{{ state.progress.target }}</p>
-    <ProgressDetails :progress="state.progress" />
+    <p v-if="state.progress?.target">{{ state.progress.target }}</p>
     <p v-if="state.connection" class="notice" role="status">{{ state.connection }}</p>
     <button
       type="button"
@@ -22,7 +20,6 @@ defineEmits(['cancel']);
             : '取消任务'
       }}
     </button>
-    <p class="small muted">可切换来源；刷新页面会恢复查询。服务重启后任务需重新提交。</p>
   </div>
   <p v-else-if="!state.busy && state.taskNote" class="notice" role="status">{{ state.taskNote }}</p>
 </template>

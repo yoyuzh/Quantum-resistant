@@ -29,7 +29,7 @@ watch(query, () => {
   <section class="stack" aria-label="文件算法证据关系图">
     <div>
       <h3>从文件追踪到迁移方向</h3>
-      <p class="small muted">实线是本次命中证据，虚线是静态迁移建议；此图不是完整供应链依赖图。</p>
+      <p class="small muted">实线：命中证据 · 虚线：迁移参考</p>
     </div>
     <label
       >查找图中文件<input v-model="query" type="search" placeholder="文件路径或身份编号"

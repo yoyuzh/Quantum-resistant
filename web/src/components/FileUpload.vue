@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { paginate } from '../utils/results.js';
-import { scanLimits } from '../composables/useScanConfig.js';
 import AppIcon from './AppIcon.vue';
 import { request } from '../api/client.js';
 import { ACCEPT, fileKey, mergeFiles } from '../utils/files.js';
@@ -64,10 +63,6 @@ async function samples() {
       <strong>选择文件或拖放到这里</strong>
       <span class="muted small">源码、配置及 PEM 文本 · UTF-8 编码</span>
     </button>
-    <p class="muted small">
-      单文件 {{ scanLimits.max_file_bytes / 1048576 }} MiB，源码合计 {{ scanLimits.max_text_bytes / 1048576 }} MiB，
-      上传请求 {{ scanLimits.max_upload_bytes / 1048576 }} MiB，最多 {{ scanLimits.max_files }} 个文件。同名不同版本可同时扫描。
-    </p>
     <div class="toolbar">
       <button
         type="button"
@@ -76,7 +71,7 @@ async function samples() {
         :disabled="disabled || loading"
       >
         {{ loading ? '正在读取示例…' : '导入示例代码' }}</button
-      ><span class="muted small">已选 {{ files.length }} 个文件</span>
+      ><strong>已选 {{ files.length }} 个文件</strong>
     </div>
     <div v-if="errors.length" class="notice error" role="alert">
       <p v-for="error in errors" :key="error">{{ error }}</p>

@@ -1,9 +1,9 @@
 <script setup>
-defineProps({ summary: Object });
+defineProps({ summary: Object, compact: Boolean });
 </script>
 
 <template>
-  <div class="metrics">
+  <div class="metrics" :class="{ compact }">
     <div>
       <span>扫描文件</span><strong>{{ summary.source_count }}</strong>
     </div>
@@ -20,10 +20,6 @@ defineProps({ summary: Object });
       >
     </div>
   </div>
-  <p class="muted small">
-    {{ summary.migration_score.priority }} · 启发式优先级：高风险项 × 25 + 受影响文件 × 10 +
-    算法种类 × 10，上限 100；不代表风险概率。
-  </p>
 </template>
 
 <style scoped>
@@ -55,6 +51,22 @@ small {
 }
 .danger {
   color: var(--danger);
+}
+.compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+.compact div {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  padding: 0;
+  background: transparent;
+}
+.compact strong {
+  font-size: 0.875rem;
+  margin: 0;
 }
 @media (max-width: 600px) {
   .metrics {

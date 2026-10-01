@@ -17,8 +17,7 @@ onMounted(load);
 
 <template>
   <details class="knowledge">
-    <summary>算法迁移知识 <span class="muted small">静态知识参考</span></summary>
-    <p class="muted small">这是算法与迁移方向的知识说明，不是本次项目的实际依赖关系图。</p>
+    <summary>算法迁移知识</summary>
     <div v-if="error" class="notice error">
       {{ error }} <button class="button secondary" @click="load">重新加载知识</button>
     </div>
@@ -45,7 +44,7 @@ dl {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.7rem;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 dt {

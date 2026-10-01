@@ -25,9 +25,8 @@ defineProps({ state: Object, mode: String });
       >
         <div class="empty">
           <span class="empty-mark"><AppIcon name="graph" :size="38" /></span>
-          <p class="eyebrow">从证据到迁移方向</p>
           <h2>让密码资产清晰可见</h2>
-          <p>选择左侧来源，开始一次静态扫描。<br />在这里查看算法分布、代码证据和迁移待办。</p>
+          <p>选择来源并开始扫描，查看算法、证据与迁移待办。</p>
           <div class="welcome-flow" aria-hidden="true">
             <span><AppIcon name="file" :size="17" />文件</span>
             <AppIcon name="arrow" :size="16" />

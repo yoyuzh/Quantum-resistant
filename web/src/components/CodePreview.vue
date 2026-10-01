@@ -42,7 +42,7 @@ const lines = computed(() => loaded.value ?? codeLines(props.sources, props.find
       ><code>{{ line.text || ' ' }}</code>
     </div>
   </div>
-  <p v-else class="muted small">此结果未包含源码内容。</p>
+  <p v-else class="notice">源码不可用，此结果仅保留代码证据。</p>
 </template>
 
 <style scoped>
