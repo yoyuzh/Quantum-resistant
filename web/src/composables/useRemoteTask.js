@@ -2,6 +2,7 @@ import { onUnmounted } from 'vue';
 import { request } from '../api/client.js';
 import { followTask } from '../utils/remoteTasks.js';
 import { uploadRequest } from '../api/upload.js';
+import { createRequestId } from '../utils/requestId.js';
 
 export function useRemoteTask(kind, state) {
   const key = `quantum-task-${kind}`;
@@ -28,7 +29,7 @@ export function useRemoteTask(kind, state) {
       ? JSON.stringify([...body.entries()].map(([name, file]) => [name, file.name, file.size, file.lastModified]))
       : JSON.stringify(body);
     if (!resumeId && pendingSubmission?.signature !== signature)
-      pendingSubmission = { signature, requestId: crypto.randomUUID() };
+      pendingSubmission = { signature, requestId: createRequestId() };
     state.progress = null;
     state.connection = '';
     state.taskNote = '';

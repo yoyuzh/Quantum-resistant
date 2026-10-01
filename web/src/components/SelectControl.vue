@@ -179,7 +179,7 @@ onUnmounted(() => {
           :class="{ active: active === index, selected: modelValue === option.value }"
           :data-index="index"
           role="option"
-          :aria-selected="active === index"
+          :aria-selected="modelValue === option.value"
           @pointerdown.prevent
           @click="choose(index)"
           @mousemove="active = index"
