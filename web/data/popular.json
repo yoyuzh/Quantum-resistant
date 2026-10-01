@@ -1,5 +1,5 @@
 {
-  "scanned_at": "2026-10-01T03:00:54+08:00",
+  "scanned_at": "2026-10-01T12:11:11+08:00",
   "repos": [
     {
       "full_name": "OpenMined/PySyft",
@@ -53,7 +53,7 @@
     },
     {
       "full_name": "pyca/cryptography",
-      "star_count": 7791,
+      "star_count": 7792,
       "url": "https://github.com/pyca/cryptography",
       "migration_score": 100,
       "finding_count": 329,
@@ -999,7 +999,7 @@
     },
     {
       "full_name": "epsylon/ufonet",
-      "star_count": 2531,
+      "star_count": 2532,
       "url": "https://github.com/epsylon/ufonet",
       "migration_score": 0,
       "finding_count": 0,
@@ -1081,11 +1081,410 @@
       ],
       "details_truncated": false,
       "error_code": null
+    },
+    {
+      "full_name": "ashutosh1206/Crypton",
+      "star_count": 1625,
+      "url": "https://github.com/ashutosh1206/Crypton",
+      "migration_score": 45,
+      "finding_count": 1,
+      "algorithms": [
+        "DSA"
+      ],
+      "findings": [
+        {
+          "source_id": "src_1e6b801ada55",
+          "file_name": "Digital-Signatures/ElGamal-Signatures/Challenges/Nonsense/encrypt.py",
+          "source_type": "github_repository",
+          "line": 46,
+          "algorithm": "DSA",
+          "risk_level": "高风险",
+          "evidence": "算法标识: DSA",
+          "reason": "DSA 依赖离散对数难题，面向量子攻击时不再安全。",
+          "recommendation": "使用 FIPS 204 ML-DSA 或其他后量子签名方案替代。",
+          "detection_method": "text_config",
+          "library": null,
+          "resolved_api": null
+        }
+      ],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 224,
+        "file_limit": 5000,
+        "candidate_files": 225,
+        "skipped_files": 1,
+        "partial": true,
+        "skip_reasons": {
+          "encoding": 1
+        }
+      },
+      "diagnostics": [
+        {
+          "code": "files_skipped",
+          "message": "归档中有 1 个候选文件因采集上限、大小、路径或编码限制未扫描。",
+          "source_id": null
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Authenticated-Encryption/AE-with-MACs/Encrypt-and-MAC/enc-and-mac.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_c5ae173408cf"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Authenticated-Encryption/AE-with-MACs/Encrypt-then-MAC/encrypt-then-mac.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_00696227c7c3"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Authenticated-Encryption/AE-with-MACs/MAC-then-Encrypt/mac-then-encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_09ab8eeb36be"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Block-Cipher/Attack-CBC-Bit-Flipping/Challenges/CNVService/CNVService.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_37af3c84345d"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Block-Cipher/Attack-CBC-Bit-Flipping/Challenges/Secret-Server/secretserver.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_4d2c063af0cc"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Block-Cipher/Attack-CBC-Byte-at-a-Time/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_fc8715e529ea"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Block-Cipher/Attack-CBC-Padding-Oracle/Challenges/Secret-Server/secretserver.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_7a110709a3a0"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Block-Cipher/Attack-ECB-Byte-at-a-Time/Challenges/Locked_Dungeon/enter_the_dungeon1.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_601d32b598a5"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Block-Cipher/CBC-IV-Detection/example.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_dffe4dbc08cb"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Diffie-Hellman-Key-Exchange/example.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_6c675a218ffc"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Digital-Signatures/ElGamal-Signatures/Challenges/Nonsense/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_1e6b801ada55"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Digital-Signatures/ElGamal-Signatures/example.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_649c65ac5847"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Digital-Signatures/PKCS#1-v1.5-Padded-RSA-Digital-Signature/example.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_ce089e954ac4"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Digital-Signatures/Unpadded-RSA-Digital-Signatures/example.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_886ad3cc7052"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Algo-Baby-Step-Giant-Step/bsgs.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_d059aa139119"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Algo-Pohlig-Hellman/ph_orderp2.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_bbbb5eeb0b37"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Algo-Pohlig-Hellman/ph_orderpp.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_b604315ff599"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Algo-Pohlig-Hellman/pohlig_hellman.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_597dfd0bf3c2"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Algo-Pollard-Rho/pollardrho.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_f60a25514b8c"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Elliptic-Curve-DLP/Algo-Baby-Step-Giant-Step/bsgs_ecdlp.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_cabf565fb436"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Elliptic-Curve-DLP/Algo-Pollard-Rho/pollardrho.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_17d961cf74bf"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/Elliptic-Curve-DLP/brute_ecdlp.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_08b60d194a40"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Discrete-Logarithm-Problem/brute.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_23e5333567fb"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Elgamal-Encryption/example.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_67697f5a0df9"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Elliptic-Curves/ellipticcurve.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_6fe4d6f39131"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Elliptic-Curves/ellipticcurve.sage.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_3c6e7031f755"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Identification/Ephemeral-Key-Auth/Challenges/EC-Auth/ecauth.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_a3cab392b1c0"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Identification/Ephemeral-Key-Auth/Challenges/EC-Auth/ecsession.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_83b9c8980e21"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "Message-Authentication-Code/Attack-Length-Extension-CBC-MAC/CBC-Length-Extension.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_11054a2ac322"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Common-Modulus/Challenges/RSA-1s-Fun/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_672868c06577"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "RSA-encryption/Attack-Coppersmith/Challenges/stereotypes/pubkey.txt 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_efe1b5dd3066"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Coppersmith/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_876c5d31abeb"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Hastad-Broadcast/hastad_unpadded.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_77934792bcd5"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-LSBit-Oracle-variant/lsbitoracle-variant.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_894c742457ac"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-LSBit-Oracle/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_eb5cfcffb1e8"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-LSBit-Oracle/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_704cf2fdb9ec"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Retrieve-Modulus/Challenges/Lost-Key/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_65d2d44d5995"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Retrieve-Modulus/Challenges/Lost-Key/rsa.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_37a718a3fa47"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Retrieve-Modulus/extractmod.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_b1884ca93688"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Wiener-variant/Challenges/Gracias/gracias.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_d64e9cdb7ea3"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Wiener-variant/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_2268c8c746b8"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Attack-Wiener/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_c684c080174d"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Factorisation-Fermat/Challenges/Crafted-RSA/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_2ee6523ca1c7"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Factorisation-Fermat/Challenges/Easy-RSA-2/task.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_6cdad89a2952"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Factorisation-Pollard's_p-1/Challenges/handicraft_rsa/handicraft_rsa.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_72382607f7d3"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "RSA-encryption/Factorisation-Pollard's_p-1/Challenges/handicraft_rsa/output.txt 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_f9bc26f84bdf"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/C4-reloaded/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_5bfc068512a2"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "RSA-encryption/Intro-Challenges/C4-reloaded/publickey.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_8a7492665be1"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-0/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_2043317d5a3c"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-1/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_d1d69f4c0a2e"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-13/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_856a1f670cbd"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-13/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_30eb1e77d15f"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-14/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_af8ca37dcc8f"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-14/exploit.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_c02e16b492c3"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-2/publickey.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_8ebaa7a61e4d"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-3/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_328d26ce70a9"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "RSA-encryption/Intro-Challenges/Challenge-4/publickey.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_d7ece47ad590"
+        },
+        {
+          "code": "unknown_pem_algorithm",
+          "message": "RSA-encryption/Intro-Challenges/Dp&Dq/publickey.pem 包含通用 PEM 密钥头，算法尚未识别，需要复核。",
+          "source_id": "src_3d04081eebb9"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/LoS-reloaded/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_99a59f7a02d3"
+        },
+        {
+          "code": "syntax_fallback",
+          "message": "RSA-encryption/Intro-Challenges/Welcome/encrypt.py 无法完成 Python AST 分析，已使用有限的文本规则。",
+          "source_id": "src_67a72bbbc57c"
+        }
+      ],
+      "details_truncated": false,
+      "error_code": null
+    },
+    {
+      "full_name": "hellman/xortool",
+      "star_count": 1486,
+      "url": "https://github.com/hellman/xortool",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 10,
+        "file_limit": 5000,
+        "candidate_files": 10,
+        "skipped_files": 0,
+        "partial": false,
+        "skip_reasons": {
+          "file_size": 0,
+          "file_limit": 0,
+          "timeout": 0
+        }
+      },
+      "diagnostics": [],
+      "details_truncated": false,
+      "error_code": null
+    },
+    {
+      "full_name": "susam/mintotp",
+      "star_count": 1401,
+      "url": "https://github.com/susam/mintotp",
+      "migration_score": 0,
+      "finding_count": 0,
+      "algorithms": [],
+      "findings": [],
+      "success": true,
+      "error": null,
+      "coverage": {
+        "scanned_files": 6,
+        "file_limit": 5000,
+        "candidate_files": 6,
+        "skipped_files": 0,
+        "partial": false,
+        "skip_reasons": {
+          "file_size": 0,
+          "file_limit": 0,
+          "timeout": 0
+        }
+      },
+      "diagnostics": [],
+      "details_truncated": false,
+      "error_code": null
     }
   ],
   "meta": {
-    "total_repos": 5,
-    "requested_count": 5,
+    "total_repos": 8,
+    "requested_count": 8,
     "query": "topic:cryptography language:python sort:stars",
     "scan_mode": "concurrent",
     "workers": 3,
