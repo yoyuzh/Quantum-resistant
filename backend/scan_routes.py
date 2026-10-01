@@ -95,7 +95,7 @@ def trigger_popular_scan(payload: PopularScanRequest = PopularScanRequest()) -> 
         if batch_incomplete(result):
             result.meta.update(incomplete=True, saved_snapshot=False)
             return asdict(result)
-        main.write_results(result, main.WEB_DIR / "data/popular.json")
+        main.write_results(result, main.popular_results_path())
         return asdict(result)
     except CollectionTimeout as exc:
         raise HTTPException(504, str(exc)) from exc

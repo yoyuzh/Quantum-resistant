@@ -28,7 +28,7 @@ def remote_work(kind, value, budget, *, collector=None):
 def popular_work(payload, budget):
     from backend import main
     return execute_popular(payload, budget, search=fetch_popular_repos, batch_scan=run_batch_scan,
-                           save=main.write_results, output_path=main.WEB_DIR / 'data/popular.json')
+                           save=main.write_results, output_path=main.popular_results_path())
 
 
 @router.post('/github', status_code=202)

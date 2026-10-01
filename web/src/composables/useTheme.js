@@ -3,7 +3,8 @@ import { onUnmounted, ref, watch } from 'vue';
 export function useTheme() {
   let initial = 'light';
   try {
-    initial = localStorage.getItem('app-theme') === 'dark' ? 'dark' : 'light';
+    const stored = window.quantumDesktop?.readTheme() ?? localStorage.getItem('app-theme');
+    initial = stored === 'dark' ? 'dark' : 'light';
   } catch {
     /* Storage may be disabled. */
   }
@@ -14,6 +15,7 @@ export function useTheme() {
       document.documentElement.dataset.theme = value;
       try {
         localStorage.setItem('app-theme', value);
+        window.quantumDesktop?.saveTheme(value).catch(() => {});
       } catch {
         /* Keep the session theme. */
       }

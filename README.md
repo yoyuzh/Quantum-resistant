@@ -21,6 +21,10 @@
 
 ## 安装与运行
 
+### 桌面窗口测试版
+
+现已提供 Electron + 本地 Python 后端的 Windows x64 安装程序，收件人无需安装 Python、Node.js 或 WebView2。可从[GitHub Release下载测试版](https://github.com/yoyuzh/Quantum-resistant/releases/tag/desktop-v0.1.0)，安装包和 SHA-256 校验文件也位于本机构建目录 `desktop/release/`。本次为未签名测试版；macOS/Linux 提供原生构建配置，尚未实机验收。使用、隐私边界、构建和分发步骤见[桌面说明](docs/desktop.md)。
+
 ### Windows 日常启动
 
 已安装 Python 依赖并构建前端后，双击项目根目录的 `start.bat`，在浏览器打开窗口中 `Open` 后显示的地址。默认使用 `http://127.0.0.1:8000`，端口占用时自动选择后续空闲端口。

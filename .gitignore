@@ -14,3 +14,10 @@ frontend/.vite/
 
 web/node_modules/
 web/dist/
+
+desktop/node_modules/
+desktop/.venv-build/
+desktop/build/backend/
+desktop/build/work/
+desktop/release/
+desktop/validation/

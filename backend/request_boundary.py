@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 from starlette.responses import JSONResponse
 
 from backend.collection_config import MAX_COLLECTED_FILE_BYTES, MAX_UPLOAD_BYTES
+from backend import runtime
 
 
 def configured(name: str, default: str = '') -> set[str]:
@@ -39,14 +40,14 @@ class RequestBoundary:
                 return await self.reject(scope, receive, send, 400, '请求包含重复的主机或来源头')
         host = headers.get('host', '')
         target = origin(f"{scope.get('scheme', 'http')}://{host}")
-        allowed = configured('QUANTUM_ALLOWED_HOSTS', 'localhost,127.0.0.1,::1')
+        allowed = {'127.0.0.1'} if runtime.desktop else configured('QUANTUM_ALLOWED_HOSTS', 'localhost,127.0.0.1,::1')
         # TestClient's host is trusted only on its in-process transport.
         testing = scope.get('client', ('', 0))[0] == 'testclient' and target and target[1] == 'testserver'
         if not target or (target[1] not in allowed and not testing):
             return await self.reject(scope, receive, send, 400, '请求主机不受信任，请检查可信主机配置')
         if scope['method'] not in {'GET', 'HEAD', 'OPTIONS'} and 'origin' in headers:
             source = origin(headers['origin'])
-            trusted = {origin(item) for item in configured('QUANTUM_ALLOWED_ORIGINS')}
+            trusted = set() if runtime.desktop else {origin(item) for item in configured('QUANTUM_ALLOWED_ORIGINS')}
             if not source or (source != target and source not in trusted):
                 return await self.reject(scope, receive, send, 403, '请求来源不受信任，请从本项目页面操作')
         async def secured_send(message):

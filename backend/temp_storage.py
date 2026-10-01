@@ -12,12 +12,13 @@ from pathlib import Path
 from threading import RLock
 
 from backend.collection_config import TEMP_STORAGE_BYTES
+from backend.runtime import temporary_parent
 
 
 class TemporaryStorage:
     def __init__(self, max_bytes: int = TEMP_STORAGE_BYTES):
-        parent = Path(tempfile.gettempdir()) / 'quantum-resistant-scans'
-        parent.mkdir(exist_ok=True)
+        parent = temporary_parent()
+        parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.cleanup_abandoned(parent)
         self.directory = tempfile.TemporaryDirectory(prefix="session-", dir=parent)
         self.root = Path(self.directory.name)

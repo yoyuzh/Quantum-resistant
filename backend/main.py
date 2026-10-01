@@ -26,8 +26,9 @@ from backend.collection_config import (MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_
                                        SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS,
                                        MAX_ARCHIVE_MEMBERS, MAX_ARCHIVE_METADATA_BYTES, MAX_ARCHIVE_EXPANDED_BYTES)
 from backend.upload_stream import UPLOAD_TIMEOUT_SECONDS, UPLOAD_IDLE_SECONDS
+from backend import runtime
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = runtime.desktop.resource_root if runtime.desktop else Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
 SAMPLE_INPUTS_DIR = PROJECT_ROOT / "sample_inputs"
 POPULAR_SCAN_LOCK = Lock()
@@ -39,8 +40,14 @@ async def lifespan(app):
     task_routes.store.close()
 
 
-app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.3.0", lifespan=lifespan,
+              docs_url=None if runtime.desktop else '/docs',
+              redoc_url=None if runtime.desktop else '/redoc',
+              openapi_url=None if runtime.desktop else '/openapi.json')
 app.add_middleware(RequestBoundary)
+if runtime.desktop:
+    from backend.desktop_boundary import DesktopBoundary
+    app.add_middleware(DesktopBoundary, runtime=runtime.desktop)
 app.include_router(task_router)
 app.include_router(report_router)
 app.include_router(scan_router)
@@ -93,10 +100,15 @@ def list_sample_sources() -> list[SampleSourceRecord]:
 app.get("/api/knowledge/graph")(knowledge_graph)
 
 
+def popular_results_path() -> Path:
+    return (runtime.desktop.data_root / 'popular.json' if runtime.desktop
+            else WEB_DIR / 'data/popular.json')
+
+
 @app.get("/static/data/popular.json", include_in_schema=False)
 @app.get("/api/popular/results")
 def get_popular_results() -> Response:
-    path = WEB_DIR / "data/popular.json"
+    path = popular_results_path()
     if not path.exists():
         raise HTTPException(404, "热门仓库扫描数据尚未生成，请先运行批量扫描脚本或点击开始扫描")
     try:

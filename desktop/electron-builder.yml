@@ -1,0 +1,52 @@
+appId: org.quantumresistant.scanner
+productName: Quantum Resistant Scanner
+asar: true
+directories:
+  output: release
+  buildResources: build
+files:
+  - src/**/*.cjs
+  - build/icon.png
+  - package.json
+extraResources:
+  - from: build/backend/quantum-backend
+    to: backend/quantum-backend
+  - from: build/THIRD-PARTY-NOTICES.txt
+    to: THIRD-PARTY-NOTICES.txt
+afterPack: scripts/after-pack.cjs
+artifactName: Quantum-Scanner-${version}-${os}-${arch}.${ext}
+publish: null
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  requestedExecutionLevel: asInvoker
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 抗量子迁移风险扫描平台
+  deleteAppDataOnUninstall: false
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: build/icon.icns
+  category: public.app-category.developer-tools
+  minimumSystemVersion: '14.0'
+  # No Developer ID certificate in the first test release.
+  identity: null
+  hardenedRuntime: false
+  notarize: false
+linux:
+  target:
+    - target: deb
+      arch: [x64]
+  icon: build/icon.png
+  category: Development
+  maintainer: Quantum Resistant Scanner contributors
+  synopsis: 抗量子迁移静态风险扫描工具
