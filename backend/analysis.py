@@ -9,7 +9,7 @@ METHOD_LABELS = {
     "text_call": "文本调用", "text_config": "文本配置", "pem_header": "PEM 头",
 }
 STANDARD_URL = "https://csrc.nist.gov/projects/post-quantum-cryptography"
-SIGNATURES = {"DSA", "ECDSA", "Ed25519", "Ed448"}
+SIGNATURES = {"DSA", "ECDSA", "EdDSA", "Ed25519", "Ed448"}
 EXCHANGES = {"DH", "ECDH", "X25519", "X448"}
 
 

@@ -8,6 +8,8 @@ from backend.analysis import build_analysis
 from backend.collection_common import CollectionTimeout, Deadline
 from scan_quantum_vuln import make_source_id, analyze_source
 from backend.pipeline import ANALYSIS_SLOTS
+from scanner.control import analysis_control
+
 
 def build_scan_response(
     documents: list[tuple[str, str] | tuple[str, str, str]],
@@ -55,7 +57,7 @@ def build_scan_response(
             "char_count": len(content),
             "origin": origin,
         }
-        with ANALYSIS_SLOTS:
+        with ANALYSIS_SLOTS, analysis_control(deadline.remaining if deadline else lambda: None):
             file_findings, file_diagnostics = analyze_source(content, filename, source_type, source_id, include_metadata=True)
         sources.append(source_record)
         findings.extend(file_findings)

@@ -8,6 +8,7 @@ from threading import BoundedSemaphore, Condition, Thread
 from backend.collection_common import CollectionTimeout
 from backend.temp_storage import StoredDocument
 from scan_quantum_vuln import analyze_source, make_source_id
+from scanner.control import analysis_control
 
 ANALYSIS_SLOTS = BoundedSemaphore(2)
 
@@ -90,7 +91,8 @@ class ScanPipeline:
                     acquired = ANALYSIS_SLOTS.acquire(timeout=.1)
                     self.budget.remaining()
                 origin, name, content = document if len(document) == 3 else (None, *document)
-                findings, notes = self.analyzer(content, name, self.source_type, identity, include_metadata=True)
+                with analysis_control(self.budget.remaining):
+                    findings, notes = self.analyzer(content, name, self.source_type, identity, include_metadata=True)
                 findings = [dict(item, source_id=identity, file_name=name, source_type=self.source_type,
                                  risk_level=item.get('risk_level', '高风险'), reason=item.get('reason', ''),
                                  recommendation=item.get('recommendation', ''), evidence=item.get('evidence', '')) for item in findings]
@@ -110,6 +112,8 @@ class ScanPipeline:
             except CollectionTimeout:
                 reason = 'cancelled' if self.budget.control.cancelled.is_set() else 'timeout'
                 self.skip_reasons[reason] += 1
+                self.diagnostics.append(dict(code='analysis_interrupted', source_id=identity,
+                                             message='文件分析因取消或超时中止，未计入完整分析结果。'))
             except Exception as exc:
                 self.skip_reasons['analysis_failure'] += 1
                 self.diagnostics.append(dict(code='analysis_failure', source_id=identity,

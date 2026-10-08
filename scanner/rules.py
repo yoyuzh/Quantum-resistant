@@ -73,6 +73,12 @@ VULNERABLE_ALGOS: dict[str, AlgorithmProfile] = {
         reason="X448 属于椭圆曲线 Diffie-Hellman 密钥交换，量子计算可高效求解其离散对数基础。",
         recommendation="密钥交换迁移到 FIPS 203 ML-KEM，或在过渡期使用经评估的混合密钥交换。",
     ),
+    "eddsa": AlgorithmProfile(
+        name="EdDSA",
+        risk_level="高风险",
+        reason="EdDSA 是椭圆曲线签名家族，曲线尚未确认（可为 Ed25519 或 Ed448）；量子攻击可破坏其离散对数基础。",
+        recommendation="签名迁移到 FIPS 204 ML-DSA；长期归档可评估 FIPS 205 SLH-DSA。",
+    ),
     "ed25519": AlgorithmProfile(
         name="Ed25519",
         risk_level="高风险",
@@ -178,7 +184,8 @@ STRING_IDENTIFIER_RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
     ("rsa", re.compile(r"\b(?:RS(?:256|384|512)|PS(?:256|384|512)|ssh-rsa|rsa-sha2-\d+)\b"), "算法标识"),
     ("dsa", re.compile(r"\b(?:ssh-dss|DSA)\b"), "算法标识"),
     ("ecdsa", re.compile(r"\b(?:ES(?:256|384|512)|ecdsa-sha2-[A-Za-z0-9_-]+)\b"), "算法标识"),
-    ("ed25519", re.compile(r"\b(?:EdDSA|Ed25519|ssh-ed25519)\b"), "算法标识"),
+    ("eddsa", re.compile(r"\bEdDSA\b"), "算法标识（曲线未确认）"),
+    ("ed25519", re.compile(r"\b(?:Ed25519|ssh-ed25519)\b"), "算法标识"),
     ("ed448", re.compile(r"\b(?:Ed448)\b"), "算法标识"),
     ("x25519", re.compile(r"\b(?:X25519|x25519)\b"), "算法标识"),
     ("x448", re.compile(r"\b(?:X448|x448)\b"), "算法标识"),

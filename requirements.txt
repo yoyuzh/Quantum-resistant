@@ -4,3 +4,4 @@ anyio>=4.15.1
 httpx>=0.27
 uvicorn[standard]>=0.27
 hypothesis>=6.100
+PyYAML==6.0.3

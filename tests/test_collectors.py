@@ -64,7 +64,7 @@ class HttpCollectionTests(unittest.TestCase):
         registry = {"https": "http://127.0.0.1:7890"}
         with patch.dict(os.environ, {"NO_PROXY": "localhost"}, clear=True), \
              patch("backend.collection_common.os.name", "nt"), \
-             patch.object(urllib.request, "getproxies_registry", return_value=registry):
+             patch.object(urllib.request, "getproxies_registry", return_value=registry, create=True):
             self.assertEqual(remote_client_options()["proxy"], registry["https"])
             os.environ["HTTPS_PROXY"] = "http://explicit-proxy:8080"
             self.assertNotIn("proxy", remote_client_options())

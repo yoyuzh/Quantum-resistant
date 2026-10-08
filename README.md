@@ -124,6 +124,10 @@ HTML、Markdown 阅读报告按摘要、范围、统计、资产与完整证据�
 
 ## 代码与验证
 
+GitHub Actions CI 在 push、PR 和手动触发时，执行 Windows/Linux 测试、前端构建及真实本地 HTTP 冒烟检查；检查范围与本地复现方法见 [CI 说明](docs/ci.md)。
+
+桌面 CD 在推送版本标签时复用 CI，成功后原生构建 Windows x64 安装包并发布 GitHub 预发布版本；触发方式与验收边界见 [CD 说明](docs/cd.md)。
+
 - `scanner/`：算法规则、Python 分析、文本回退与结果汇总；`scan_quantum_vuln.py` 保留公共入口。
 - `backend/`：模型、采集、扫描、热门编排、原子存储、知识和报告；`backend.main:app` 保持启动兼容。
 - `web/src/`：组件、composable、API 模块、纯函数和集中主题样式。

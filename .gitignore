@@ -3,6 +3,11 @@ __pycache__/
 .DS_Store
 .pytest_cache/
 .mypy_cache/
+.venv/
+.env
+.env.*
+!.env.example
+.serena/cache/
 
 tmp/
 .idea/
