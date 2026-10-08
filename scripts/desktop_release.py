@@ -16,6 +16,20 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION = re.compile(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-(?:alpha|beta|rc)\.(?:0|[1-9][0-9]*))?")
 
 
+TARGET_SUFFIXES = {
+    "windows-x64": "win-x64.exe",
+    "linux-x64": "linux-amd64.deb",
+    "macos-x64": "mac-x64.dmg",
+    "macos-arm64": "mac-arm64.dmg",
+}
+
+
+def installer_name(version: str, target: str) -> str:
+    if target not in TARGET_SUFFIXES:
+        raise ValueError("不支持的桌面发布目标")
+    return f"Quantum-Scanner-{version}-{TARGET_SUFFIXES[target]}"
+
+
 def validate_version(tag: str, manifest: dict, lock: dict) -> str:
     version = manifest.get("version")
     if not isinstance(version, str) or VERSION.fullmatch(version) is None:
@@ -31,7 +45,8 @@ def git_output(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
 
 
-def release_identity(root: Path, tag: str, expected_sha: str | None = None) -> dict[str, str]:
+def release_identity(root: Path, tag: str, expected_sha: str | None = None,
+                     target: str = "windows-x64") -> dict[str, str]:
     desktop = root / "desktop"
     version = validate_version(
         tag,
@@ -44,18 +59,29 @@ def release_identity(root: Path, tag: str, expected_sha: str | None = None) -> d
         raise ValueError("checkout 必须为指定版本标签的确切提交")
     if expected_sha is not None and expected_sha != sha:
         raise ValueError("构建提交与 CI 检查提交不一致")
-    return {"tag": tag, "version": version, "sha": sha,
-            "installer": f"Quantum-Scanner-{version}-win-x64.exe"}
+    return {"tag": tag, "version": version, "sha": sha, "target": target,
+            "installer": installer_name(version, target)}
 
 
 def verify_installer(directory: Path, installer: str) -> str:
+    if Path(installer).name != installer or "\\" in installer:
+        raise ValueError("安装包名称必须为文件名")
     path = directory / installer
     if not path.is_file() or path.stat().st_size < 2:
-        raise ValueError("Windows 安装包不存在或为空")
+        raise ValueError("安装包不存在或为空")
     digest = hashlib.sha256()
     with path.open("rb") as stream:
-        if stream.read(2) != b"MZ":
-            raise ValueError("安装包缺少 Windows 可执行文件头")
+        if path.suffix == ".exe":
+            valid = stream.read(2) == b"MZ"
+        elif path.suffix == ".deb":
+            valid = stream.read(8) == b"!<arch>\n"
+        elif path.suffix == ".dmg" and path.stat().st_size >= 512:
+            stream.seek(-512, os.SEEK_END)
+            valid = stream.read(4) == b"koly"
+        else:
+            valid = False
+        if not valid:
+            raise ValueError("安装包格式与目标扩展名不一致")
         stream.seek(0)
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
@@ -69,7 +95,7 @@ def verify_installer(directory: Path, installer: str) -> str:
 def write_release_files(root: Path, identity: dict[str, str], checksum: str) -> None:
     directory = root / "desktop" / "release"
     information = {
-        **identity, "sha256": checksum, "target": "windows-x64", "signed": False,
+        **identity, "sha256": checksum, "target": identity.get("target", "windows-x64"), "signed": False,
         "python_version": sys.version.split()[0],
         "node_version": subprocess.check_output(["node", "--version"], text=True).strip(),
         "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
@@ -78,7 +104,7 @@ def write_release_files(root: Path, identity: dict[str, str], checksum: str) -> 
         json.dumps(information, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
     )
     notes = (
-        f"Windows x64 桌面测试版 {identity['version']}\n\n"
+        f"{information['target']} 桌面测试版 {identity['version']}\n\n"
         "包含安装包、SHA256SUMS.txt 和 BUILD-INFO.json。\n"
         f"源码提交：`{identity['sha']}`。\n\n"
         "该提交已通过 Windows/Linux CI 检查；打包后的 Python 后端已通过离线冒烟检查。\n"
@@ -94,10 +120,12 @@ def main() -> None:
     parser.add_argument("stage", choices=("prepare", "verify"))
     parser.add_argument("--tag", default=os.environ.get("RELEASE_TAG", ""))
     parser.add_argument("--sha", default=os.environ.get("RELEASE_SHA"))
+    parser.add_argument("--target", choices=tuple(TARGET_SUFFIXES),
+                        default=os.environ.get("RELEASE_TARGET", "windows-x64"))
     args = parser.parse_args()
     if args.stage == "verify" and not args.sha:
         parser.error("verify 必须指定 CI 已检查的提交 SHA")
-    identity = release_identity(ROOT, args.tag, args.sha)
+    identity = release_identity(ROOT, args.tag, args.sha, args.target)
     if args.stage == "verify":
         checksum = verify_installer(ROOT / "desktop" / "release", identity["installer"])
         write_release_files(ROOT, identity, checksum)

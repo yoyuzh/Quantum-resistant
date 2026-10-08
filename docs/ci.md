@@ -50,6 +50,6 @@ Python 3.10 完整回归有 1 项失败：`test_cancel_partial_results_terminal_
 
 上述 Python 3.10 崩溃已定位并修复：进入 CPython AST 解析器前进行带预算检查的 token 预检查，过长逻辑语句及 token 超限输入转为有限文本分析，并保留 `syntax_fallback` 诊断。新增子进程回归覆盖 300000 段点号链，防止原生崩溃被异常处理掩盖。
 
-`.github/workflows/desktop-build.yml` 提供手动原生构建验证：Windows x64、Ubuntu 22.04 x64、macOS 15 Intel 和 Apple Silicon。每个平台构建自己的 Python 后端与 Electron 安装包，执行冻结后端冒烟、锁定运行依赖检查及完整回归，再上传安装包和校验文件。它不发布 Release；现有 CD 仍只发布 Windows x64。macOS 配置只打包当前 runner 的架构，避免 Intel Electron 被配入 arm64 后端。
+`.github/workflows/desktop-build.yml` 提供手动原生构建验证：Windows x64、Ubuntu 22.04 x64、macOS 15 Intel 和 Apple Silicon。每个平台构建自己的 Python 后端与 Electron 安装包，执行冻结后端冒烟、锁定运行依赖检查及完整回归，再上传安装包和校验文件。它不发布 Release；从 0.1.2 起，CD 在四端全部验证成功后统一发布 EXE、DEB 和两个 DMG，见 [CD 说明](cd.md)。macOS 配置只打包当前 runner 的架构，避免 Intel Electron 被配入 arm64 后端。
 
 同机并行执行多个完整 Python 测试进程时，应为各进程设置独立的 `TMPDIR`、`TMP`、`TEMP`，避免共享暂存目录清理发生竞争。GitHub 各矩阵任务使用独立 runner。

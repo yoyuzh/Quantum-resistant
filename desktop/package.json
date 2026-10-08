@@ -1,6 +1,6 @@
 {
   "name": "quantum-resistant-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "homepage": "https://github.com/yoyuzh/Quantum-resistant",
   "description": "抗量子迁移风险扫描平台桌面测试版",

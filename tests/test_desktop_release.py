@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from scripts.desktop_release import release_identity, validate_version, verify_installer, write_release_files
+from scripts.desktop_release import installer_name, release_identity, validate_version, verify_installer, write_release_files
 
 
 class DesktopReleaseTests(unittest.TestCase):
@@ -75,6 +75,38 @@ class DesktopReleaseTests(unittest.TestCase):
         (directory / name).unlink()
         with self.assertRaises(ValueError):
             verify_installer(directory, name)
+
+    def test_all_native_formats_and_target_names(self) -> None:
+        directory = self.desktop / "release"
+        directory.mkdir()
+        samples = {
+            "windows-x64": ("win-x64.exe", b"MZfixture"),
+            "linux-x64": ("linux-amd64.deb", b"!<arch>\nfixture"),
+            "macos-x64": ("mac-x64.dmg", b"fixture" + b"koly" + bytes(508)),
+            "macos-arm64": ("mac-arm64.dmg", b"fixture" + b"koly" + bytes(508)),
+        }
+        for target, (suffix, content) in samples.items():
+            with self.subTest(target=target):
+                name = installer_name(self.version, target)
+                self.assertEqual(name, f"Quantum-Scanner-{self.version}-{suffix}")
+                checksum = hashlib.sha256(content).hexdigest()
+                (directory / name).write_bytes(content)
+                (directory / "SHA256SUMS.txt").write_text(f"{checksum}  {name}\n", encoding="utf-8")
+                self.assertEqual(verify_installer(directory, name), checksum)
+                identity = {"tag": self.tag, "version": self.version, "sha": "a" * 40,
+                            "installer": name, "target": target}
+                with patch("scripts.desktop_release.subprocess.check_output", return_value="v24.0.0"):
+                    write_release_files(self.root, identity, checksum)
+                information = json.loads((directory / "BUILD-INFO.json").read_text())
+                self.assertEqual(information["target"], target)
+                self.assertEqual(information["installer"], name)
+                (directory / name).write_bytes(b"invalid format")
+                with self.assertRaises(ValueError):
+                    verify_installer(directory, name)
+        with self.assertRaises(ValueError):
+            installer_name(self.version, "macos-universal")
+        with self.assertRaises(ValueError):
+            verify_installer(directory, "../outside.exe")
 
     def test_build_information_preserves_identity_and_unsigned_notice(self) -> None:
         (self.desktop / "release").mkdir()

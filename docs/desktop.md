@@ -4,11 +4,14 @@
 
 ## 本次产物
 
-- 下载入口：[GitHub Release桌面0.1.0测试版](https://github.com/yoyuzh/Quantum-resistant/releases/tag/desktop-v0.1.0)。
-- Windows x64：`desktop/release/Quantum-Scanner-0.1.0-win-x64.exe`。
+- 下载入口：[GitHub Release多端测试版](https://github.com/yoyuzh/Quantum-resistant/releases)。从 0.1.2 起，同一 Release 包含全部平台安装包。
+- Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
+- Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
+- macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
+- macOS Apple Silicon：`Quantum-Scanner-X.Y.Z-mac-arm64.dmg`。
 - 完整性校验：同目录的 `SHA256SUMS.txt`。
 - 首版为未签名测试版，不包含发布者身份认证。正式公开分发前应完成 Windows 代码签名；macOS 还需 Developer ID 签名和 Apple 公证。不要通过关闭系统安全功能解决安装提示。
-- macOS 14+ Intel/Apple Silicon 和 Ubuntu 22.04/24.04 x64 的配置已提供，但本次没有这两种平台的实包或实机验收。不将构建配置视为平台兼容认证。
+- Windows、macOS Intel/Apple Silicon、Ubuntu 22.04 x64 的原生构建及冻结后端冒烟均已通过托管 runner 验证；不将其视为全部平台安装后 GUI 兼容性认证。Ubuntu 24.04 和 macOS 最低系统版本仍需实机验收。
 
 SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在 PowerShell 中运行 `Get-FileHash -Algorithm SHA256 安装程序路径`，与随包校验值比较。
 

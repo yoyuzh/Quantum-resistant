@@ -23,7 +23,7 @@
 
 ### 桌面窗口测试版
 
-现已提供 Electron + 本地 Python 后端的 Windows x64 安装程序，收件人无需安装 Python、Node.js 或 WebView2。可从[GitHub Release下载测试版](https://github.com/yoyuzh/Quantum-resistant/releases/tag/desktop-v0.1.0)，安装包和 SHA-256 校验文件也位于本机构建目录 `desktop/release/`。本次为未签名测试版；macOS/Linux 提供原生构建配置，尚未实机验收。使用、隐私边界、构建和分发步骤见[桌面说明](docs/desktop.md)。
+现已提供 Electron + 本地 Python 后端的多端构建与发布流程：Windows x64 EXE、Linux x64 DEB，以及 macOS Intel/Apple Silicon 各自的 DMG，收件人无需安装 Python、Node.js 或 WebView2。可从[GitHub Release下载测试版](https://github.com/yoyuzh/Quantum-resistant/releases)，安装包附带统一 SHA-256 校验文件及四端构建信息。本次为未正式签名测试版；macOS 尚未 Apple 公证。四端原生构建已经验证，安装后 GUI 兼容性仍需相应平台实机验收。使用、隐私边界、构建和分发步骤见[桌面说明](docs/desktop.md)。
 
 ### Windows 日常启动
 
