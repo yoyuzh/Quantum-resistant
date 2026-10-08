@@ -1,6 +1,6 @@
 {
   "name": "quantum-resistant-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "抗量子迁移风险扫描平台桌面测试版",
   "author": "Quantum Resistant Scanner contributors",

@@ -1,0 +1,171 @@
+name: Desktop Release
+
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing desktop-vX.Y.Z tag containing the release workflows
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ inputs.tag || github.ref_name }}
+  # Do not interrupt an upload or publication already in progress.
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release tag and version
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.identity.outputs.tag }}
+      version: ${{ steps.identity.outputs.version }}
+      sha: ${{ steps.identity.outputs.sha }}
+      installer: ${{ steps.identity.outputs.installer }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Validate tag, package versions and commit
+        id: identity
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: python -B scripts/desktop_release.py prepare
+
+  checks:
+    name: Release CI
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+
+  build:
+    name: Build Windows x64 installer
+    needs: [prepare, checks]
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+      RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+          architecture: x64
+          cache: pip
+          cache-dependency-path: |
+            desktop/requirements-build.txt
+            desktop/requirements-runtime.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          architecture: x64
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            desktop/package-lock.json
+
+      - name: Install desktop tooling
+        run: npm ci --prefix desktop
+
+      # Existing script builds UI, tests Node code, freezes and smoke-tests
+      # the backend, then packages with --publish never and writes checksums.
+      - name: Build and smoke test installer resources
+        run: npm --prefix desktop run build
+
+      - name: Install test dependency in locked build runtime
+        run: desktop/.venv-build/Scripts/python.exe -m pip install hypothesis
+
+      - name: Check locked build runtime dependencies
+        run: desktop/.venv-build/Scripts/python.exe -m pip check
+
+      - name: Test locked build runtime
+        run: desktop/.venv-build/Scripts/python.exe -B -m unittest discover -s tests -v
+
+      - name: Verify identity and checksums, generate release notes
+        run: python -B scripts/desktop_release.py verify
+
+      - name: Store verified release assets
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-installer-${{ needs.prepare.outputs.sha }}
+          path: |
+            desktop/release/${{ needs.prepare.outputs.installer }}
+            desktop/release/SHA256SUMS.txt
+            desktop/release/BUILD-INFO.json
+            desktop/release/RELEASE-NOTES.md
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  publish:
+    name: Publish GitHub prerelease
+    needs: [prepare, build]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+      RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+      INSTALLER_NAME: ${{ needs.prepare.outputs.installer }}
+    steps:
+      # The job with write permission does not checkout or execute repository code.
+      - name: Download verified assets from this run
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-installer-${{ needs.prepare.outputs.sha }}
+          path: release
+
+      - name: Publish assets for the tested tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_TAG" --jq .sha)
+          if [ "$tag_sha" != "$RELEASE_SHA" ]; then
+            echo "Release tag moved after CI; publication stopped." >&2
+            exit 1
+          fi
+          cd release
+          sha256sum --check SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" "$INSTALLER_NAME" SHA256SUMS.txt BUILD-INFO.json \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease --latest=false \
+            --title "Desktop $RELEASE_TAG (Windows x64 test build)" --notes-file RELEASE-NOTES.md
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --draft=false --prerelease --latest=false
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > published-release.json
+          jq -e --arg tag "$RELEASE_TAG" --arg installer "$INSTALLER_NAME" '
+            .tag_name == $tag and .draft == false and .prerelease == true and
+            (.assets | any(.name == $installer and .size > 0)) and
+            (.assets | any(.name == "SHA256SUMS.txt" and .size > 0)) and
+            (.assets | any(.name == "BUILD-INFO.json" and .size > 0))
+          ' published-release.json
