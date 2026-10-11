@@ -44,7 +44,7 @@ def build_markdown_report(
     analysis = build_analysis(findings)
     insights = analysis["insights"]
     cell = markdown_table_cell
-    lines = ["# 量子脆弱密码算法扫描报告", "",
+    lines = ["# 抗量子密码风险检测与迁移辅助软件 扫描报告", "",
              f"{cell(SOURCE_LABELS.get(source_type, source_type))} · {cell(scanned_at or beijing_now_iso())}（北京时间）", "",
              "## 摘要与关键结论", "",
              f"- 风险发现总数：{summary['finding_count']} · 受影响文件：{insights['affected_files']}",

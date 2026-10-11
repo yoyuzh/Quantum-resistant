@@ -12,11 +12,6 @@ __pycache__/
 tmp/
 .idea/
 
-frontend/
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-
 web/node_modules/
 web/dist/
 
@@ -26,3 +21,10 @@ desktop/build/backend/
 desktop/build/work/
 desktop/release/
 desktop/validation/
+
+.hypothesis/
+
+# Generated scan snapshots and private registration materials
+web/data/popular.json
+*软著申请*.docx
+*软著申请*.pdf

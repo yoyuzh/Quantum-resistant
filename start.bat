@@ -1,7 +1,7 @@
 @echo off
 setlocal
 chcp 65001 >nul
-title 抗量子迁移风险扫描平台
+title 抗量子密码风险检测与迁移辅助软件
 
 echo 正在启动，请保持此窗口打开。
 echo 启动后请在浏览器打开下方 Open 后的地址；按 Ctrl+C 停止服务。

@@ -118,6 +118,6 @@ function submit() {
       </section>
       <ResultsWorkspace :key="mode" :state="current" :mode="mode" />
     </div>
-    <footer>抗量子迁移分析原型</footer>
+    <footer>抗量子密码风险检测与迁移辅助软件 V1.0.0</footer>
   </main>
 </template>

@@ -2,11 +2,11 @@ name: Desktop Release
 
 on:
   push:
-    tags: ['desktop-v*']
+    tags: ['v*', 'desktop-v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing desktop-vX.Y.Z tag containing the release workflows
+        description: Existing vX.Y.Z or legacy desktop-vX.Y.Z tag containing the release workflows
         type: string
         required: true
 
@@ -27,6 +27,7 @@ jobs:
       tag: ${{ steps.identity.outputs.tag }}
       version: ${{ steps.identity.outputs.version }}
       sha: ${{ steps.identity.outputs.sha }}
+      prerelease: ${{ steps.identity.outputs.prerelease }}
     steps:
       - name: Checkout release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -142,7 +143,7 @@ jobs:
           retention-days: 14
 
   publish:
-    name: Publish GitHub prerelease
+    name: Publish GitHub release
     needs: [prepare, build]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
@@ -153,6 +154,7 @@ jobs:
       RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
       RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
     steps:
       # The job with write permission does not checkout or execute repository code.
       - name: Download verified assets from this run
@@ -196,9 +198,9 @@ jobs:
           cd release
           sha256sum --check --strict SHA256SUMS.txt
           jq -s '{tag: .[0].tag, version: .[0].version, sha: .[0].sha,
-            signed: false, builds: .}' desktop-release-*/BUILD-INFO.json > BUILD-INFO.json
+            prerelease: .[0].prerelease, signed: false, builds: .}' desktop-release-*/BUILD-INFO.json > BUILD-INFO.json
           cat > RELEASE-NOTES.md <<EOF
-          桌面测试版 $RELEASE_VERSION
+          抗量子密码风险检测与迁移辅助软件 V$RELEASE_VERSION
 
           - Windows x64：EXE 安装程序
           - Linux x64：Ubuntu DEB 安装包
@@ -210,15 +212,27 @@ jobs:
           SHA256SUMS.txt 覆盖全部安装包，BUILD-INFO.json 记录各平台构建身份。
           安装包尚未正式代码签名，macOS 尚未 Apple 公证。自动检查不代表安装后 GUI 实机验收。
           EOF
+          if [ "$RELEASE_PRERELEASE" = true ]; then
+            publish_flags=(--prerelease --latest=false)
+          elif [ "$RELEASE_PRERELEASE" = false ]; then
+            publish_flags=(--prerelease=false --latest=true)
+          else
+            echo "Invalid release channel; publication stopped." >&2
+            exit 1
+          fi
           gh release create "$RELEASE_TAG" "${packages[@]}" SHA256SUMS.txt BUILD-INFO.json \
             --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease --latest=false \
-            --title "Desktop $RELEASE_TAG (Windows, macOS, Linux test build)" --notes-file RELEASE-NOTES.md
+            --title "抗量子密码风险检测与迁移辅助软件 $RELEASE_TAG" --notes-file RELEASE-NOTES.md
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
-            --draft=false --prerelease --latest=false
+            --draft=false "${publish_flags[@]}"
           gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > published-release.json
           expected=$(printf '%s\n' "${packages[@]}" SHA256SUMS.txt BUILD-INFO.json | jq -Rn '[inputs]')
-          jq -e --arg tag "$RELEASE_TAG" --argjson expected "$expected" '
+          jq -e --arg tag "$RELEASE_TAG" --argjson expected "$expected" \
+            --argjson prerelease "$RELEASE_PRERELEASE" '
             (.assets | map(select(.size > 0) | .name)) as $actual |
-            .tag_name == $tag and .draft == false and .prerelease == true and
+            .tag_name == $tag and .draft == false and .prerelease == $prerelease and
             all($expected[]; . as $name | $actual | index($name) != null)
           ' published-release.json
+          if [ "$RELEASE_PRERELEASE" = false ]; then
+            gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name | grep -Fx "$RELEASE_TAG"
+          fi

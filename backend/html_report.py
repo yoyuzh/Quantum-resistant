@@ -87,7 +87,7 @@ def build_html_report(**payload) -> str:
     section('notes', '附录', details)
     nav = ' · '.join(f'<a href="#{i}">{name}</a>' for i, name in [('summary', '摘要'), ('scope', '范围'), ('charts', '统计'), ('assets', '资产'), ('evidence', '证据'), ('migration', '迁移'), ('notes', '附录')])
     return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' \
-        + '<title>抗量子迁移分析报告</title><style>' + STYLE + '</style><body><main><header><h1>抗量子迁移分析报告</h1>' \
+        + '<title>抗量子密码风险检测与迁移辅助软件 扫描报告</title><style>' + STYLE + '</style><body><main><header><h1>抗量子密码风险检测与迁移辅助软件 扫描报告</h1>' \
         + f'<p class="muted">{text(SOURCE_LABELS.get(report["source_type"], report["source_type"]))} · {text(report["scanned_at"])}（北京时间）</p></header><nav>' + nav + '</nav>' + ''.join(sections) + '</main></body></html>'
 
 

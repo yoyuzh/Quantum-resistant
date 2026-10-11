@@ -1,16 +1,16 @@
-# 桌面测试版的使用与分发
+# 抗量子密码风险检测与迁移辅助软件桌面使用说明
 
-桌面版保留四类输入、源码定位、迁移知识、热门仓库和四种报告。双击安装程序后，从桌面或开始菜单启动“抗量子迁移风险扫描平台”。无需安装 Python、Node.js 或 WebView2；不需要管理员权限。Windows 安装程序采用当前用户安装，默认不添加开机启动。
+桌面版保留四类输入、源码定位、迁移知识、热门仓库和四种报告。双击安装程序后，从桌面或开始菜单启动“抗量子密码风险检测与迁移辅助软件”。无需安装 Python、Node.js 或 WebView2；不需要管理员权限。Windows 安装程序采用当前用户安装，默认不添加开机启动。
 
-## 本次产物
+## 安装包与平台
 
-- 下载入口：[GitHub Release多端测试版](https://github.com/yoyuzh/Quantum-resistant/releases)。从 0.1.2 起，同一 Release 包含全部平台安装包。
+- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。V1.0.0 使用正式版本标签 v1.0.0，同一 Release 包含全部平台安装包。
 - Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
 - Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
 - macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
 - macOS Apple Silicon：`Quantum-Scanner-X.Y.Z-mac-arm64.dmg`。
 - 完整性校验：同目录的 `SHA256SUMS.txt`。
-- 首版为未签名测试版，不包含发布者身份认证。正式公开分发前应完成 Windows 代码签名；macOS 还需 Developer ID 签名和 Apple 公证。不要通过关闭系统安全功能解决安装提示。
+- 安装包尚未正式代码签名，不包含发布者身份认证。当前未提供 Windows 发布者签名或 macOS Developer ID 签名与 Apple 公证；系统可能显示相应提示。不要通过关闭系统安全功能解决安装提示。
 - Windows、macOS Intel/Apple Silicon、Ubuntu 22.04 x64 的原生构建及冻结后端冒烟均已通过托管 runner 验证；不将其视为全部平台安装后 GUI 兼容性认证。Ubuntu 24.04 和 macOS 最低系统版本仍需实机验收。
 
 SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在 PowerShell 中运行 `Get-FileHash -Algorithm SHA256 安装程序路径`，与随包校验值比较。
@@ -27,7 +27,7 @@ SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在
 
 ## 从源码构建
 
-构建机需要 Python 3.13（本次使用3.13.5）、Node.js 22.12+（建议24 LTS）、npm及可访问依赖源的网络。收件人的电脑不需要这些开发工具。
+构建机需要 Python 3.13（现有构建使用3.13.5）、Node.js 22.12+（现有CI使用24）、npm及可访问依赖源的网络。收件人的电脑不需要这些开发工具。
 
 ```powershell
 npm ci --prefix desktop
@@ -68,4 +68,4 @@ npm --prefix desktop start
 
 内部进程协议使用逐行JSON：父进程通过stdin传递`token`、`data_root`和`cache_root`；后端绑定端口并完成ASGI启动后，通过stdout发送`ready`及`port`、`pid`。`status`命令按`id`返回运行与排队总数，`shutdown`或stdin EOF触发回收；stdout只承载协议，诊断单独写日志。启动最长等待30秒，退出最长等待10秒。不要将含令牌的初始配置放入命令行、网页或日志。
 
-具体已完成和未完成的验收见[桌面验证记录](desktop-validation.md)。
+验证方法和未验收边界见[验证说明](validation.md)。安装名称已统一为正式中文名，历史 Release 的旧安装包不会因此改变；用户数据继续使用原目录以兼容已有主题与热门快照。

@@ -35,7 +35,7 @@ def format_findings(findings: list[dict[str, str | int]]) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="扫描 Python 代码中的量子脆弱密码算法。")
+    parser = argparse.ArgumentParser(description="抗量子密码风险检测与迁移辅助软件：扫描 Python 代码中的量子脆弱密码算法。")
     parser.add_argument(
         "file",
         nargs="?",

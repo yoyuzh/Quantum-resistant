@@ -40,7 +40,7 @@ async def lifespan(app):
     task_routes.store.close()
 
 
-app = FastAPI(title="Quantum Crypto Migration Scanner", version="0.3.0", lifespan=lifespan,
+app = FastAPI(title="抗量子密码风险检测与迁移辅助软件", version="1.0.0", lifespan=lifespan,
               docs_url=None if runtime.desktop else '/docs',
               redoc_url=None if runtime.desktop else '/redoc',
               openapi_url=None if runtime.desktop else '/openapi.json')

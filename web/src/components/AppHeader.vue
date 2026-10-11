@@ -9,7 +9,7 @@ defineEmits(['toggle-theme']);
     <div class="brand">
       <span class="brand-mark"><AppIcon name="shield" :size="26" /></span>
       <div>
-        <h1>抗量子迁移风险扫描平台</h1>
+        <h1>抗量子密码风险检测与迁移辅助软件</h1>
       </div>
     </div>
     <button

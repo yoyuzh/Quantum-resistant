@@ -40,7 +40,7 @@ class BackendApiTests(unittest.TestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("抗量子迁移风险扫描平台", response.text)
+        self.assertIn("抗量子密码风险检测与迁移辅助软件", response.text)
         self.assertIn("/static/assets/", response.text)
 
     def test_scan_files_accepts_multiple_uploaded_sources(self) -> None:
@@ -182,7 +182,7 @@ class BackendApiTests(unittest.TestCase):
         response = self.client.post("/api/report/markdown", json=scan_response.json())
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("# 量子脆弱密码算法扫描报告", response.text)
+        self.assertIn("# 抗量子密码风险检测与迁移辅助软件 扫描报告", response.text)
         self.assertIn("report_demo.py", response.text)
         self.assertIn("RSA", response.text)
         self.assertIn("风险发现总数：1", response.text)

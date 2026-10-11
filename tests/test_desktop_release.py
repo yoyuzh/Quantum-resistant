@@ -46,6 +46,7 @@ class DesktopReleaseTests(unittest.TestCase):
         sha = git("rev-parse", "HEAD")
         git("-c", "tag.gpgsign=false", "tag", self.tag)
         self.assertEqual(release_identity(self.root, self.tag, sha)["sha"], sha)
+        self.assertEqual(release_identity(self.root, self.tag, sha)["prerelease"], "true")
         git("tag", "-d", self.tag)
         git("-c", "tag.gpgsign=false", "tag", "-a", self.tag, "-m", "fixture")
         self.assertEqual(release_identity(self.root, self.tag, sha)["sha"], sha)
@@ -121,6 +122,28 @@ class DesktopReleaseTests(unittest.TestCase):
         notes = (self.desktop / "release" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
         self.assertIn("预发布", notes)
         self.assertIn("不代表安装后桌面交互已实机验收", notes)
+
+    def test_formal_and_prerelease_versions_keep_matching_identity(self) -> None:
+        for version, tag, prerelease in [
+            ("1.0.0", "v1.0.0", False),
+            ("1.1.0-rc.1", "v1.1.0-rc.1", True),
+            ("0.1.2", "desktop-v0.1.2", True),
+        ]:
+            with self.subTest(tag=tag):
+                manifest = {"version": version}
+                lock = {"version": version, "packages": {"": manifest}}
+                self.assertEqual(validate_version(tag, manifest, lock), version)
+                with self.assertRaises(ValueError):
+                    validate_version("v9.9.9", manifest, lock)
+                (self.desktop / "release").mkdir(exist_ok=True)
+                identity = {"tag": tag, "version": version, "sha": "a" * 40,
+                            "installer": installer_name(version, "windows-x64")}
+                with patch("scripts.desktop_release.subprocess.check_output", return_value="v24.0.0"):
+                    write_release_files(self.root, identity, "b" * 64)
+                info = json.loads((self.desktop / "release" / "BUILD-INFO.json").read_text(encoding="utf-8"))
+                self.assertEqual(info["prerelease"], prerelease)
+                notes = (self.desktop / "release" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
+                self.assertIn("预发布版本" if prerelease else "正式版本", notes)
 
 
 if __name__ == "__main__":

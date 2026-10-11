@@ -6,12 +6,13 @@ const { BackendProcess } = require('./backend.cjs');
 const { localURL, externalURL, requestHeaders, trustedFrame, validTheme } = require('./policy.cjs');
 const { readTheme, saveTheme } = require('./preferences.cjs');
 
-app.setName('Quantum Resistant Scanner');
-if (!app.isPackaged && process.env.QUANTUM_DESKTOP_DATA_DIR) {
-  const root = path.resolve(process.env.QUANTUM_DESKTOP_DATA_DIR);
-  fs.mkdirSync(root, { recursive: true, mode: 0o700 });
-  app.setPath('userData', root);
-}
+// Keep existing installations' preferences and snapshots after the display-name change.
+app.setName('抗量子密码风险检测与迁移辅助软件');
+const profileRoot = !app.isPackaged && process.env.QUANTUM_DESKTOP_DATA_DIR
+  ? path.resolve(process.env.QUANTUM_DESKTOP_DATA_DIR)
+  : path.join(app.getPath('appData'), 'Quantum Resistant Scanner');
+fs.mkdirSync(profileRoot, { recursive: true, mode: 0o700 });
+app.setPath('userData', profileRoot);
 protocol.registerSchemesAsPrivileged([{ scheme: 'quantum', privileges: { standard: true, secure: true } }]);
 let window;
 let splash;
@@ -80,7 +81,7 @@ async function start() {
   protocol.handle('quantum', () => new Response(
     '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>正在启动扫描平台</title>' +
     '<style>body{font:16px system-ui;background:#f4f7fc;color:#213349;padding:52px}h1{font-size:24px}</style>' +
-    '<h1>抗量子迁移风险扫描平台</h1><p>正在启动本地扫描服务…</p><p>本地扫描无需联网。</p></html>',
+    '<h1>抗量子密码风险检测与迁移辅助软件</h1><p>正在启动本地扫描服务…</p><p>本地扫描无需联网。</p></html>',
     { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'" } },
   ));
   splash = new BrowserWindow({ width: 620, height: 300, resizable: false, autoHideMenuBar: true,
@@ -130,7 +131,7 @@ async function start() {
     });
   });
   window = new BrowserWindow({ width: 1440, height: 960, minWidth: 900, minHeight: 600, show: false,
-    title: '抗量子迁移风险扫描平台 · 测试版', icon: path.join(__dirname, '..', 'build', 'icon.png'),
+    title: '抗量子密码风险检测与迁移辅助软件', icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: { session: isolated, preload: path.join(__dirname, 'preload.cjs'),
       additionalArguments: [`--quantum-origin=${origin}`],
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true,

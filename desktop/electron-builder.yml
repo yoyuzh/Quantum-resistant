@@ -1,5 +1,5 @@
 appId: org.quantumresistant.scanner
-productName: Quantum Resistant Scanner
+productName: 抗量子密码风险检测与迁移辅助软件
 asar: true
 directories:
   output: release
@@ -29,7 +29,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: 抗量子迁移风险扫描平台
+  shortcutName: 抗量子密码风险检测与迁移辅助软件
   deleteAppDataOnUninstall: false
 mac:
   target:
@@ -38,7 +38,7 @@ mac:
   icon: build/icon.icns
   category: public.app-category.developer-tools
   minimumSystemVersion: '14.0'
-  # No Developer ID certificate in the first test release.
+  # No Developer ID certificate configured for this release.
   identity: null
   hardenedRuntime: false
   notarize: false
@@ -49,4 +49,4 @@ linux:
   icon: build/icon.png
   category: Development
   maintainer: Quantum Resistant Scanner contributors
-  synopsis: 抗量子迁移静态风险扫描工具
+  synopsis: 抗量子密码风险检测与迁移辅助软件

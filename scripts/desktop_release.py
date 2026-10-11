@@ -34,8 +34,8 @@ def validate_version(tag: str, manifest: dict, lock: dict) -> str:
     version = manifest.get("version")
     if not isinstance(version, str) or VERSION.fullmatch(version) is None:
         raise ValueError("桌面版本号必须为 x.y.z 或 x.y.z-alpha/beta/rc.n")
-    if tag != f"desktop-v{version}":
-        raise ValueError("标签必须与 desktop/package.json 版本一致：desktop-v" + version)
+    if tag not in (f"v{version}", f"desktop-v{version}"):
+        raise ValueError("标签必须与 desktop/package.json 版本一致：v" + version)
     if lock.get("version") != version or lock.get("packages", {}).get("", {}).get("version") != version:
         raise ValueError("desktop/package-lock.json 版本与 package.json 不一致")
     return version
@@ -60,6 +60,7 @@ def release_identity(root: Path, tag: str, expected_sha: str | None = None,
     if expected_sha is not None and expected_sha != sha:
         raise ValueError("构建提交与 CI 检查提交不一致")
     return {"tag": tag, "version": version, "sha": sha, "target": target,
+            "prerelease": str(tag.startswith("desktop-v") or "-" in version).lower(),
             "installer": installer_name(version, target)}
 
 
@@ -100,15 +101,17 @@ def write_release_files(root: Path, identity: dict[str, str], checksum: str) -> 
         "node_version": subprocess.check_output(["node", "--version"], text=True).strip(),
         "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
     }
+    information["prerelease"] = identity['tag'].startswith('desktop-v') or '-' in identity['version']
+    channel = "预发布版本" if information["prerelease"] else "正式版本"
     (directory / "BUILD-INFO.json").write_text(
         json.dumps(information, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
     )
     notes = (
-        f"{information['target']} 桌面测试版 {identity['version']}\n\n"
+        f"{information['target']} 抗量子密码风险检测与迁移辅助软件 桌面版 {identity['version']}\n\n"
         "包含安装包、SHA256SUMS.txt 和 BUILD-INFO.json。\n"
         f"源码提交：`{identity['sha']}`。\n\n"
         "该提交已通过 Windows/Linux CI 检查；打包后的 Python 后端已通过离线冒烟检查。\n"
-        "安装程序尚未代码签名，本次发布为预发布版本。自动检查不代表安装后桌面交互已实机验收。\n"
+        f"本次发布为{channel}。安装程序尚未代码签名。自动检查不代表安装后桌面交互已实机验收。\n"
         "安装后无需另行安装 Python、Node.js 或 WebView2。\n"
         "可用 PowerShell 的 Get-FileHash -Algorithm SHA256 校验下载文件；校验值不证明发布者身份。\n"
     )
