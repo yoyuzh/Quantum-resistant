@@ -14,7 +14,7 @@ import httpx
 
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes, safe_archive_member_name
 from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries, remote_client_options
-from backend.remote_sources import _REJECTED_AUTH, decode_github_blob, github_get, github_headers, github_sources, pypi_sources
+from backend.remote_sources import decode_github_blob, github_get, github_headers, github_sources, pypi_sources
 
 
 def zip_bytes(files):
@@ -57,9 +57,6 @@ class ArchiveTests(unittest.TestCase):
 
 
 class HttpCollectionTests(unittest.TestCase):
-    def setUp(self):
-        _REJECTED_AUTH.clear()
-
     def test_windows_proxy_and_explicit_environment_priority(self):
         registry = {"https": "http://127.0.0.1:7890"}
         with patch.dict(os.environ, {"NO_PROXY": "localhost"}, clear=True), \
@@ -69,25 +66,28 @@ class HttpCollectionTests(unittest.TestCase):
             os.environ["HTTPS_PROXY"] = "http://explicit-proxy:8080"
             self.assertNotIn("proxy", remote_client_options())
 
-    def test_rejected_github_token_falls_back_once_and_stays_anonymous(self):
+    def test_lowercase_proxy_environment_prevents_system_proxy_override(self):
+        with patch.dict(os.environ, {'https_proxy': 'http://explicit:8080'}, clear=True), \
+             patch('backend.collection_common.os.name', 'nt'), \
+             patch.object(urllib.request, 'getproxies_registry', return_value={'https': 'http://system:7890'}, create=True):
+            self.assertNotIn('proxy', remote_client_options())
+
+    def test_github_requests_do_not_forward_authorization_headers(self):
         authorizations = []
         def handle(request):
             authorizations.append(request.headers.get("authorization"))
             return httpx.Response(401 if request.headers.get("authorization") else 200, json={"ok": True})
-        headers = {"Authorization": "Bearer invalid", "Accept": "application/vnd.github+json"}
+        headers = {"Authorization": "Bearer unused", "aUtHoRiZaTiOn": "Bearer unused-too", **github_headers()}
         with httpx.Client(transport=httpx.MockTransport(handle)) as client:
             self.assertTrue(github_get(client, "https://api.github.com/repos/a/b", headers=headers).json()["ok"])
             self.assertTrue(github_get(client, "https://api.github.com/repos/a/b/git/trees/main", headers=headers).json()["ok"])
-        self.assertEqual(authorizations, ["Bearer invalid", None, None])
-        self.assertNotIn("Authorization", headers)
+        self.assertEqual(authorizations, [None, None])
+        self.assertIn("Authorization", headers)
 
-    def test_rejected_environment_token_is_skipped_on_later_collections(self):
-        with patch.dict(os.environ, {"GITHUB_TOKEN": "invalid-cache"}):
-            with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(401 if r.headers.get("authorization") else 200))) as client:
-                github_get(client, "https://api.github.com/repos/a/b", headers=github_headers())
-            self.assertNotIn("Authorization", github_headers())
-            os.environ["GITHUB_TOKEN"] = "replacement-token"
-            self.assertEqual(github_headers()["Authorization"], "Bearer replacement-token")
+    def test_github_headers_ignore_environment_credentials(self):
+        for token in ("", "unused-old-token", "unused-replacement-token"):
+            with self.subTest(token=token), patch.dict(os.environ, {"GITHUB_TOKEN": token}):
+                self.assertEqual(github_headers(), {"Accept": "application/vnd.github+json"})
 
     def test_anonymous_github_401_is_explicit_error(self):
         calls = []
@@ -95,9 +95,9 @@ class HttpCollectionTests(unittest.TestCase):
             calls.append(request)
             return httpx.Response(401)
         with httpx.Client(transport=httpx.MockTransport(handle)) as client:
-            with self.assertRaisesRegex(CollectionError, "匿名访问"):
-                github_get(client, "https://api.github.com/repos/a/b", headers={"Authorization": "Bearer invalid"})
-        self.assertEqual(len(calls), 2)
+            with self.assertRaisesRegex(CollectionError, "公开访问"):
+                github_get(client, "https://api.github.com/repos/a/b", headers=github_headers())
+        self.assertEqual(len(calls), 1)
 
     def test_github_collection_preserves_anonymous_401(self):
         calls = []
@@ -107,11 +107,11 @@ class HttpCollectionTests(unittest.TestCase):
             return httpx.Response(401)
         with patch.dict(os.environ, {"GITHUB_TOKEN": "invalid"}), \
              patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
-            with self.assertRaisesRegex(CollectionError, "匿名访问"):
+            with self.assertRaisesRegex(CollectionError, "公开访问"):
                 github_sources("https://github.com/a/b", 2, Deadline.after(3))
-        self.assertEqual(len(calls), 2)
+        self.assertEqual(len(calls), 1)
 
-    def test_github_collection_uses_anonymous_requests_after_token_401(self):
+    def test_github_collection_ignores_environment_token(self):
         authorizations = []
         real_client = httpx.Client
         def handle(request):
@@ -129,34 +129,59 @@ class HttpCollectionTests(unittest.TestCase):
              patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
             result = github_sources("https://github.com/a/b", 2, Deadline.after(3))
         self.assertEqual(result[0][1], "crypto.py")
-        self.assertEqual(authorizations, ["Bearer invalid", None, None, None])
+        self.assertEqual(authorizations, [None, None, None])
 
-    def test_rejected_token_and_anonymous_rate_limit_is_actionable(self):
-        calls = []
-        def handle(request):
-            calls.append(request)
-            return httpx.Response(401 if request.headers.get("authorization") else 403)
-        with httpx.Client(transport=httpx.MockTransport(handle)) as client:
-            with self.assertRaisesRegex(CollectionError, "更新 GITHUB_TOKEN"):
-                github_get(client, "https://api.github.com/search/repositories", headers={"Authorization": "Bearer invalid"})
-        self.assertEqual(len(calls), 2)
+    def test_anonymous_rate_limit_is_actionable_without_token_setup(self):
+        for status in (403, 429):
+            calls = []
+            def handle(request):
+                calls.append(request)
+                return httpx.Response(status, headers={"Retry-After": "120"})
+            with self.subTest(status=status), httpx.Client(transport=httpx.MockTransport(handle)) as client:
+                with self.assertRaisesRegex(CollectionError, "公开 API 请求受限.*稍后重试") as caught:
+                    github_get(client, "https://api.github.com/search/repositories", headers=github_headers())
+                self.assertNotIn("GITHUB_TOKEN", str(caught.exception))
+                self.assertEqual(len(calls), 1)
 
     def test_api_rate_limit_uses_public_archive_fallback(self):
         calls = []
-        archive = zip_bytes([("b-main/crypto.py", 'algorithm = "RS256"\n')])
+        archive = zip_bytes([
+            ("b-main/crypto.py", 'algorithm = "RS256"\n'),
+            ("b-main/README.md", "# Public repository\nRSA example"),
+        ])
         real_client = httpx.Client
         def handle(request):
+            self.assertNotIn("authorization", request.headers)
             calls.append((request.url.host, request.url.path))
             if request.url.host == "api.github.com":
-                return httpx.Response(403)
+                return httpx.Response(403, headers={'X-RateLimit-Remaining': '0', 'Retry-After': '120'})
             if request.url.path.endswith("/main.zip"):
                 return httpx.Response(200, content=archive)
             return httpx.Response(404)
-        with patch.dict(os.environ, {"GITHUB_TOKEN": ""}), \
-             patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "unused-old-token"}), \
+             patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))), \
+             patch.object(Deadline, 'pause') as pause:
+            result = github_sources("https://github.com/a/b", 2, Deadline.after(600))
+        self.assertEqual({item[1] for item in result}, {"crypto.py", "README.md"})
+        self.assertFalse(any("/git/trees/" in path for _, path in calls))
+        pause.assert_not_called()
+
+    def test_public_archive_falls_back_to_master_branch(self):
+        calls = []
+        archive = zip_bytes([("b-master/crypto.py", 'algorithm = "RS256"\n')])
+        real_client = httpx.Client
+        def handle(request):
+            self.assertNotIn("authorization", request.headers)
+            calls.append(request.url.path)
+            if request.url.host == "api.github.com":
+                return httpx.Response(429, headers={"Retry-After": "120"})
+            if request.url.path.endswith("/master.zip"):
+                return httpx.Response(200, content=archive)
+            return httpx.Response(404)
+        with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
             result = github_sources("https://github.com/a/b", 2, Deadline.after(3))
         self.assertEqual(result[0][1], "crypto.py")
-        self.assertFalse(any("/git/trees/" in path for _, path in calls))
+        self.assertEqual(calls[-2:], ["/a/b/archive/refs/heads/main.zip", "/a/b/archive/refs/heads/master.zip"])
 
     def test_github_expired_deadline_never_connects(self):
         real_client = httpx.Client
@@ -247,24 +272,59 @@ class HttpCollectionTests(unittest.TestCase):
             result = pypi_sources("test", Deadline.after(3))
         self.assertEqual(result[0][1], "package/a.py")
 
-    def test_pypi_direct_first_then_proxy_on_connection_failure(self):
+    def test_pypi_configured_route_first_then_direct_if_system_proxy_is_down(self):
         archive = zip_bytes([("package/a.py", "x=1")])
         client_options = []
         real_client = httpx.Client
         def make_client(**kwargs):
             client_options.append(kwargs)
             def handle(request):
-                if kwargs["trust_env"] is False:
-                    raise httpx.ConnectError("direct unavailable", request=request)
+                if kwargs.get('proxy'):
+                    raise httpx.ProxyError("system proxy unavailable", request=request)
                 if request.url.host == "pypi.org":
                     return httpx.Response(200, json={"urls": [{"filename": "package.whl", "packagetype": "bdist_wheel", "url": "https://files.pythonhosted.org/package.whl"}]})
                 return httpx.Response(200, content=archive)
             return real_client(transport=httpx.MockTransport(handle))
-        with patch("backend.remote_sources.remote_client_options", return_value={"follow_redirects": True, "trust_env": True, "proxy": "http://127.0.0.1:7890"}), \
+        with patch.dict(os.environ, {}, clear=True), \
+             patch("backend.remote_sources.remote_client_options", return_value={"follow_redirects": False, "trust_env": True, "proxy": "http://127.0.0.1:7890"}), \
              patch("backend.remote_sources.httpx.Client", side_effect=make_client):
             result = pypi_sources("package", Deadline.after(3))
         self.assertEqual(result[0][1], "package/a.py")
-        self.assertEqual([c["trust_env"] for c in client_options], [False, True])
+        self.assertEqual([c["trust_env"] for c in client_options], [True, False])
+
+    def test_pypi_working_proxy_is_used_without_an_extra_direct_attempt(self):
+        archive = zip_bytes([('package/a.py', 'x=1')])
+        options = []
+        real_client = httpx.Client
+        def handle(request):
+            if request.url.host == 'pypi.org':
+                return httpx.Response(200, json={'urls': [{'filename': 'package.whl', 'url': 'https://files.pythonhosted.org/package.whl'}]})
+            return httpx.Response(200, content=archive)
+        def make_client(**kwargs):
+            options.append(kwargs)
+            return real_client(transport=httpx.MockTransport(handle))
+        with patch.dict(os.environ, {}, clear=True), \
+             patch('backend.remote_sources.remote_client_options', return_value={'trust_env': True, 'proxy': 'http://system:7890'}), \
+             patch('backend.remote_sources.httpx.Client', side_effect=make_client):
+            self.assertEqual(len(pypi_sources('package', Deadline.after(3))), 1)
+        self.assertEqual(len(options), 1)
+        self.assertEqual(options[0]['proxy'], 'http://system:7890')
+
+    def test_pypi_explicit_proxy_failure_never_bypasses_that_proxy(self):
+        real_client = httpx.Client
+        options = []
+        def make_client(**kwargs):
+            options.append(kwargs)
+            def fail(request):
+                raise httpx.ProxyError('configured proxy unavailable', request=request)
+            return real_client(transport=httpx.MockTransport(fail))
+        with patch.dict(os.environ, {'HTTPS_PROXY': 'http://explicit:7890'}, clear=True), \
+             patch('backend.remote_sources.httpx.Client', side_effect=make_client), \
+             patch.object(Deadline, 'pause'):
+            with self.assertRaisesRegex(CollectionError, '代理连接失败'):
+                pypi_sources('package', Deadline.after(600))
+        self.assertEqual(len(options), 1)
+        self.assertTrue(options[0]['trust_env'])
 
     def test_blob_encoding_and_decoded_size(self):
         for payload in [{"encoding": "utf8"}, {"encoding": "base64", "content": "!"}, {"encoding": "base64", "content": base64.b64encode(b"\xff").decode()}]:

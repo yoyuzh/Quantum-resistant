@@ -107,6 +107,7 @@ class Deadline:
 
 HTTP_SLOTS = BoundedSemaphore(8)
 logger = logging.getLogger(__name__)
+MAX_RETRY_WAIT_SECONDS = 2.0
 
 
 @contextmanager
@@ -151,10 +152,15 @@ class CollectedSources(list[SourceDocument]):
         self.diagnostics = diagnostics or []
 
 
+def has_environment_proxy() -> bool:
+    return any(value for name, value in os.environ.items()
+               if name.lower() in {"https_proxy", "http_proxy", "all_proxy"})
+
+
 def remote_client_options() -> dict:
     """Use explicit proxy variables, then the Windows static system proxy."""
     options = {"follow_redirects": False, "trust_env": True}
-    if any(os.environ.get(key) for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")):
+    if has_environment_proxy():
         return options
     if os.name == "nt":
         read_registry = getattr(urllib.request, "getproxies_registry", None)
@@ -263,7 +269,9 @@ def get_with_retries(client: httpx.Client, url: str, *, headers: dict | None = N
             if (exc.response.status_code not in {429, 500, 502, 503, 504} and not limited) or attempt == attempts - 1:
                 raise
             delay = retry_delay(exc.response, attempt)
-            if delay >= budget.remaining():
+            # A scan deadline is not a license to wait minutes for an API quota.
+            # Let callers use an archive fallback or report the actual failure.
+            if delay > MAX_RETRY_WAIT_SECONDS or delay >= budget.remaining():
                 raise
         except httpx.DecodingError:
             # Retrying identical malformed content only consumes the task budget.

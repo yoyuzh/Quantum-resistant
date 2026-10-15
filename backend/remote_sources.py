@@ -2,24 +2,20 @@ from __future__ import annotations
 
 import base64
 import binascii
-import hashlib
-import os
 import tarfile
-import time
 import zipfile
 from collections import Counter
-from threading import Lock
 from urllib.parse import quote, urlparse
 
 import httpx
 
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes
-from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries, remote_client_options
+from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries, has_environment_proxy, remote_client_options
 from backend.collection_config import MAX_ARCHIVE_BYTES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
 from backend.collectors import is_supported_source_path, source_priority
 
 
-class GitHubAuthenticationError(CollectionError):
+class GitHubAccessError(CollectionError):
     pass
 
 
@@ -33,38 +29,17 @@ class FileCollectionError(CollectionError):
         self.reason = reason
 
 
-_REJECTED_AUTH: dict[bytes, float] = {}
-_REJECTED_AUTH_LOCK = Lock()
-_REJECTED_AUTH_TTL_SECONDS = 300
-
-
-def _auth_fingerprint(authorization: str) -> bytes:
-    return hashlib.sha256(authorization.encode("utf-8")).digest()
-
-
-def _auth_was_rejected(authorization: str) -> bool:
-    with _REJECTED_AUTH_LOCK:
-        rejected_at = _REJECTED_AUTH.get(_auth_fingerprint(authorization))
-    return rejected_at is not None and time.monotonic() - rejected_at < _REJECTED_AUTH_TTL_SECONDS
-
-
 def github_headers() -> dict[str, str]:
-    headers = {"Accept": "application/vnd.github+json"}
-    token = os.environ.get("GITHUB_TOKEN")
-    if token:
-        authorization = f"Bearer {token}"
-        if not _auth_was_rejected(authorization):
-            headers["Authorization"] = authorization
-    return headers
+    return {"Accept": "application/vnd.github+json"}
 
 
 def describe_http_error(exc: Exception | None) -> str:
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
         if status == 401:
-            return "GitHub 拒绝访问（HTTP 401），请检查令牌或仓库权限"
+            return "GitHub 拒绝公开访问（HTTP 401），请确认仓库为公开仓库且地址正确"
         if status in {403, 429}:
-            return "远程服务限制访问或请求过多；GitHub 可配置 GITHUB_TOKEN 后重试"
+            return "远程服务限制访问或请求过多，请稍后重试"
         if status == 404:
             return "资源不存在或没有访问权限"
         return f"远程服务返回 HTTP {status}"
@@ -90,31 +65,16 @@ def describe_http_error(exc: Exception | None) -> str:
 
 
 def github_get(client: httpx.Client, url: str, *, headers: dict[str, str], **kwargs) -> httpx.Response:
-    """Retry a public GitHub resource anonymously after a rejected token."""
-    original_headers = headers
-    headers = headers.copy()
-    if headers.get('Authorization') and _auth_was_rejected(headers['Authorization']):
-        headers.pop('Authorization')
+    """Read public GitHub resources without forwarding credentials."""
+    headers = {key: value for key, value in headers.items() if key.lower() != "authorization"}
     try:
         return get_with_retries(client, url, headers=headers.copy(), **kwargs)
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code in {403, 429} and urlparse(url).hostname == "api.github.com":
-            raise GitHubRateLimitError("GitHub API 限制访问或请求过多；请检查 GITHUB_TOKEN 或稍后重试") from exc
-        if exc.response.status_code != 401 or "Authorization" not in headers:
-            raise
-        rejected_auth = headers.pop("Authorization")
-        with _REJECTED_AUTH_LOCK:
-            _REJECTED_AUTH[_auth_fingerprint(rejected_auth)] = time.monotonic()
-            if original_headers.get('Authorization') == rejected_auth:
-                original_headers.pop('Authorization', None)
-        try:
-            return get_with_retries(client, url, headers=headers.copy(), **kwargs)
-        except httpx.HTTPStatusError as retry_exc:
-            if retry_exc.response.status_code == 401:
-                raise GitHubAuthenticationError("GitHub 拒绝匿名访问（HTTP 401），请检查仓库权限") from retry_exc
-            if retry_exc.response.status_code in {403, 429}:
-                raise GitHubRateLimitError("GitHub 令牌被拒绝，匿名请求又受到限流；请更新 GITHUB_TOKEN") from retry_exc
-            raise
+            raise GitHubRateLimitError("GitHub 公开 API 请求受限，请稍后重试") from exc
+        if exc.response.status_code == 401:
+            raise GitHubAccessError(describe_http_error(exc)) from exc
+        raise
 
 
 def decode_github_blob(payload: dict) -> str:
@@ -146,7 +106,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
             default = metadata.get("default_branch")
             if default:
                 branches = [default]
-        except (CollectionTimeout, GitHubAuthenticationError):
+        except (CollectionTimeout, GitHubAccessError):
             raise
         except GitHubRateLimitError as exc:
             api_rate_error = last_error = exc
@@ -175,7 +135,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                         finally:
                             if archive_path:
                                 deadline.control.storage.remove(archive_path)
-                    except (CollectionTimeout, GitHubAuthenticationError):
+                    except (CollectionTimeout, GitHubAccessError):
                         raise
                     except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
                         last_error = exc
@@ -202,7 +162,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                             document = deadline.control.publish((url, path, content))
                             deadline.control.emit(collected_delta=1, processed_delta=1)
                             return document
-                        except (CollectionTimeout, GitHubAuthenticationError, GitHubRateLimitError):
+                        except (CollectionTimeout, GitHubAccessError, GitHubRateLimitError):
                             raise
                         except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:
                             file_error = exc
@@ -211,7 +171,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     raise FileCollectionError(f"未能读取 {path}：{describe_http_error(file_error)}", getattr(file_error, 'reason', 'download_failure'))
                 completed, timed_out = concurrent_collect(eligible, fetch, 2 if limit <= 6 else 4, deadline)
                 docs = [result for _, result in completed if not isinstance(result, Exception)]
-                auth_error = next((result for _, result in completed if isinstance(result, GitHubAuthenticationError)), None)
+                access_error = next((result for _, result in completed if isinstance(result, GitHubAccessError)), None)
                 rate_error = next((result for _, result in completed if isinstance(result, GitHubRateLimitError)), None)
                 if docs:
                     docs.sort(key=lambda d: source_priority(d[1]))
@@ -233,11 +193,11 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                                             skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
                 if timed_out:
                     raise CollectionTimeout("GitHub 文件采集超时")
-                if auth_error:
-                    raise auth_error
+                if access_error:
+                    raise access_error
                 if rate_error:
                     raise rate_error
-            except (CollectionTimeout, GitHubAuthenticationError):
+            except (CollectionTimeout, GitHubAccessError):
                 raise
             except GitHubRateLimitError as exc:
                 api_rate_error = last_error = exc
@@ -257,7 +217,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                         deadline.control.storage.remove(archive_path)
                 if docs:
                     return docs
-            except (CollectionTimeout, GitHubAuthenticationError):
+            except (CollectionTimeout, GitHubAccessError):
                 raise
             except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
                 last_error = exc
@@ -271,10 +231,12 @@ def pypi_candidate_score(item: dict) -> tuple:
 
 def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
     last_error: Exception | None = None
-    options = [{"follow_redirects": False, "trust_env": False}]
-    proxy_options = remote_client_options()
-    if proxy_options.get("proxy") or any(os.environ.get(key) for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")):
-        options.append(proxy_options)
+    configured = remote_client_options()
+    options = [configured]
+    # Honor explicit proxy settings. An automatically discovered Windows proxy
+    # may be stale after a proxy app exits; only that case permits direct fallback.
+    if configured.get('proxy') and not has_environment_proxy():
+        options.append({"follow_redirects": False, "trust_env": False})
     for index, client_options in enumerate(options):
         if index and not isinstance(last_error, (httpx.TransportError, OSError)):
             break

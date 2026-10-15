@@ -15,7 +15,7 @@ from backend.collection_common import CollectionControl, CollectedSources
 from backend.pipeline import ScanPipeline
 from backend.scanning import build_scan_response
 from backend.temp_storage import TemporaryStorage
-from scan_quantum_vuln import analyze_source, build_migration_score, make_source_id
+from scan_quantum_vuln import analyze_source, build_migration_score
 
 logger = logging.getLogger(__name__)
 GITHUB_SEARCH_API = "https://api.github.com/search/repositories"
@@ -61,11 +61,9 @@ class FetchError(CollectionError):
     pass
 
 
-def fetch_popular_repos(top: int = 20, token: str | None = None, *, deadline: Deadline | None = None) -> list[RepoInfo]:
+def fetch_popular_repos(top: int = 20, *, deadline: Deadline | None = None) -> list[RepoInfo]:
     budget = deadline or Deadline.after(POPULAR_BATCH_TIMEOUT_SECONDS)
     headers = github_headers()
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
     try:
         with httpx.Client(**remote_client_options()) as client:
             response = github_get(client, GITHUB_SEARCH_API, headers=headers,

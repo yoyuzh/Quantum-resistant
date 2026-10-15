@@ -15,7 +15,6 @@ from fastapi.testclient import TestClient
 from backend.collection_common import CollectedSources, CollectionError, CollectionTimeout, Deadline
 from backend.main import app, POPULAR_SCAN_LOCK
 from backend.popular import BatchResult, FetchError, RepoInfo, RepoScanResult, fetch_popular_repos, run_batch_scan, scan_popular, scan_single_repo
-from backend.remote_sources import _REJECTED_AUTH
 from backend.storage import write_results
 from scripts.batch_scan_popular import main
 
@@ -29,10 +28,7 @@ def success(name="a/b"):
 
 
 class PopularServiceTests(unittest.TestCase):
-    def setUp(self):
-        _REJECTED_AUTH.clear()
-
-    def test_popular_search_retries_invalid_token_anonymously(self):
+    def test_popular_search_ignores_environment_token(self):
         authorizations = []
         real_client = httpx.Client
         def handle(request):
@@ -43,17 +39,17 @@ class PopularServiceTests(unittest.TestCase):
         with patch.dict(os.environ, {"GITHUB_TOKEN": "invalid"}), \
              patch("backend.popular.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
             self.assertEqual(fetch_popular_repos(top=1)[0].full_name, "a/b")
-        self.assertEqual(authorizations, ["Bearer invalid", None])
+        self.assertEqual(authorizations, [None])
 
     @patch("backend.popular.github_get")
-    def test_search_query_and_token(self, get):
+    def test_search_query_is_anonymous(self, get):
         get.return_value = httpx.Response(200, json={"items": [{"full_name": "a/b", "html_url": "https://github.com/a/b", "stargazers_count": 100}]})
-        self.assertEqual(fetch_popular_repos(top=8, token="test-token")[0].full_name, "a/b")
+        self.assertEqual(fetch_popular_repos(top=8)[0].full_name, "a/b")
         options = get.call_args.kwargs
         self.assertEqual(options["params"]["q"], "topic:cryptography language:python")
         self.assertEqual(options["params"]["sort"], "stars")
         self.assertEqual(options["params"]["per_page"], "8")
-        self.assertEqual(options["headers"]["Authorization"], "Bearer test-token")
+        self.assertEqual(options["headers"], {"Accept": "application/vnd.github+json"})
 
     @patch("backend.popular.github_get")
     def test_search_failures(self, get):
