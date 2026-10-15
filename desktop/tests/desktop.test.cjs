@@ -37,7 +37,6 @@ test('preload exposes a restricted desktop bridge and rereads persisted theme af
     ipcRenderer: {
       sendSync: (channel) => { assert.equal(channel, 'quantum:read-theme'); return theme; },
       invoke: async (channel, value) => {
-        if (channel === 'quantum:menu') return 'menu';
         assert.equal(channel, 'quantum:theme'); theme = value;
       },
     },
@@ -49,10 +48,9 @@ test('preload exposes a restricted desktop bridge and rereads persisted theme af
     vm.runInNewContext(source, { require: () => electron, window, process: { platform: 'win32', argv: [`--quantum-origin=${origin}`] } });
   }
   load(origin);
-  assert.deepEqual(Object.keys(bridge).sort(), ['platform', 'readTheme', 'saveTheme', 'showMenu']);
+  assert.deepEqual(Object.keys(bridge).sort(), ['platform', 'readTheme', 'saveTheme']);
   assert.equal(bridge.platform, 'win32');
   assert.equal(Object.isFrozen(bridge), true);
-  assert.equal(await bridge.showMenu('untrusted command'), 'menu');
   assert.equal(bridge.readTheme(), 'light');
   await bridge.saveTheme('dark');
   load(origin);

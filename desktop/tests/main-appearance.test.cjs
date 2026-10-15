@@ -78,6 +78,7 @@ test('main initializes theme before either hidden window and synchronizes valida
       assert.equal(window.options.show, false);
       assert.equal(window.options.backgroundColor, PALETTES[initial].root);
       assert.equal(window.options.titleBarOverlay.color, PALETTES[initial].surface);
+      assert.equal(window.options.titleBarOverlay.height, 36);
     }
     const window = h.windows[1];
     const event = { sender: window.webContents, senderFrame: window.webContents.mainFrame };
@@ -85,6 +86,7 @@ test('main initializes theme before either hidden window and synchronizes valida
     h.handlers['quantum:theme'](event, next);
     assert.equal(h.currentTheme(), next);
     assert.equal(window.overlay.color, PALETTES[next].surface);
+    assert.equal(window.overlay.height, 36);
     assert.equal(window.background, PALETTES[next].root);
     assert.equal(h.saved(), next);
     h.listeners['quantum:read-theme'](event);
@@ -92,5 +94,6 @@ test('main initializes theme before either hidden window and synchronizes valida
     assert.throws(() => h.handlers['quantum:theme']({ sender: {} }, initial));
     assert.throws(() => h.handlers['quantum:theme'](event, '../invalid'));
     assert.equal(h.currentTheme(), next);
+    assert.equal(h.handlers['quantum:menu'], undefined);
   }
 });

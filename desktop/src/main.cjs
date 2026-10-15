@@ -87,7 +87,7 @@ async function start() {
     { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'" } },
   ));
   splash = new BrowserWindow({ width: 620, height: 300, resizable: false, show: false,
-    ...windowAppearance(initialTheme, process.platform, 36),
+    ...windowAppearance(initialTheme, process.platform),
     webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, devTools: false } });
   if (process.platform !== 'darwin') splash.removeMenu();
   splash.on('close', (event) => { if (!quitting) { event.preventDefault(); void quit(); } });
@@ -163,7 +163,8 @@ async function start() {
   ipcMain.on('quantum:read-theme', (event) => {
     event.returnValue = trustedFrame(event, window.webContents, origin) ? readTheme(dataRoot) : null;
   });
-  installApplicationMenu({ app, Menu, ipcMain, window, origin, quit, platform: process.platform });
+  installApplicationMenu({ app, Menu, window, quit, platform: process.platform });
+  // Setting the application menu can affect an already-created startup window.
   if (process.platform !== 'darwin') splash.removeMenu();
   await window.loadURL(`${origin}/`);
   splash.destroy(); splash = null;

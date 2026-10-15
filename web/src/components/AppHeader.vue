@@ -1,6 +1,5 @@
 <script setup>
 import AppIcon from './AppIcon.vue';
-import DesktopMenu from './DesktopMenu.vue';
 const overlay = ['win32', 'linux'].includes(window.quantumDesktop?.platform);
 defineProps({ theme: String });
 defineEmits(['toggle-theme']);
@@ -9,13 +8,10 @@ defineEmits(['toggle-theme']);
 <template>
   <header class="app-header" :class="{ 'desktop-overlay': overlay }">
     <div class="brand">
-      <span class="brand-mark"><AppIcon name="shield" :size="26" /></span>
-      <div>
-        <h1>抗量子密码风险检测与迁移辅助软件</h1>
-      </div>
+      <span class="brand-mark"><AppIcon name="shield" :size="overlay ? 18 : 26" /></span>
+      <h1>抗量子密码风险检测与迁移辅助软件</h1>
     </div>
     <div class="header-actions">
-    <DesktopMenu v-if="overlay" />
     <button
       class="button secondary"
       @click="$emit('toggle-theme')"
@@ -62,11 +58,29 @@ defineEmits(['toggle-theme']);
   flex-shrink: 0;
 }
 .desktop-overlay {
-  height: 72px;
+  height: env(titlebar-area-height, 36px);
+  padding-block: 0;
   padding-left: calc(env(titlebar-area-x, 0px) + 16px);
   padding-right: max(16px, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 150px)) + 16px));
   -webkit-app-region: drag;
   app-region: drag;
+}
+.desktop-overlay .brand { gap: 8px; }
+.desktop-overlay .brand-mark { width: 24px; height: 24px; border-radius: 7px; }
+.desktop-overlay h1 {
+  font-size: 13px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desktop-overlay .button {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+  gap: 5px;
+  border-radius: 6px;
 }
 .desktop-overlay .header-actions {
   -webkit-app-region: no-drag;
