@@ -32,9 +32,7 @@ onMounted(load);
 
 <style scoped>
 .knowledge {
-  padding: 1rem;
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
+  min-width: 0;
 }
 summary {
   cursor: pointer;
@@ -52,5 +50,6 @@ dt {
 }
 dd {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 </style>

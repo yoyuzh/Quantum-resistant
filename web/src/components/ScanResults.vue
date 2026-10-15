@@ -1,149 +1,48 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
-import { formatTime } from '../utils/results.js';
+import { computed, ref } from 'vue';
 import { useResultSelection } from '../composables/useResultSelection.js';
+import { useSourceContent } from '../composables/useSourceContent.js';
 import CoverageNotice from './CoverageNotice.vue';
 import ScanSummary from './ScanSummary.vue';
 import ResultHelp from './ResultHelp.vue';
-import { fileLabel } from '../utils/presentation.js';
+import ResultHeader from './ResultHeader.vue';
 import FindingsList from './FindingsList.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
 import AnalysisOverview from './AnalysisOverview.vue';
 import AssetInventory from './AssetInventory.vue';
 import MigrationChecklist from './MigrationChecklist.vue';
-import ExportMenu from './ExportMenu.vue';
-import AppIcon from './AppIcon.vue';
-import { methodLabel } from '../utils/analysis.js';
-import { useSourceContent } from '../composables/useSourceContent.js';
 const props = defineProps({ result: Object });
-const loadSource = useSourceContent(computed(() => props.result));
+const result = computed(() => props.result);
+const loadSource = useSourceContent(result);
 const body = ref(null);
-const { tab, filters, findings, selectedKey, reset, select, reveal } = useResultSelection(
-  computed(() => props.result),
-);
-const tabs = [
-  ['overview', '分析概览', 'graph'],
-  ['assets', '资产清单', 'file'],
-  ['findings', '发现明细', 'code'],
-  ['migration', '迁移待办', 'list'],
-];
-const hasFilters = computed(() => Object.values(filters).some(Boolean));
-watch(tab, () => body.value?.scrollTo({ top: 0 }), { flush: 'post' });
-async function selectEvidence(value) {
-  select({ query: '', ...value });
-  await nextTick();
-  body.value?.focus({ preventScroll: true });
-}
-async function revealEvidence(asset, location) {
-  reveal(asset, location);
-  await nextTick();
-  body.value?.focus({ preventScroll: true });
-}
-function tabKeys(event, index) {
-  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-  event.preventDefault();
-  const next =
-    event.key === 'Home'
-      ? 0
-      : event.key === 'End'
-        ? tabs.length - 1
-        : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-  tab.value = tabs[next][0];
-  event.currentTarget.parentElement.children[next].focus();
-}
+const header = ref(null);
+const { tab, filters, findings, assetFindings, selectedKey, visited, origin, announcement,
+  reset, select, reveal, back, switchTab, updateFilters, keepFocusVisible } = useResultSelection(result, { body, header });
 </script>
-
 <template>
   <div class="result-layout">
     <p class="sr-only" role="status">分析结束，共 {{ result.summary.finding_count }} 项发现。</p>
-    <div class="panel-heading">
-      <div class="result-heading">
-        <div>
-          <h2>密码资产与迁移分析</h2>
-          <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
-        </div>
-        <ExportMenu :result="result" />
-      </div>
-      <div class="result-tabs" role="tablist" aria-label="分析视图">
-        <button
-          v-for="([value, label, icon], index) in tabs"
-          :id="`tab-${value}`"
-          :key="value"
-          class="button"
-          :class="{ active: tab === value }"
-          role="tab"
-          :aria-selected="tab === value"
-          aria-controls="result-panel"
-          :tabindex="tab === value ? 0 : -1"
-          @click="tab = value"
-          @keydown="tabKeys($event, index)"
-        >
-          <AppIcon :name="icon" :size="17" />{{ label }}
-        </button>
-      </div>
+    <div ref="header" class="result-sticky">
+      <ResultHeader :result="result" :tab="tab" :filters="filters" :origin="origin"
+        :announcement="announcement" @select-tab="switchTab" @back="back" @reset="reset" />
     </div>
-    <div
-      id="result-panel"
-      ref="body"
-      class="panel-body stack"
-      role="tabpanel"
-      tabindex="0"
-      :aria-labelledby="`tab-${tab}`"
-    >
+    <div id="result-panel" ref="body" class="panel-body stack" role="tabpanel" tabindex="0"
+      :aria-labelledby="`tab-${tab}`" @focusin="keepFocusVisible">
       <ScanSummary :summary="result.summary" :compact="tab !== 'overview'" />
-      <CoverageNotice :coverage="result.coverage" :diagnostics="result.diagnostics" />
-      <div
-        v-if="hasFilters && (tab === 'assets' || tab === 'findings')"
-        class="filter-notice toolbar"
-      >
-        <span class="small"
-          >当前筛选：{{ filters.algorithm || '全部算法'
-          }}{{ filters.sourceId ? ' · ' + fileLabel(result.sources.find(s => s.source_id === filters.sourceId) || { file_name: filters.sourceId }, result.sources) : ''
-          }}{{ filters.target ? ' · ' + filters.target : ''
-          }}{{ filters.method ? ' · ' + methodLabel(filters.method) : ''
-          }}{{ filters.query ? ' · ' + filters.query : '' }}</span
-        >
-        <button class="button secondary" @click="reset">
-          <AppIcon name="close" :size="14" />清除筛选
-        </button>
-      </div>
-      <AnalysisOverview v-if="tab === 'overview'" :result="result" @select="selectEvidence" />
-      <AssetInventory
-        v-else-if="tab === 'assets'"
-        :analysis="result.analysis"
-        :findings="findings"
-        @reveal="revealEvidence"
-      />
-      <FindingsList
-        v-else-if="tab === 'findings'"
-        :findings="result.findings"
-        :sources="result.sources"
-        :filters="filters"
-        :matching="findings"
-        :selected-key="selectedKey"
-        :load-source="loadSource"
-        @update:filters="Object.assign(filters, $event)"
-      />
-      <MigrationChecklist v-else :analysis="result.analysis" @select="selectEvidence" />
+      <CoverageNotice :coverage="result.coverage" :diagnostics="result.diagnostics" :compact="tab !== 'overview'" />
+      <AnalysisOverview v-if="visited.has('overview')" v-show="tab === 'overview'"
+        class="result-view" :class="{ 'view-active': tab === 'overview' }" :result="result" @select="select" />
+      <AssetInventory v-if="visited.has('assets')" v-show="tab === 'assets'"
+        class="result-view" :class="{ 'view-active': tab === 'assets' }"
+        :analysis="result.analysis" :findings="assetFindings" @reveal="reveal" />
+      <FindingsList v-if="visited.has('findings')" v-show="tab === 'findings'"
+        class="result-view" :class="{ 'view-active': tab === 'findings' }"
+        :findings="result.findings" :sources="result.sources" :filters="filters" :matching="findings"
+        :selected-key="selectedKey" :load-source="loadSource" @update:filters="updateFilters" />
+      <MigrationChecklist v-if="visited.has('migration')" v-show="tab === 'migration'"
+        class="result-view" :class="{ 'view-active': tab === 'migration' }" :analysis="result.analysis" @select="select" />
       <ResultHelp :score="result.summary.migration_score" />
-      <KnowledgePanel v-if="tab === 'overview' || tab === 'migration'" />
+      <KnowledgePanel v-if="tab === 'migration'" />
     </div>
   </div>
 </template>
-
-<style scoped>
-.result-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-}
-.filter-notice {
-  background: var(--accent-soft);
-  padding: 0.5rem 0.7rem;
-  border-radius: var(--radius);
-  justify-content: space-between;
-  overflow-wrap: anywhere;
-}
-</style>

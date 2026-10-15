@@ -43,6 +43,10 @@ summary {
   background: var(--bg-elevated);
   border-radius: var(--radius);
 }
+.popular-overview :deep(.evidence-bars) {
+  padding: 0;
+  background: transparent;
+}
 p {
   margin: 0.75rem 0;
 }

@@ -10,6 +10,31 @@ BOUNDARIES = [
 ]
 
 
+def migration_presentation(migrations: list[dict[str, Any]]) -> dict[str, Any]:
+    """Factor repeated guidance without changing canonical analysis or exports."""
+    def normalize(action: dict, targets: list[str]) -> dict:
+        prefix = "按用途评估 " + " / ".join(targets) + "，"
+        suffix = "确认所用密码库与平台支持。ML-KEM 是密钥封装机制，不能直接替换签名或任意加密 API。"
+        description = action["description"]
+        if description == prefix + suffix:
+            description = "按用途评估表中候选方案，" + suffix
+        return {**action, "description": description}
+
+    normalized = [[normalize(action, item.get("targets", []))
+                   for action in item.get("actions", [])] for item in migrations]
+    shared: list[dict] = []
+    for action in normalized[0] if len(normalized) > 1 else []:
+        if action not in shared and all(action in actions for actions in normalized):
+            shared.append(action)
+    rows = [{**item, "actions": [action for action, normalized_action in
+                                zip(item.get("actions", []), normalized[index])
+                                if normalized_action not in shared]}
+            for index, item in enumerate(migrations)]
+    references = list(dict.fromkeys(item["reference_url"] for item in migrations
+                                    if item.get("reference_url")))
+    return {"rows": rows, "shared": shared, "references": references}
+
+
 def scope_status(coverage: dict | None) -> str:
     if not coverage:
         return "扫描范围未知。"

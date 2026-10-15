@@ -25,6 +25,9 @@ const paths = {
   chevron: ['m8 5 7 7-7 7'],
   close: ['m6 6 12 12', 'M6 18 18 6'],
   star: ['m12 3 3 6 6 1-4.5 4.5 1 6-5.5-3-5.5 3 1-6L3 10l6-1Z'],
+  external: ['M14 3h7v7', 'm21 3-11 11', 'M10 3H3v18h18v-7'],
+  back: ['m10 5-7 7 7 7', 'M3 12h18'],
+  menu: ['M4 6h16M4 12h16M4 18h16'],
 };
 </script>
 <template>

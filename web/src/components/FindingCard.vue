@@ -1,8 +1,9 @@
 <script setup>
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import CodePreview from './CodePreview.vue';
 import { methodLabel } from '../utils/analysis.js';
 import { fileLabel } from '../utils/presentation.js';
+import { findingKey } from '../utils/results.js';
 const props = defineProps({
   finding: Object,
   sources: { type: Array, default: () => [] },
@@ -11,19 +12,14 @@ const props = defineProps({
   identityPeers: Array,
 });
 const expanded = ref(props.initialExpanded);
-const article = ref(null);
-async function reveal() {
-  if (!props.initialExpanded) return;
-  expanded.value = true;
-  await nextTick();
-  article.value?.scrollIntoView({ block: 'nearest' });
-}
-onMounted(reveal);
-watch(() => props.initialExpanded, reveal);
+watch(() => props.initialExpanded, (value) => {
+  if (value) expanded.value = true;
+});
 </script>
 
 <template>
-  <article ref="article" class="finding">
+  <article class="finding" tabindex="-1" :data-finding-key="findingKey(finding)"
+    :aria-label="`${finding.algorithm} · ${fileLabel(finding, identityPeers || sources)} · 第 ${finding.line} 行`">
     <div class="toolbar">
       <span class="tag">{{ finding.algorithm }}</span
       ><span class="risk">{{ finding.risk_level }}</span
@@ -32,7 +28,7 @@ watch(() => props.initialExpanded, reveal);
     <p class="filename">{{ fileLabel(finding, identityPeers || sources) }}</p>
     <p class="evidence">{{ finding.evidence }}</p>
     <details :open="expanded" @toggle="expanded = $event.target.open">
-      <summary class="button secondary">
+      <summary>
         {{ expanded ? '收起详情' : '详情与源码' }}
       </summary>
       <div v-if="expanded" class="stack detail">
@@ -52,7 +48,7 @@ watch(() => props.initialExpanded, reveal);
 
 <style scoped>
 .finding {
-  padding: 1rem;
+  padding: 0.85rem 1rem;
   border-left: 3px solid var(--danger);
   border-radius: var(--radius);
   background: var(--bg-elevated);
@@ -62,16 +58,17 @@ watch(() => props.initialExpanded, reveal);
   font-size: 0.75rem;
 }
 .filename {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 .evidence {
-  font: 0.875rem/1.6 var(--font-mono);
+  font: 0.9375rem/1.6 var(--font-mono);
   padding: 0.5rem 0;
   overflow-wrap: anywhere;
 }
 .detail {
-  margin-top: 0.75rem;
+  margin-top: 0.65rem;
+  gap: 0.65rem;
 }
 </style>

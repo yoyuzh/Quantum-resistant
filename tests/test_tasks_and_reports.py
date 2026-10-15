@@ -20,7 +20,7 @@ from backend.html_report import build_html_report
 from backend.insights import build_insights
 from backend.remote_sources import pypi_sources
 from backend.task_store import TaskStore
-from backend.popular import BatchResult, RepoInfo
+from backend.popular import BatchResult
 
 CODE = 'from Crypto.PublicKey import RSA\nRSA.generate(2048)'
 
@@ -218,6 +218,14 @@ class ReliabilityTests(unittest.TestCase):
             with self.assertRaises(httpx.HTTPStatusError):
                 get_with_retries(client, 'https://api.github.com/fixture', deadline=Deadline.after(2))
         self.assertEqual(len(calls), 1)
+
+    def test_rate_limit_does_not_silently_wait_minutes_inside_a_long_scan_budget(self):
+        with httpx.Client(transport=httpx.MockTransport(lambda request:
+                httpx.Response(429, headers={'Retry-After': '120'}))) as client, \
+             patch.object(Deadline, 'pause') as pause:
+            with self.assertRaises(httpx.HTTPStatusError):
+                get_with_retries(client, 'https://api.github.com/fixture', deadline=Deadline.after(1200))
+        pause.assert_not_called()
 
     def test_archive_cancellation_keeps_completed_file(self):
         buffer = io.BytesIO()

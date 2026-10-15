@@ -1,10 +1,12 @@
 'use strict';
-const { app, BrowserWindow, session, dialog, shell, Menu, ipcMain, protocol } = require('electron');
+const { app, BrowserWindow, session, dialog, shell, Menu, ipcMain, protocol, nativeTheme } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { BackendProcess } = require('./backend.cjs');
 const { localURL, externalURL, requestHeaders, trustedFrame, validTheme } = require('./policy.cjs');
 const { readTheme, saveTheme } = require('./preferences.cjs');
+const { windowAppearance, applyAppearance, startupPage } = require('./appearance.cjs');
+const { installApplicationMenu } = require('./application-menu.cjs');
 
 // Keep existing installations' preferences and snapshots after the display-name change.
 app.setName('抗量子密码风险检测与迁移辅助软件');
@@ -77,17 +79,21 @@ if (!app.requestSingleInstanceLock()) {
 
 async function start() {
   dataRoot = app.getPath('userData');
+  const initialTheme = readTheme(dataRoot);
+  nativeTheme.themeSource = initialTheme;
   fs.mkdirSync(path.join(dataRoot, 'logs'), { recursive: true, mode: 0o700 });
   protocol.handle('quantum', () => new Response(
-    '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>正在启动扫描平台</title>' +
-    '<style>body{font:16px system-ui;background:#f4f7fc;color:#213349;padding:52px}h1{font-size:24px}</style>' +
-    '<h1>抗量子密码风险检测与迁移辅助软件</h1><p>正在启动本地扫描服务…</p><p>本地扫描无需联网。</p></html>',
+    startupPage(initialTheme, process.platform),
     { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'" } },
   ));
-  splash = new BrowserWindow({ width: 620, height: 300, resizable: false, autoHideMenuBar: true,
+  splash = new BrowserWindow({ width: 620, height: 300, resizable: false, show: false,
+    ...windowAppearance(initialTheme, process.platform, 36),
     webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, devTools: false } });
+  if (process.platform !== 'darwin') splash.removeMenu();
   splash.on('close', (event) => { if (!quitting) { event.preventDefault(); void quit(); } });
   await splash.loadURL('quantum://startup');
+  if (quitting) return;
+  splash.show();
   const entry = app.isPackaged
     ? path.join(process.resourcesPath, 'backend', 'quantum-backend', process.platform === 'win32' ? 'quantum-backend.exe' : 'quantum-backend')
     : (process.env.QUANTUM_DESKTOP_BACKEND_ENTRY || path.join(__dirname, '..', 'backend_entry.py'));
@@ -131,6 +137,7 @@ async function start() {
     });
   });
   window = new BrowserWindow({ width: 1440, height: 960, minWidth: 900, minHeight: 600, show: false,
+    ...windowAppearance(initialTheme, process.platform),
     title: '抗量子密码风险检测与迁移辅助软件', icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: { session: isolated, preload: path.join(__dirname, 'preload.cjs'),
       additionalArguments: [`--quantum-origin=${origin}`],
@@ -150,18 +157,14 @@ async function start() {
   window.webContents.on('render-process-gone', () => { log('窗口渲染进程退出'); void quit(); });
   ipcMain.handle('quantum:theme', (event, value) => {
     if (!trustedFrame(event, window.webContents, origin) || !validTheme(value)) throw new Error('主题请求无效');
+    applyAppearance(nativeTheme, [window], value, process.platform);
     saveTheme(dataRoot, value);
   });
   ipcMain.on('quantum:read-theme', (event) => {
     event.returnValue = trustedFrame(event, window.webContents, origin) ? readTheme(dataRoot) : null;
   });
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    ...(process.platform === 'darwin' ? [{ label: app.name, submenu: [{ label: '退出', accelerator: 'Cmd+Q', click: () => void quit() }] }] : []),
-    { label: '文件', submenu: [{ label: '退出', accelerator: 'Alt+F4', click: () => void quit() }] },
-    { label: '编辑', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' },
-      { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
-    { label: '视图', submenu: [{ role: 'reload' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }] },
-  ]));
+  installApplicationMenu({ app, Menu, ipcMain, window, origin, quit, platform: process.platform });
+  if (process.platform !== 'darwin') splash.removeMenu();
   await window.loadURL(`${origin}/`);
   splash.destroy(); splash = null;
   window.show();

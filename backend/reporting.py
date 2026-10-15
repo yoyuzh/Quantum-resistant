@@ -37,7 +37,7 @@ def build_markdown_report(
     scanned_at: Optional[str] = None, coverage: dict | None = None,
     diagnostics: list[dict] | None = None,
 ) -> str:
-    from backend.report_presentation import BOUNDARIES, key_conclusions, scope_status
+    from backend.report_presentation import BOUNDARIES, key_conclusions, scope_status, migration_presentation
     import json
     import re
     summary = build_summary(sources, findings)
@@ -96,11 +96,24 @@ def build_markdown_report(
             f"迁移参考：{cell(finding['recommendation'])}", "",
         ])
     lines.extend(["## 迁移待办", ""])
-    for item in analysis['migrations']:
-        lines.extend([f"### {cell(item['algorithm'])} · {item['affected_files']} 个文件 / {item['finding_count']} 项发现", "",
-                      f"{cell(item['purpose'])} · 参考：{cell(' / '.join(item['targets']))}", ""])
-        lines.extend(f"- **{cell(step['title'])}**：{cell(step['description'])}" for step in item['actions'])
-        lines.extend([f"[NIST 标准参考]({item['reference_url']})", ""])
+    migration = migration_presentation(analysis['migrations'])
+    if migration['rows']:
+        rows(["算法", "用途", "影响文件", "发现数", "候选方案"], [
+            [item['algorithm'], item['purpose'], item['affected_files'], item['finding_count'], ' / '.join(item['targets'])]
+            for item in migration['rows']])
+    if migration['shared']:
+        lines.extend(["### 通用迁移流程", ""])
+        lines.extend(f"{index}. **{cell(step['title'])}**：{cell(step['description'])}"
+                     for index, step in enumerate(migration['shared'], 1))
+        lines.append("")
+    for item in migration['rows']:
+        if item['actions']:
+            label = '迁移流程' if len(migration['rows']) == 1 else '专项说明'
+            lines.extend([f"### {cell(item['algorithm'])} {label}", ""])
+            lines.extend(f"- **{cell(step['title'])}**：{cell(step['description'])}" for step in item['actions'])
+            lines.append("")
+    lines.extend(f"[NIST 标准参考{f' {index}' if len(migration['references']) > 1 else ''}]({url})\n"
+                 for index, url in enumerate(migration['references'], 1))
     if not analysis['migrations']:
         lines.extend(["无迁移待办。", ""])
     lines.extend(["## 附录", "", "### 评分与能力边界", "", *[f"- {line}" for line in BOUNDARIES], "", "### 识别依据", ""])

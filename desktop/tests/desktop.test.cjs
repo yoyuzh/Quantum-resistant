@@ -27,7 +27,7 @@ test('theme IPC trusts only main frame of the expected window and origin', () =>
   assert.equal(trustedFrame({ sender: {}, senderFrame: contents.mainFrame }, contents, 'http://127.0.0.1:1234'), false);
   assert.equal(trustedFrame({ sender: contents, senderFrame: { url: contents.mainFrame.url } }, contents, 'http://127.0.0.1:1234'), false);
 });
-test('preload exposes only theme access on the main local page and rereads persisted theme after reload', async () => {
+test('preload exposes a restricted desktop bridge and rereads persisted theme after reload', async () => {
   const origin = 'http://127.0.0.1:1234';
   const source = fs.readFileSync(path.join(__dirname, '../src/preload.cjs'), 'utf8');
   let theme = 'light';
@@ -36,17 +36,23 @@ test('preload exposes only theme access on the main local page and rereads persi
     contextBridge: { exposeInMainWorld: (name, value) => { assert.equal(name, 'quantumDesktop'); bridge = value; } },
     ipcRenderer: {
       sendSync: (channel) => { assert.equal(channel, 'quantum:read-theme'); return theme; },
-      invoke: async (channel, value) => { assert.equal(channel, 'quantum:theme'); theme = value; },
+      invoke: async (channel, value) => {
+        if (channel === 'quantum:menu') return 'menu';
+        assert.equal(channel, 'quantum:theme'); theme = value;
+      },
     },
   };
   function load(pageOrigin, child = false) {
     bridge = undefined;
     const window = { location: { origin: pageOrigin } };
     window.top = child ? {} : window;
-    vm.runInNewContext(source, { require: () => electron, window, process: { argv: [`--quantum-origin=${origin}`] } });
+    vm.runInNewContext(source, { require: () => electron, window, process: { platform: 'win32', argv: [`--quantum-origin=${origin}`] } });
   }
   load(origin);
-  assert.deepEqual(Object.keys(bridge).sort(), ['readTheme', 'saveTheme']);
+  assert.deepEqual(Object.keys(bridge).sort(), ['platform', 'readTheme', 'saveTheme', 'showMenu']);
+  assert.equal(bridge.platform, 'win32');
+  assert.equal(Object.isFrozen(bridge), true);
+  assert.equal(await bridge.showMenu('untrusted command'), 'menu');
   assert.equal(bridge.readTheme(), 'light');
   await bridge.saveTheme('dark');
   load(origin);

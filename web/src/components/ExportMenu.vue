@@ -5,35 +5,39 @@ import AppIcon from './AppIcon.vue';
 const props = defineProps({ result: Object });
 const menu = ref(null);
 const { exporting, error, download, exportReport } = useExport(computed(() => props.result));
-function save(format) {
+function close() {
   menu.value.open = false;
+  menu.value.querySelector('summary')?.focus({ preventScroll: true });
+}
+function save(format) {
+  close();
   exportReport(format);
 }
 </script>
 <template>
   <div class="export-control">
-    <details ref="menu" @keydown.esc="menu.open = false">
-      <summary class="button secondary">
+    <details ref="menu" @keydown.esc.prevent="close">
+      <summary class="button text-action">
         <AppIcon name="download" :size="17" />{{ exporting ? '正在导出…' : '导出报告' }}
       </summary>
       <div class="export-options">
-        <button class="button secondary" :disabled="exporting" @click="save('html')">
+        <button class="button export-option" :disabled="exporting" @click="save('html')">
           HTML · 阅读 / 打印
         </button>
-        <button class="button secondary" :disabled="exporting" @click="save('markdown')">
+        <button class="button export-option" :disabled="exporting" @click="save('markdown')">
           Markdown · 编辑
         </button>
-        <button class="button secondary" :disabled="exporting" @click="save('json')">
+        <button class="button export-option" :disabled="exporting" @click="save('json')">
           JSON · 完整数据
         </button>
-        <button class="button secondary" :disabled="exporting" @click="save('csv')">
+        <button class="button export-option" :disabled="exporting" @click="save('csv')">
           CSV · 发现表格
         </button>
       </div>
     </details>
     <p v-if="error" class="notice error" role="alert">{{ error }}</p>
     <p v-if="download" class="small muted" role="status">
-      已生成，<a :href="download.url" :download="download.filename">再次下载</a>
+      已生成，<a class="button text-action compact" :href="download.url" :download="download.filename">再次下载</a>
     </p>
   </div>
 </template>
@@ -48,18 +52,27 @@ summary {
 summary::-webkit-details-marker {
   display: none;
 }
+summary::before { display: none; }
 .export-options {
   position: absolute;
   z-index: 5;
   right: 0;
   display: grid;
-  gap: 0.4rem;
+  gap: 0.1rem;
   width: 220px;
   padding: 0.6rem;
   background: var(--bg-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
 }
+.export-option {
+  width: 100%;
+  justify-content: flex-start;
+  background: transparent;
+  color: var(--text-primary);
+}
+.export-option:hover:not(:disabled) { background: var(--control-hover); }
+.export-option:active:not(:disabled) { background: var(--control-pressed); }
 .export-options p {
   padding: 0.2rem 0.5rem;
 }

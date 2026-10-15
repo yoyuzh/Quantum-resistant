@@ -154,6 +154,7 @@ onUnmounted(() => {
       :aria-controls="listId"
       :aria-expanded="open"
       :aria-disabled="disabled"
+      :title="selectedLabel"
       :aria-activedescendant="open ? `${id}-option-${active}` : undefined"
       @click="open ? hide() : show()"
       @keydown="onKeydown"
@@ -192,27 +193,27 @@ onUnmounted(() => {
 <style scoped>
 .select-field {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.25rem;
   min-width: 0;
 }
 .select-label {
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: var(--font-control);
 }
 .select-trigger {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  min-height: 44px;
-  padding: 0.65rem 0.75rem;
+  gap: 0.5rem;
+  min-height: var(--control-height);
+  padding: 0.5rem 0.65rem;
   border-radius: var(--radius);
-  background: var(--bg-input);
+  background: var(--control-bg);
   color: var(--text-primary);
   cursor: pointer;
 }
 .select-trigger:hover,
 .select-trigger.open {
-  background: var(--bg-elevated);
+  background: var(--control-hover);
 }
 .select-trigger.disabled {
   opacity: 0.55;
@@ -226,9 +227,12 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.85rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  font-size: var(--font-control);
 }
 .chevron {
   width: 0.5rem;
@@ -253,6 +257,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-lg);
 }
 .select-option {
+  min-height: var(--compact-control-height);
   padding: 0.6rem 0.7rem;
   border-radius: 6px;
   font-size: 0.84rem;
@@ -262,7 +267,7 @@ onUnmounted(() => {
 }
 .select-option:hover,
 .select-option.active {
-  background: var(--accent-soft);
+  background: var(--control-selected);
   color: var(--accent-dim);
 }
 .select-option.selected {

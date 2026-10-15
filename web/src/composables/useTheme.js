@@ -1,24 +1,13 @@
 import { onUnmounted, ref, watch } from 'vue';
+import { readThemePreference, persistThemePreference } from '../utils/theme.js';
 
 export function useTheme() {
-  let initial = 'light';
-  try {
-    const stored = window.quantumDesktop?.readTheme() ?? localStorage.getItem('app-theme');
-    initial = stored === 'dark' ? 'dark' : 'light';
-  } catch {
-    /* Storage may be disabled. */
-  }
-  const theme = ref(initial);
+  const theme = ref(readThemePreference(window.quantumDesktop));
   const stop = watch(
     theme,
     (value) => {
       document.documentElement.dataset.theme = value;
-      try {
-        localStorage.setItem('app-theme', value);
-        window.quantumDesktop?.saveTheme(value).catch(() => {});
-      } catch {
-        /* Keep the session theme. */
-      }
+      persistThemePreference(value, window.quantumDesktop);
     },
     { immediate: true },
   );

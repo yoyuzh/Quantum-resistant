@@ -1,11 +1,19 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useId, watch } from 'vue';
 import { graphData } from '../utils/analysis.js';
+import { useGraphInspection } from '../composables/useGraphInspection.js';
 const props = defineProps({ assets: Array });
-defineEmits(['select']);
+const emit = defineEmits(['select']);
 const query = ref('');
 const page = ref(1);
 const graph = computed(() => graphData(props.assets, query.value, page.value));
+const tooltipId = useId();
+const { inspection, tooltip, position, inspectPointer, inspectFocus, blurNode,
+  retainPointer, hidePointer, clearInspection } = useGraphInspection(graph);
+function select(value) {
+  clearInspection();
+  emit('select', value);
+}
 const height = computed(() =>
   Math.max(180, Math.max(graph.value.files.length, graph.value.algorithms.length) * 56 + 30),
 );
@@ -26,7 +34,7 @@ watch(query, () => {
 </script>
 
 <template>
-  <section class="stack" aria-label="文件算法证据关系图">
+  <section class="stack" aria-label="文件算法证据关系图" @keydown.esc.stop="clearInspection">
     <div>
       <h3>从文件追踪到迁移方向</h3>
       <p class="small muted">实线：命中证据 · 虚线：迁移参考</p>
@@ -39,6 +47,7 @@ watch(query, () => {
       class="graph-scroll"
       tabindex="0"
       aria-label="关系图，可横向滚动"
+      @pointerleave="hidePointer"
     >
       <div class="graph-labels">
         <span>文件与命中数</span><span>传统算法</span><span>迁移方向 · 需复核</span>
@@ -53,56 +62,42 @@ watch(query, () => {
           v-for="edge in graph.evidenceEdges"
           :key="`${edge.sourceId}:${edge.algorithm}`"
           class="edge"
-          role="button"
-          tabindex="0"
-          :aria-label="`${edge.sourceId} 的 ${edge.algorithm}：${edge.count} 项证据`"
-          @click="
-            $emit('select', { sourceId: edge.sourceId, algorithm: edge.algorithm, target: '' })
-          "
-          @keydown.enter="
-            $emit('select', { sourceId: edge.sourceId, algorithm: edge.algorithm, target: '' })
-          "
-          @keydown.space.prevent="
-            $emit('select', { sourceId: edge.sourceId, algorithm: edge.algorithm, target: '' })
-          "
+          :class="{ highlighted: inspection?.evidence.includes(edge) }"
+          aria-hidden="true"
+          @pointerenter="inspectPointer({ kind: 'evidence', ...edge }, $event)"
+          @pointerleave="hidePointer"
         >
-          <path
-            class="hit-area"
-            :d="curve(190, fileY(edge.sourceId), 252, algorithmY(edge.algorithm))"
-          />
+          <path class="hit-area" :d="curve(190, fileY(edge.sourceId), 252, algorithmY(edge.algorithm))" />
           <path :d="curve(190, fileY(edge.sourceId), 252, algorithmY(edge.algorithm))" />
         </g>
         <g
           v-for="edge in graph.recommendationEdges"
           :key="`${edge.algorithm}:${edge.target}`"
           class="edge recommendation"
-          role="button"
-          tabindex="0"
-          :aria-label="`${edge.algorithm} 的 ${edge.target} 迁移参考`"
-          @click="$emit('select', { algorithm: edge.algorithm, target: edge.target, sourceId: '' })"
-          @keydown.enter="
-            $emit('select', { algorithm: edge.algorithm, target: edge.target, sourceId: '' })
-          "
-          @keydown.space.prevent="
-            $emit('select', { algorithm: edge.algorithm, target: edge.target, sourceId: '' })
-          "
+          :class="{ highlighted: inspection?.references.includes(edge) }"
+          aria-hidden="true"
+          @pointerenter="inspectPointer({ kind: 'recommendation', ...edge }, $event)"
+          @pointerleave="hidePointer"
         >
-          <path
-            class="hit-area"
-            :d="curve(362, algorithmY(edge.algorithm), 442, targetY(edge.target))"
-          />
+          <path class="hit-area" :d="curve(362, algorithmY(edge.algorithm), 442, targetY(edge.target))" />
           <path :d="curve(362, algorithmY(edge.algorithm), 442, targetY(edge.target))" />
         </g>
         <g
           v-for="file in graph.files"
           :key="file.id"
           class="node file"
+          :class="{ highlighted: inspection?.files.has(file.id) }"
           role="button"
           tabindex="0"
           :aria-label="`${file.label}，${file.id}，${file.count} 项发现`"
-          @click="$emit('select', { sourceId: file.id, algorithm: '', target: '' })"
-          @keydown.enter="$emit('select', { sourceId: file.id, algorithm: '', target: '' })"
-          @keydown.space.prevent="$emit('select', { sourceId: file.id, algorithm: '', target: '' })"
+          :aria-describedby="inspection ? tooltipId : undefined"
+          @pointerenter="inspectPointer({ kind: 'file', sourceId: file.id }, $event)"
+          @pointerleave="hidePointer"
+          @focus="inspectFocus({ kind: 'file', sourceId: file.id }, $event)"
+          @blur="blurNode"
+          @click="select({ sourceId: file.id, algorithm: '', target: '' })"
+          @keydown.enter="select({ sourceId: file.id, algorithm: '', target: '' })"
+          @keydown.space.prevent="select({ sourceId: file.id, algorithm: '', target: '' })"
         >
           <title>{{ file.label }} · {{ file.id }}</title>
           <rect x="2" :y="fileY(file.id) - 22" width="188" height="44" rx="9" />
@@ -115,12 +110,18 @@ watch(query, () => {
           v-for="algorithm in graph.algorithms"
           :key="algorithm"
           class="node algorithm"
+          :class="{ highlighted: inspection?.algorithms.has(algorithm) }"
           role="button"
           tabindex="0"
           :aria-label="`筛选 ${algorithm}`"
-          @click="$emit('select', { algorithm, sourceId: '', target: '' })"
-          @keydown.enter="$emit('select', { algorithm, sourceId: '', target: '' })"
-          @keydown.space.prevent="$emit('select', { algorithm, sourceId: '', target: '' })"
+          :aria-describedby="inspection ? tooltipId : undefined"
+          @pointerenter="inspectPointer({ kind: 'algorithm', algorithm }, $event)"
+          @pointerleave="hidePointer"
+          @focus="inspectFocus({ kind: 'algorithm', algorithm }, $event)"
+          @blur="blurNode"
+          @click="select({ algorithm, sourceId: '', target: '' })"
+          @keydown.enter="select({ algorithm, sourceId: '', target: '' })"
+          @keydown.space.prevent="select({ algorithm, sourceId: '', target: '' })"
         >
           <rect x="252" :y="algorithmY(algorithm) - 20" width="110" height="40" rx="10" />
           <text x="307" :y="algorithmY(algorithm) + 4" text-anchor="middle">{{ algorithm }}</text>
@@ -129,12 +130,18 @@ watch(query, () => {
           v-for="target in graph.targets"
           :key="target"
           class="node target"
+          :class="{ highlighted: inspection?.targets.has(target) }"
           role="button"
           tabindex="0"
           :aria-label="`查看 ${target} 对应证据`"
-          @click="$emit('select', { target, algorithm: '', sourceId: '' })"
-          @keydown.enter="$emit('select', { target, algorithm: '', sourceId: '' })"
-          @keydown.space.prevent="$emit('select', { target, algorithm: '', sourceId: '' })"
+          :aria-describedby="inspection ? tooltipId : undefined"
+          @pointerenter="inspectPointer({ kind: 'target', target }, $event)"
+          @pointerleave="hidePointer"
+          @focus="inspectFocus({ kind: 'target', target }, $event)"
+          @blur="blurNode"
+          @click="select({ target, algorithm: '', sourceId: '' })"
+          @keydown.enter="select({ target, algorithm: '', sourceId: '' })"
+          @keydown.space.prevent="select({ target, algorithm: '', sourceId: '' })"
         >
           <rect x="442" :y="targetY(target) - 20" width="176" height="40" rx="10" />
           <text x="530" :y="targetY(target) + 4" text-anchor="middle">{{ target }}</text>
@@ -145,10 +152,8 @@ watch(query, () => {
       {{ assets.length ? '没有匹配的文件。' : '本次未发现可绘制的算法证据。' }}
     </p>
     <div class="toolbar graph-footer">
-      <span class="small muted"
-        >当前 {{ graph.files.length }} / {{ graph.totalFiles }} 个命中文件 · 搜索匹配
-        {{ graph.matchedFiles }} 个</span
-      >
+      <span class="small muted">当前 {{ graph.files.length }} / {{ graph.totalFiles }} 个命中文件 · 搜索匹配
+        {{ graph.matchedFiles }} 个</span>
       <template v-if="graph.pagination.pages > 1">
         <button class="button secondary" :disabled="graph.pagination.current === 1" @click="page--">
           上一页
@@ -163,6 +168,13 @@ watch(query, () => {
         </button>
       </template>
     </div>
+    <Teleport to="body">
+      <div v-if="inspection" :id="tooltipId" ref="tooltip" class="graph-inspection" role="tooltip"
+        :style="position" @pointerenter="retainPointer" @pointerleave="hidePointer"
+        @keydown.esc="clearInspection">
+        <strong>{{ inspection.title }}</strong><span>{{ inspection.detail }}</span>
+      </div>
+    </Teleport>
   </section>
 </template>
 
@@ -190,7 +202,7 @@ watch(query, () => {
   cursor: pointer;
 }
 .node rect {
-  fill: var(--bg-surface);
+  fill: var(--control-bg);
 }
 .node text {
   fill: var(--text-primary);
@@ -202,35 +214,34 @@ watch(query, () => {
   font-size: 10px;
 }
 .algorithm rect {
-  fill: var(--accent-soft);
+  fill: var(--control-selected);
 }
 .algorithm text {
   fill: var(--accent-dim);
   font-weight: 600;
 }
 .target rect {
-  fill: var(--bg-surface);
+  fill: var(--control-bg);
 }
 .node:hover rect,
-.node:focus-visible rect {
-  fill: var(--accent-glow);
-}
-.edge {
-  cursor: pointer;
+.node:focus-visible rect,
+.node.highlighted rect {
+  fill: var(--control-hover);
 }
 .edge path {
+  pointer-events: none;
   stroke: var(--accent);
   stroke-width: 1.3;
   fill: none;
   opacity: 0.4;
 }
 .edge .hit-area {
+  pointer-events: stroke;
   stroke: transparent;
   stroke-width: 16;
   opacity: 1;
 }
-.edge:hover path:not(.hit-area),
-.edge:focus-visible path:not(.hit-area) {
+.edge.highlighted path:not(.hit-area) {
   stroke-width: 3;
   opacity: 1;
 }
@@ -241,4 +252,21 @@ watch(query, () => {
 .graph-footer {
   justify-content: space-between;
 }
+.graph-inspection {
+  position: fixed;
+  z-index: 110;
+  max-width: min(420px, calc(100vw - 16px));
+  max-height: min(240px, 50vh);
+  overflow-y: auto;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+.graph-inspection span { color: var(--text-secondary); }
 </style>

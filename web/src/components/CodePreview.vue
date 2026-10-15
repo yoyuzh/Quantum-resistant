@@ -51,7 +51,7 @@ const lines = computed(() => loaded.value ?? codeLines(props.sources, props.find
   background: var(--bg-input);
   border-radius: var(--radius);
   padding: 0.6rem 0;
-  font: 0.75rem/1.8 var(--font-mono);
+  font: 0.875rem/1.75 var(--font-mono);
 }
 .code-view > div {
   display: flex;

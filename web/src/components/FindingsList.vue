@@ -5,6 +5,7 @@ import FindingCard from './FindingCard.vue';
 import SelectControl from './SelectControl.vue';
 import { methodLabel } from '../utils/analysis.js';
 import { fileLabel } from '../utils/presentation.js';
+import { focusDestination } from '../utils/navigation.js';
 const props = defineProps({
   findings: Array,
   sources: Array,
@@ -38,13 +39,7 @@ async function changePage(delta) {
   page.value += delta;
   await nextTick();
   const container = list.value?.closest('.panel-body');
-  if (container && container.scrollHeight > container.clientHeight) {
-    container.scrollTop +=
-      list.value.getBoundingClientRect().top - container.getBoundingClientRect().top - 20;
-  } else {
-    list.value?.scrollIntoView({ block: 'start' });
-  }
-  list.value?.focus({ preventScroll: true });
+  focusDestination(list.value, container, list.value?.closest('.result-layout')?.querySelector('.result-sticky'));
 }
 const algorithms = computed(() => [...new Set(props.findings.map((f) => f.algorithm))].sort());
 const algorithmOptions = computed(() => [
@@ -96,9 +91,9 @@ watch(
       发现明细 <span class="muted small">{{ filtered.length }} / {{ findings.length }} 项</span>
     </h3>
     <div class="filters">
-      <SelectControl v-model="algorithm" label="算法" :options="algorithmOptions" />
-      <SelectControl v-model="sourceId" label="文件" :options="fileOptions" />
-      <SelectControl v-model="method" label="识别方式" :options="methodOptions" />
+      <SelectControl v-model="algorithm" class="algorithm-filter" label="算法" :options="algorithmOptions" />
+      <SelectControl v-model="method" class="method-filter" label="识别方式" :options="methodOptions" />
+      <SelectControl v-model="sourceId" class="file-filter" label="文件" :options="fileOptions" />
       <label class="search"
         >搜索<input v-model="query" type="search" placeholder="文件、API、证据或迁移建议"
       /></label>
@@ -138,26 +133,29 @@ watch(
 }
 .filters {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem 0.65rem;
+  align-items: start;
 }
+.algorithm-filter { grid-column: 1; grid-row: 1; }
+.method-filter { grid-column: 2; grid-row: 1; }
+.file-filter { grid-column: 1 / -1; grid-row: 2; }
 .search {
   grid-column: 1 / -1;
 }
 .pagination {
   justify-content: center;
 }
-@media (min-width: 1200px) {
+@container results (min-width: 560px) {
   .filters {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 1.6fr);
   }
-  .search {
-    grid-column: auto;
-  }
+  .file-filter { grid-column: 3; grid-row: 1; }
 }
-@media (max-width: 500px) {
+@container results (min-width: 880px) {
   .filters {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(90px, 0.7fr) minmax(140px, 1fr) minmax(160px, 1.4fr) minmax(240px, 1.8fr);
   }
+  .search { grid-column: 4; }
 }
 </style>

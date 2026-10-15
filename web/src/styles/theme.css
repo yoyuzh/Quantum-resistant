@@ -6,12 +6,16 @@
   --bg-card: #ffffff;
   --bg-elevated: #f8fafb;
   --bg-input: #fbfcfd;
+  --control-bg: #eaf0f3;
+  --control-hover: #dfebe9;
+  --control-pressed: #cfe3de;
+  --control-selected: #dcefe9;
   --border: #e1e6eb;
   --border-light: #eaedf2;
   --accent: #087c71;
   --on-accent: #ffffff;
   --accent-glow: rgba(15, 155, 142, 0.18);
-  --accent-dim: #0d7d72;
+  --accent-dim: #086b62;
   --accent-soft: rgba(15, 155, 142, 0.06);
   --text-primary: #1a2532;
   --text-secondary: #5b6b7c;
@@ -33,6 +37,9 @@
   --font-sans: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
   --radius: 10px;
   --radius-lg: 18px;
+  --control-height: 40px;
+  --compact-control-height: 36px;
+  --font-control: 0.8125rem;
   --transition-theme:
     background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
@@ -44,15 +51,19 @@
   --bg-card: #182230;
   --bg-elevated: #1d2a38;
   --bg-input: #101923;
+  --control-bg: #243745;
+  --control-hover: #304b55;
+  --control-pressed: #285a53;
+  --control-selected: #1c4944;
   --border: #233140;
   --border-light: #2b3b4c;
   --accent: #00d4aa;
   --on-accent: #071e19;
   --accent-glow: rgba(0, 212, 170, 0.2);
-  --accent-dim: #00a885;
+  --accent-dim: #34d8b5;
   --accent-soft: rgba(0, 212, 170, 0.05);
   --text-primary: #e3ecf4;
-  --text-secondary: #8c9eb0;
+  --text-secondary: #a7b9c9;
   --text-muted: #546678;
   --danger: #ff5c72;
   --danger-bg: rgba(255, 92, 114, 0.08);

@@ -35,6 +35,11 @@ defineEmits(['update:filename', 'update:content']);
   white-space: pre;
   overflow: auto;
 }
+.editor::placeholder {
+  white-space: normal;
+  font-family: var(--font-sans);
+  font-size: var(--font-control);
+}
 @media (max-width: 600px) {
   .editor {
     min-height: 230px;

@@ -48,7 +48,7 @@ const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)
   text-align: left;
 }
 .bar-name {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   overflow-wrap: anywhere;
 }
 .bar-track {
@@ -69,8 +69,22 @@ strong {
 }
 .actionable {
   cursor: pointer;
+  padding: 0.6rem 0.75rem;
+  min-height: var(--control-height);
+  border-radius: var(--radius);
+  background: transparent;
+  transition: background-color 140ms ease;
 }
+.actionable .bar-name {
+  color: var(--accent-dim);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-glow);
+  text-underline-offset: 0.25em;
+}
+.actionable:hover .bar-name { text-decoration-color: currentColor; }
 .actionable:hover {
   color: var(--accent);
+  background: var(--control-hover);
 }
+.actionable:active { background: var(--control-pressed); }
 </style>

@@ -1,5 +1,6 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { version as appVersion } from '../../desktop/package.json';
 import AppHeader from './components/AppHeader.vue';
 import ModeTabs from './components/ModeTabs.vue';
 import SnippetInput from './components/SnippetInput.vue';
@@ -15,6 +16,7 @@ import { useScan } from './composables/useScan.js';
 import { usePopular } from './composables/usePopular.js';
 import { useTheme } from './composables/useTheme.js';
 import { DEFAULT_RSA_CODE } from './utils/defaults.js';
+import { focusDestination } from './utils/navigation.js';
 
 const mode = ref('snippet');
 const drafts = reactive({
@@ -48,6 +50,14 @@ watch(mode, (value) => {
 function submit() {
   start(mode.value, drafts[mode.value]);
 }
+async function prepareRepository(value) {
+  mode.value = 'github';
+  drafts.github.value = value;
+  await nextTick();
+  focusDestination(inputBody.value?.closest('.input-panel')?.querySelector('h2'),
+    inputBody.value, undefined, { focus: false });
+  inputBody.value?.querySelector('input')?.focus({ preventScroll: true });
+}
 </script>
 
 <template>
@@ -61,7 +71,7 @@ function submit() {
       @refresh="runPopular(true)"
       @reload="runPopular(false)"
       @cancel="cancelPopular"
-      @scan-repository="mode = 'github'; drafts.github.value = $event"
+      @scan-repository="prepareRepository"
     />
     <div v-else class="workspace-grid">
       <section class="panel input-panel" aria-label="扫描输入区域">
@@ -118,6 +128,6 @@ function submit() {
       </section>
       <ResultsWorkspace :key="mode" :state="current" :mode="mode" />
     </div>
-    <footer>抗量子密码风险检测与迁移辅助软件 V1.0.0</footer>
+    <footer>抗量子密码风险检测与迁移辅助软件 V{{ appVersion }}</footer>
   </main>
 </template>

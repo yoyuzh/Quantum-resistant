@@ -3,6 +3,11 @@ import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
 import ProgressDetails from './ProgressDetails.vue';
 const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object });
+const title = computed(() => {
+  if (['succeeded', 'partial', 'cancelled', 'failed'].includes(props.progress?.state))
+    return '分析已结束，正在呈现结果';
+  return props.progress?.stage || (props.mode === 'popular' ? '正在扫描仓库' : '正在分析代码');
+});
 const description = computed(
   () =>
     ({
@@ -28,7 +33,7 @@ const description = computed(
         <div class="scan-dots"><i></i><i></i><i></i></div>
       </div>
       <div class="loading-heading">
-        <h2>{{ mode === 'popular' ? '正在扫描仓库' : '正在分析代码' }}</h2>
+        <h2 role="status">{{ title }}</h2>
       </div>
       <p v-if="!progress" class="description">{{ description }}</p>
       <ProgressDetails :progress="progress" />

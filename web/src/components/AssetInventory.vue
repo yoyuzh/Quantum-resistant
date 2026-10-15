@@ -1,13 +1,21 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { paginate } from '../utils/results.js';
 import { methodLabel } from '../utils/analysis.js';
 import AppIcon from './AppIcon.vue';
 import DisclosurePanel from './DisclosurePanel.vue';
 import { fileLabel } from '../utils/presentation.js';
+import { focusDestination } from '../utils/navigation.js';
 const props = defineProps({ analysis: Object, findings: Array });
 defineEmits(['reveal']);
 const page = ref(1);
+const list = ref(null);
+async function changePage(delta) {
+  page.value += delta;
+  await nextTick();
+  focusDestination(list.value, list.value?.closest('.panel-body'),
+    list.value?.closest('.result-layout')?.querySelector('.result-sticky'));
+}
 const assets = computed(() => {
   const keys = new Set(
     props.findings.map((item) => JSON.stringify([item.source_id, item.algorithm])),
@@ -22,7 +30,7 @@ watch(assets, () => {
 });
 </script>
 <template>
-  <section class="stack" aria-label="密码资产清单">
+  <section ref="list" class="stack" tabindex="-1" aria-label="密码资产清单">
     <h3>密码资产 <span class="small muted">{{ assets.length }} 项</span></h3>
     <p v-if="!analysis" class="notice">此历史结果未记录资产分析，请在发现明细中查看证据。</p>
     <p v-else-if="!assets.length" class="notice">当前范围内没有密码资产。</p>
@@ -52,29 +60,25 @@ watch(assets, () => {
         </dl>
       </DisclosurePanel>
       <div class="toolbar" aria-label="证据位置">
-        <button
-          v-for="(location, index) in asset.locations.slice(0, 8)"
-          :key="index"
-          class="button secondary"
-          :aria-label="`查看 ${fileLabel(asset, analysis.assets)} 第 ${location.line} 行 ${asset.algorithm} 证据`"
-          @click="$emit('reveal', asset, location)"
-        >
-          第 {{ location.line }} 行
-        </button>
-        <button class="button secondary" @click="$emit('reveal', asset)">
-          全部证据 <AppIcon name="arrow" :size="16" />
+        <span v-if="asset.locations.length > 1" class="small muted">
+          第 {{ [...new Set(asset.locations.map(location => location.line))].slice(0, 8).join('、') }} 行{{ asset.locations.length > 8 ? '等' : '' }}
+        </span>
+        <button class="button text-action" @click="$emit('reveal', asset, asset.locations[0])">
+          <AppIcon name="code" :size="16" />
+          {{ asset.finding_count === 1 ? `查看证据 · 第 ${asset.locations[0]?.line} 行` : `查看 ${asset.finding_count} 项证据` }}
+          <AppIcon name="arrow" :size="16" />
         </button>
       </div>
     </article>
     <div v-if="pagination.pages > 1" class="toolbar">
-      <button class="button secondary" :disabled="pagination.current === 1" @click="page--">
+      <button class="button secondary" :disabled="pagination.current === 1" @click="changePage(-1)">
         上一页
       </button>
       <span class="small">{{ pagination.current }} / {{ pagination.pages }}</span>
       <button
         class="button secondary"
         :disabled="pagination.current === pagination.pages"
-        @click="page++"
+        @click="changePage(1)"
       >
         下一页
       </button>
@@ -83,7 +87,7 @@ watch(assets, () => {
 </template>
 <style scoped>
 .asset-file {
-  font-size: 0.85rem;
+  font-size: 1rem;
   overflow-wrap: anywhere;
 }
 dl {

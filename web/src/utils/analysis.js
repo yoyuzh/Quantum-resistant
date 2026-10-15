@@ -46,6 +46,7 @@ export function graphData(assets, query = '', page = 1) {
     sourceId: asset.source_id,
     algorithm: asset.algorithm,
     count: asset.finding_count,
+    targets: asset.targets,
   }));
   const recommendations = new Map();
   subset.forEach((asset) =>

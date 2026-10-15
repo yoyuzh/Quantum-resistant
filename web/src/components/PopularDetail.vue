@@ -3,14 +3,18 @@ import CoverageNotice from './CoverageNotice.vue';
 import FindingCard from './FindingCard.vue';
 import { findingKey } from '../utils/results.js';
 import ResultHelp from './ResultHelp.vue';
+import AppIcon from './AppIcon.vue';
 defineProps({ repo: Object });
-defineEmits(['scan-repository']);
+defineEmits(['scan-repository', 'back']);
 </script>
 
 <template>
-  <section v-if="repo" class="panel popular-detail">
+  <section v-if="repo" id="popular-detail" class="panel popular-detail">
     <div class="panel-heading">
-      <h2>{{ repo.full_name }}</h2>
+      <button class="button text-action compact back-list" @click="$emit('back')">
+        <AppIcon name="back" :size="16" />返回榜单
+      </button>
+      <h2 tabindex="-1">{{ repo.full_name }}</h2>
       <p>
         <strong>{{ repo.finding_count }} 项发现</strong> · 迁移评分 {{ repo.migration_score }}/100
       </p>
@@ -22,7 +26,7 @@ defineEmits(['scan-repository']);
         class="notice"
       >
         显示 {{ (repo.findings || []).length }} / {{ repo.finding_count }} 项详情。
-        <button class="button secondary" @click="$emit('scan-repository', `https://github.com/${repo.full_name}`)">完整扫描此仓库</button>
+        <button class="button text-action" @click="$emit('scan-repository', `https://github.com/${repo.full_name}`)">完整扫描此仓库</button>
       </div>
       <p v-if="!repo.findings?.length" class="notice">已扫描文件中未发现已知传统公钥算法用法。</p>
       <FindingCard
@@ -39,3 +43,9 @@ defineEmits(['scan-repository']);
     <p>选择左侧仓库，查看发现及扫描范围。</p>
   </section>
 </template>
+<style scoped>
+.back-list { display: none; margin-bottom: 0.7rem; }
+@media (max-width: 1023px), (max-height: 799px) {
+  .back-list { display: inline-flex; }
+}
+</style>

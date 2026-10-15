@@ -10,10 +10,6 @@ function amount(value, label) {
 </script>
 <template>
   <div v-if="progress" class="progress-details stack">
-    <p role="status">
-      {{ ['succeeded', 'partial', 'cancelled', 'failed'].includes(progress.state)
-        ? '分析已结束，正在呈现结果' : progress.stage || '正在提交任务' }}
-    </p>
     <div v-for="row in rows" :key="row.label" class="progress-row">
       <div class="progress-label">
         <span>{{ row.label }} {{ amount(row.value, row.label) }}<template v-if="row.total != null"> / {{ amount(row.total, row.label) }}</template></span>

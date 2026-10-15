@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import { capturePosition, focusDestination, restorePosition } from '../utils/navigation.js';
 import { formatStars, formatTime, sortRepos } from '../utils/results.js';
 import ScanStatus from './ScanStatus.vue';
 import PopularDetail from './PopularDetail.vue';
@@ -23,6 +24,24 @@ watch(
   },
 );
 const selected = ref('');
+const listBody = ref(null);
+const detail = ref(null);
+let returnPoint;
+let navigation = 0;
+async function selectRepository(name) {
+  const id = ++navigation;
+  returnPoint = { trigger: document.activeElement, position: capturePosition(listBody.value) };
+  selected.value = name;
+  await nextTick();
+  if (id !== navigation) return;
+  const root = detail.value?.$el;
+  focusDestination(root?.querySelector('h2'), root?.querySelector('.panel-body'));
+}
+function backToList() {
+  navigation++;
+  restorePosition(listBody.value, returnPoint?.position);
+  returnPoint?.trigger?.focus({ preventScroll: true });
+}
 const repos = computed(() => sortRepos(displayed.value?.repos || []));
 watch(
   () => props.state.result,
@@ -48,7 +67,7 @@ watch(
         <h2>热门密码学仓库</h2>
         <p class="muted small">Python · 按 GitHub Star 排序</p>
       </div>
-      <div class="panel-body stack" role="region" tabindex="0" aria-label="热门仓库扫描与列表">
+      <div ref="listBody" class="panel-body stack" role="region" tabindex="0" aria-label="热门仓库扫描与列表">
         <SelectControl
           label="扫描仓库数量"
           :model-value="state.busy && state.progress?.total_repos != null ? state.progress.total_repos : state.top"
@@ -89,7 +108,7 @@ watch(
           >
             {{ previous ? '查看本次部分结果' : '查看上次快照' }}
           </button>
-          <PopularOverview :result="displayed" @select="selected = $event" />
+          <PopularOverview :result="displayed" @select="selectRepository" />
           <p class="small">
             成功 {{ repos.length }} 个 · 失败
             {{ displayed.failures?.length ?? displayed.meta?.failed_count ?? 0 }} 个
@@ -101,7 +120,8 @@ watch(
               class="repo-row"
               :class="{ selected: selected === repo.full_name }"
               :aria-pressed="selected === repo.full_name"
-              @click="selected = repo.full_name"
+              aria-controls="popular-detail"
+              @click="selectRepository(repo.full_name)"
             >
               <span class="rank">{{ index + 1 }}</span
               ><span class="repo-info"
@@ -135,7 +155,8 @@ watch(
       />
     </section>
     <Transition v-else name="content" appear>
-      <PopularDetail :key="selected" :repo="activeRepo" @scan-repository="$emit('scan-repository', $event)" />
+      <PopularDetail :key="selected" ref="detail" :repo="activeRepo" @back="backToList"
+        @scan-repository="$emit('scan-repository', $event)" />
     </Transition>
   </div>
 </template>
@@ -152,16 +173,16 @@ watch(
   align-items: center;
   text-align: left;
   padding: 0.85rem;
-  background: var(--bg-elevated);
+  background: var(--control-bg);
   color: var(--text-primary);
   border-radius: var(--radius);
   cursor: pointer;
 }
 .repo-row:hover:not(.selected) {
-  background: var(--accent-soft);
+  background: var(--control-hover);
 }
 .repo-row.selected {
-  background: var(--accent-soft);
+  background: var(--control-selected);
   box-shadow: inset 3px 0 var(--accent);
 }
 .rank {
