@@ -16,7 +16,7 @@ import httpx
 from fastapi.testclient import TestClient
 
 from backend import main, task_routes
-from backend.collection_common import CollectionControl, CollectedSources, Deadline
+from backend.collection_common import CollectedSources, Deadline
 from backend.pipeline import ScanPipeline
 from backend.popular import RepoInfo, run_batch_scan, scan_single_repo, BatchResult
 from backend.remote_sources import github_sources, pypi_sources

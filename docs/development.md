@@ -28,6 +28,14 @@ BACKEND_PORT=8010 FRONTEND_PORT=3010 ./scripts/start_dev.sh
 
 完整检查及离线 fixture 见 [验证说明](validation.md)。桌面开发、冻结依赖、原生构建及验收见 [桌面说明](desktop.md)。
 
+## 联网采集
+
+GitHub、PyPI 和热门检索使用统一的网络配置：优先读取 HTTP_PROXY、HTTPS_PROXY、ALL_PROXY（兼容小写）；Windows 未设置这些变量时读取系统静态代理。PyPI 优先使用该配置，不先绕过代理直连。只有自动发现的 Windows 代理发生连接故障时才尝试直连回退；显式环境代理失败会明确报错，不绕过它。
+
+GitHub 采集与热门检索统一匿名访问，不读取或使用 GITHUB_TOKEN，也不接受热门检索令牌参数。无需配置凭据；系统中遗留的 GitHub 令牌不会影响扫描。仅支持公开仓库，不支持私有仓库。公开 API 请求受限时，单仓库扫描尝试转用公开 ZIP 归档；热门检索仍依赖 GitHub 搜索额度，受限时返回稍后重试提示并保留已有结果。网络、代理及采集大小限制继续生效。
+
+远程请求仅进行短暂重试，单次退避最多 2 秒；服务要求更长的限流等待时立即进入上层回退或报告原因，不在扫描界面静默等待数分钟。整体扫描预算、连接/读取超时、下载大小和并发限制继续生效。
+
 ## 自动检查
 
 `.github/workflows/ci.yml` 在 push、PR 和手动调用时运行，桌面发布传入标签对应的确切提交。矩阵包括 Ubuntu 22.04 的 Python 3.10/3.13 和 Windows Server 2022 的 Python 3.13，Node.js 使用 24。
@@ -45,5 +53,7 @@ BACKEND_PORT=8010 FRONTEND_PORT=3010 ./scripts/start_dev.sh
 四端成功后，发布任务再次核对远程标签 SHA、各端 BUILD-INFO 与校验值，汇总四安装包、SHA256SUMS.txt 和 BUILD-INFO.json，创建草稿，再按标签转为正式发布或预发布；稳定 `vX.Y.Z` 为正式 Latest，带 alpha/beta/rc 后缀和历史 desktop-v 标签为预发布。不覆盖已有 Release 或移动已发布标签。检查和构建为只读权限，发布任务使用 contents: write 且不 checkout/执行仓库源码。artifact 保留 14 天。
 
 安装包尚未正式代码签名，macOS 尚未 Developer ID 签名/Apple 公证。构建通过不能代替安装后 GUI 实机验收；SHA-256 只校验文件完整性。
+
+运行版本统一读取 `desktop/package.json`；网页通过构建导入版本，Python 后端及冻结程序读取随包清单。修改版本时同步两个 npm 清单和锁文件，发布身份检查阻止版本不一致的构建。变更摘要写入根目录 `CHANGELOG.md`。
 
 项目整理、测试及软著材料准备不触发发布流程；维护者明确决定发布时再创建提交、推送与标签。

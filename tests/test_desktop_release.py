@@ -24,6 +24,24 @@ class DesktopReleaseTests(unittest.TestCase):
         self.lock = {"version": self.version, "packages": {"": self.manifest}}
         for name, data in [("package.json", self.manifest), ("package-lock.json", self.lock)]:
             (self.desktop / name).write_text(json.dumps(data), encoding="utf-8")
+        web = self.root / 'web'
+        web.mkdir()
+        for name, data in [("package.json", self.manifest), ("package-lock.json", self.lock)]:
+            (web / name).write_text(json.dumps(data), encoding="utf-8")
+
+    def test_running_and_npm_versions_match_and_release_rejects_web_drift(self) -> None:
+        from backend import __version__
+        from backend.main import app
+        root = Path(__file__).resolve().parents[1]
+        self.assertEqual(app.version, __version__)
+        for folder in ('desktop', 'web'):
+            manifest = json.loads((root / folder / 'package.json').read_text(encoding='utf-8'))
+            lock = json.loads((root / folder / 'package-lock.json').read_text(encoding='utf-8'))
+            self.assertEqual(validate_version(f'v{__version__}', manifest, lock), __version__)
+        (self.root / 'web' / 'package.json').write_text('{"version": "9.9.9"}', encoding='utf-8')
+        with patch('scripts.desktop_release.git_output') as git, self.assertRaises(ValueError):
+            release_identity(self.root, self.tag)
+        git.assert_not_called()
 
     def test_version_mismatch_and_untrusted_tag_are_rejected(self) -> None:
         self.assertEqual(validate_version(self.tag, self.manifest, self.lock), self.version)

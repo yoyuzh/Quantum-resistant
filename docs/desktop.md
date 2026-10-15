@@ -4,7 +4,7 @@
 
 ## 安装包与平台
 
-- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。V1.0.0 使用正式版本标签 v1.0.0，同一 Release 包含全部平台安装包。
+- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。当前版本 V1.1.0，正式版本标签 v1.1.0，同一 Release 包含全部平台安装包。
 - Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
 - Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
 - macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
@@ -20,6 +20,8 @@ SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在
 本地代码只作静态分析，扫描不会执行上传的代码，也不会安装被扫描的 PyPI 包。代码片段、文件上传、迁移知识和报告导出可离线使用。只有用户主动扫描 GitHub/PyPI 或刷新热门仓库时，后端才访问已有允许列表中的远程服务。
 
 用户数据目录由 Electron 的 `userData` 确定：Windows 通常为 `%APPDATA%\Quantum Resistant Scanner`，macOS 为 `~/Library/Application Support/Quantum Resistant Scanner`，Linux 为 `~/.config/Quantum Resistant Scanner`（可能由 XDG 配置调整）。主题和热门快照位于该目录；日志最多每类4份、每份约1 MiB，不记录令牌、源码正文或请求体。源码、归档和任务结果在其 `cache/scans` 中短期保存，保留原有2 GiB容量、结果15分钟/8份/512 MiB限制。
+
+明暗切换同步网页、窗口背景和标题栏；启动画面使用已保存的主题。Windows/Linux 将标题区域整合到应用顶部，保留原生窗口按钮；“文件、编辑、视图”从顶部“菜单”按钮或 F10 打开，常用编辑和缩放快捷键继续可用。macOS 保留原生标题栏和系统菜单。
 
 退出后不恢复扫描任务；先导出需要保存的结果。进行中关闭窗口会提示取消任务并退出，最长约10秒停止本地后端。异常退出遗留的暂存目录在下次启动清理。卸载保留用户设置、热门快照和已导出的报告；可在确认不再需要后自行删除用户数据目录。应用不会写入安装资源目录，也不会携带开发者机器上的热门快照、令牌或扫描结果。
 

@@ -27,6 +27,7 @@ from backend.collection_config import (MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_
                                        MAX_ARCHIVE_MEMBERS, MAX_ARCHIVE_METADATA_BYTES, MAX_ARCHIVE_EXPANDED_BYTES)
 from backend.upload_stream import UPLOAD_TIMEOUT_SECONDS, UPLOAD_IDLE_SECONDS
 from backend import runtime
+from backend import __version__
 
 PROJECT_ROOT = runtime.desktop.resource_root if runtime.desktop else Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
@@ -40,7 +41,7 @@ async def lifespan(app):
     task_routes.store.close()
 
 
-app = FastAPI(title="抗量子密码风险检测与迁移辅助软件", version="1.0.0", lifespan=lifespan,
+app = FastAPI(title="抗量子密码风险检测与迁移辅助软件", version=__version__, lifespan=lifespan,
               docs_url=None if runtime.desktop else '/docs',
               redoc_url=None if runtime.desktop else '/redoc',
               openapi_url=None if runtime.desktop else '/openapi.json')

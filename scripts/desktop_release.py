@@ -53,6 +53,12 @@ def release_identity(root: Path, tag: str, expected_sha: str | None = None,
         json.loads((desktop / "package.json").read_text(encoding="utf-8")),
         json.loads((desktop / "package-lock.json").read_text(encoding="utf-8")),
     )
+    web = root / "web"
+    validate_version(
+        f"v{version}",
+        json.loads((web / "package.json").read_text(encoding="utf-8")),
+        json.loads((web / "package-lock.json").read_text(encoding="utf-8")),
+    )
     sha = git_output(root, "rev-parse", "HEAD")
     tag_sha = git_output(root, "rev-parse", "--verify", f"refs/tags/{tag}^{{commit}}")
     if re.fullmatch(r"[0-9a-f]{40}", sha) is None or tag_sha != sha:
