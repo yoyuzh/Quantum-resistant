@@ -318,14 +318,21 @@ class ScaleTests(unittest.TestCase):
     def test_ttl_timer_cleans_without_a_status_request(self):
         store = TaskStore(ttl=.1)
         self.addCleanup(store.close)
-        submitted = store.submit('snippet', {}, 'ttl-timer', lambda budget: task_routes.local_work([('a.py', CODE)], 'snippet', budget))
-        store.jobs[submitted['id']].future.result(3)
-        folder = store.jobs[submitted['id']].folder
         expired = threading.Event()
+        release = threading.Event()
+        self.addCleanup(release.set)
         original = store.storage.remove_folder
         def remove(path):
             original(path)
             expired.set()
         store.storage.remove_folder = remove
-        self.assertTrue(expired.wait(2))
+        def work(budget):
+            self.assertTrue(release.wait(5))
+            return task_routes.local_work([('a.py', CODE)], 'snippet', budget)
+        submitted = store.submit('snippet', {}, 'ttl-timer', work)
+        job = store.jobs[submitted['id']]
+        folder = job.folder
+        release.set()
+        job.future.result(5)
+        self.assertTrue(expired.wait(5))
         self.assertFalse(folder.exists())
