@@ -18,7 +18,7 @@
 - `web/src/components/`：输入、结果、源码、知识、热门列表等，业务组件原则上 <=350 行（含样式），不得压缩代码凑行数。
 - `web/src/composables/`：扫描、热门、主题状态；`api/client.js` 统一请求/错误/超时；`utils/` 纯函数；`styles/theme.css` 主题变量，`style.css` 基础样式。
 - 网页唯一源码入口为 `web/src/`；`web/index.html` 与 `web/assets/` 由构建生成。
-- 正式软件全称为“抗量子密码风险检测与迁移辅助软件”，登记版本 V1.0.0，当前发布版本 V1.1.0；页面、API、桌面窗口与文档使用同一名称。运行版本以 desktop/package.json 为准，web 的 npm 元数据与之同步。
+- 正式软件全称为“抗量子密码风险检测与迁移辅助软件”，登记版本 V1.0.0，当前发布版本 V1.1.1；页面、API、桌面窗口与文档使用同一名称。运行版本以 desktop/package.json 为准，web 的 npm 元数据与之同步。
 
 ## 验证与构建
 
