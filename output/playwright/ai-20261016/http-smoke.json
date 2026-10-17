@@ -1,0 +1,46 @@
+[
+  {
+    "kind": "snippet",
+    "scan": "succeeded",
+    "ai": "succeeded",
+    "opinions": 1,
+    "reports": {
+      "html": 200,
+      "markdown": 200,
+      "json": 200,
+      "csv": 200
+    }
+  },
+  {
+    "kind": "github",
+    "scan": "partial",
+    "ai": "partial",
+    "opinions": 40,
+    "reports": {
+      "html": 200,
+      "markdown": 200,
+      "json": 200,
+      "csv": 200
+    }
+  },
+  {
+    "kind": "pypi",
+    "scan": "partial",
+    "ai": "partial",
+    "opinions": 40,
+    "reports": {
+      "html": 200,
+      "markdown": 200,
+      "json": 200,
+      "csv": 200
+    }
+  },
+  {
+    "kind": "files",
+    "ai": "succeeded",
+    "source_ids": [
+      "src_2688d4554f8e",
+      "src_93a0da120921"
+    ]
+  }
+]

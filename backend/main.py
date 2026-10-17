@@ -28,6 +28,7 @@ from backend.collection_config import (MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_
 from backend.upload_stream import UPLOAD_TIMEOUT_SECONDS, UPLOAD_IDLE_SECONDS
 from backend import runtime
 from backend import __version__
+from backend.ai.routes import router as ai_router, task_router as ai_task_router
 
 PROJECT_ROOT = runtime.desktop.resource_root if runtime.desktop else Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
@@ -52,6 +53,8 @@ if runtime.desktop:
 app.include_router(task_router)
 app.include_router(report_router)
 app.include_router(scan_router)
+app.include_router(ai_router)
+app.include_router(ai_task_router)
 app.mount("/static/assets", StaticFiles(directory=WEB_DIR / "assets"), name="assets")
 
 

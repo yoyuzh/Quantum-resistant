@@ -1,0 +1,141 @@
+{
+  "schema_version": "1",
+  "source_task_id": "cd998b9aae2746f5a40bd57beca7a03c",
+  "input_digest": "61c005da98229f6a437910819d6d57a976c3b6c3c33cd8ad0312b6ed5f56ac46",
+  "created_at": "2026-10-16T15:39:29.285340+08:00",
+  "provider": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "rule_version": "ai-candidates-1",
+  "prompt_version": "ai-review-1",
+  "validation_version": "ai-citations-1",
+  "candidate_coverage": {
+    "source_files": 1,
+    "searched_files": 1,
+    "searched_bytes": 127,
+    "selected_files": 1,
+    "discovered_candidates": 2,
+    "selected_candidates": 2,
+    "context_bytes": 254,
+    "source_partial": false,
+    "partial": false,
+    "skip_reasons": {}
+  },
+  "ai_coverage": {
+    "planned": 2,
+    "completed": 2,
+    "calls": 1,
+    "partial": false
+  },
+  "candidates": [
+    {
+      "candidate_id": "ff38977d0d9d46194d034229541033b5f83613928802b335ecda53ca34288d74",
+      "source_id": "src_96e32cf34021",
+      "file_name": "independent_wrapper.py",
+      "start_line": 1,
+      "end_line": 1,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "5d919140ca357977aa060e7e9ca7f6a3e4d46094ec6379f3951053254e3e92d1",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from custom_crypto import encrypt"
+        },
+        {
+          "line": 2,
+          "text": "def protect_message(data, public_key):"
+        },
+        {
+          "line": 3,
+          "text": "    return encrypt(data, public_key, algorithm=\"RSA\")"
+        }
+      ]
+    },
+    {
+      "candidate_id": "cee87b54a81a4c03540e58a0fc9b9ade64dc7e0e7326636ee82e1e9b32c41cbd",
+      "source_id": "src_96e32cf34021",
+      "file_name": "independent_wrapper.py",
+      "start_line": 3,
+      "end_line": 3,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_call"
+      ],
+      "input_digest": "5d919140ca357977aa060e7e9ca7f6a3e4d46094ec6379f3951053254e3e92d1",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from custom_crypto import encrypt"
+        },
+        {
+          "line": 2,
+          "text": "def protect_message(data, public_key):"
+        },
+        {
+          "line": 3,
+          "text": "    return encrypt(data, public_key, algorithm=\"RSA\")"
+        }
+      ]
+    }
+  ],
+  "opinions": [
+    {
+      "candidate_id": "ff38977d0d9d46194d034229541033b5f83613928802b335ecda53ca34288d74",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "abstain",
+      "rationale": "候选指向第1行自定义模块导入 `custom_crypto`，静态发现列表为空，仅有规则名 python_crypto_import，缺少该模块的实现与算法细节，无法判断其是否为密码资产或所用算法与用途。",
+      "missing_information": [
+        "custom_crypto 模块的实现或来源",
+        "encrypt 函数实际使用的算法与密钥处理逻辑",
+        "静态发现的具体证据（static_finding_refs 为空）"
+      ],
+      "citations": [
+        {
+          "source_id": "src_96e32cf34021",
+          "start_line": 1,
+          "end_line": 1,
+          "quote": "from custom_crypto import encrypt"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "cee87b54a81a4c03540e58a0fc9b9ade64dc7e0e7326636ee82e1e9b32c41cbd",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "abstain",
+      "rationale": "候选指向第3行调用 `encrypt(data, public_key, algorithm=\"RSA\")`，传入 algorithm=\"RSA\" 字样，但被调用方为自定义模块 custom_crypto，无法确认其是否真正实现 RSA、密钥长度、填充方式与用途，静态发现列表为空，不足以给出实质判断。",
+      "missing_information": [
+        "custom_crypto.encrypt 的实现细节",
+        "是否真实使用 RSA 及密钥长度与填充模式",
+        "静态发现的具体证据（static_finding_refs 为空）"
+      ],
+      "citations": [
+        {
+          "source_id": "src_96e32cf34021",
+          "start_line": 3,
+          "end_line": 3,
+          "quote": "    return encrypt(data, public_key, algorithm=\"RSA\")"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    }
+  ],
+  "diagnostics": [],
+  "usage": {
+    "prompt_tokens": 711,
+    "completion_tokens": 415,
+    "total_tokens": 1126
+  }
+}

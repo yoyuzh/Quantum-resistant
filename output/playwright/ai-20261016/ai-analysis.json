@@ -1,0 +1,420 @@
+{
+  "schema_version": "1",
+  "source_task_id": "0b314d51962b4f8e8222890c128e61af",
+  "input_digest": "28838de7dc5438d801268608966c437e899cc3d0208633451e15206f9329f308",
+  "created_at": "2026-10-16T15:15:23.605094+08:00",
+  "provider": "http://127.0.0.1:8019",
+  "model": "local-fixture-not-real-model",
+  "rule_version": "ai-candidates-1",
+  "prompt_version": "ai-review-1",
+  "validation_version": "ai-citations-1",
+  "candidate_coverage": {
+    "source_files": 1,
+    "searched_files": 1,
+    "searched_bytes": 616,
+    "selected_files": 1,
+    "discovered_candidates": 5,
+    "selected_candidates": 5,
+    "context_bytes": 1534,
+    "source_partial": false,
+    "partial": false,
+    "skip_reasons": {}
+  },
+  "ai_coverage": {
+    "planned": 5,
+    "completed": 5,
+    "calls": 1,
+    "partial": false
+  },
+  "candidates": [
+    {
+      "candidate_id": "fac2f81d0578d1368ff17a64e8a0564aa6c976e837672be3f6420fd6a1218e38",
+      "source_id": "src_aaa427f40293",
+      "file_name": "snippet.py",
+      "start_line": 12,
+      "end_line": 16,
+      "origins": [
+        "independent",
+        "static"
+      ],
+      "rules": [
+        "python_crypto_call",
+        "static_finding"
+      ],
+      "input_digest": "8b32f1b23a0b49936e99ae25aa0ab76642e8245f78b0981077b51cafc77a7556",
+      "static_finding_refs": [
+        "e0731b2ea479350e72e0dfbfd4464b7d2160e86b4a47758430776734840c5c79"
+      ],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.backends import default_backend"
+        },
+        {
+          "line": 2,
+          "text": "from cryptography.hazmat.primitives import hashes"
+        },
+        {
+          "line": 3,
+          "text": "from cryptography.hazmat.primitives.asymmetric import padding, rsa"
+        },
+        {
+          "line": 8,
+          "text": "if __name__ == \"__main__\":"
+        },
+        {
+          "line": 9,
+          "text": "    message = payload()"
+        },
+        {
+          "line": 10,
+          "text": ""
+        },
+        {
+          "line": 11,
+          "text": "    # 演示：这里故意使用 RSA，便于扫描器识别"
+        },
+        {
+          "line": 12,
+          "text": "    private_key = rsa.generate_private_key("
+        },
+        {
+          "line": 13,
+          "text": "        public_exponent=65537,"
+        },
+        {
+          "line": 14,
+          "text": "        key_size=2048,"
+        },
+        {
+          "line": 15,
+          "text": "        backend=default_backend(),"
+        },
+        {
+          "line": 16,
+          "text": "    )"
+        },
+        {
+          "line": 17,
+          "text": ""
+        },
+        {
+          "line": 18,
+          "text": "    signature = private_key.sign("
+        },
+        {
+          "line": 19,
+          "text": "        message,"
+        },
+        {
+          "line": 20,
+          "text": "        padding.PKCS1v15(),"
+        }
+      ]
+    },
+    {
+      "candidate_id": "c4517737361673a46c91dca545c19bdf7b62820c6668ac619c6277702be2be40",
+      "source_id": "src_aaa427f40293",
+      "file_name": "snippet.py",
+      "start_line": 1,
+      "end_line": 1,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "8b32f1b23a0b49936e99ae25aa0ab76642e8245f78b0981077b51cafc77a7556",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.backends import default_backend"
+        },
+        {
+          "line": 2,
+          "text": "from cryptography.hazmat.primitives import hashes"
+        },
+        {
+          "line": 3,
+          "text": "from cryptography.hazmat.primitives.asymmetric import padding, rsa"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "def payload() -> bytes:"
+        }
+      ]
+    },
+    {
+      "candidate_id": "8e7446eff6218d6d556a7dccd64f064864c1c283d1f52345b9f6682cb254c8c5",
+      "source_id": "src_aaa427f40293",
+      "file_name": "snippet.py",
+      "start_line": 2,
+      "end_line": 2,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "8b32f1b23a0b49936e99ae25aa0ab76642e8245f78b0981077b51cafc77a7556",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.backends import default_backend"
+        },
+        {
+          "line": 2,
+          "text": "from cryptography.hazmat.primitives import hashes"
+        },
+        {
+          "line": 3,
+          "text": "from cryptography.hazmat.primitives.asymmetric import padding, rsa"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "def payload() -> bytes:"
+        },
+        {
+          "line": 6,
+          "text": "    return b\"demo-message\""
+        }
+      ]
+    },
+    {
+      "candidate_id": "f1d3aaf9fb7eaf662cb544f797b77c697f42caa09a42296a124bf19d95ed849f",
+      "source_id": "src_aaa427f40293",
+      "file_name": "snippet.py",
+      "start_line": 3,
+      "end_line": 3,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "8b32f1b23a0b49936e99ae25aa0ab76642e8245f78b0981077b51cafc77a7556",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.backends import default_backend"
+        },
+        {
+          "line": 2,
+          "text": "from cryptography.hazmat.primitives import hashes"
+        },
+        {
+          "line": 3,
+          "text": "from cryptography.hazmat.primitives.asymmetric import padding, rsa"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "def payload() -> bytes:"
+        },
+        {
+          "line": 6,
+          "text": "    return b\"demo-message\""
+        },
+        {
+          "line": 7,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "candidate_id": "bc1293b0c3c3ad730f3ef29d75f636e49553decfe9a324f69211998a8a222949",
+      "source_id": "src_aaa427f40293",
+      "file_name": "snippet.py",
+      "start_line": 18,
+      "end_line": 22,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_call"
+      ],
+      "input_digest": "8b32f1b23a0b49936e99ae25aa0ab76642e8245f78b0981077b51cafc77a7556",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.backends import default_backend"
+        },
+        {
+          "line": 2,
+          "text": "from cryptography.hazmat.primitives import hashes"
+        },
+        {
+          "line": 3,
+          "text": "from cryptography.hazmat.primitives.asymmetric import padding, rsa"
+        },
+        {
+          "line": 14,
+          "text": "        key_size=2048,"
+        },
+        {
+          "line": 15,
+          "text": "        backend=default_backend(),"
+        },
+        {
+          "line": 16,
+          "text": "    )"
+        },
+        {
+          "line": 17,
+          "text": ""
+        },
+        {
+          "line": 18,
+          "text": "    signature = private_key.sign("
+        },
+        {
+          "line": 19,
+          "text": "        message,"
+        },
+        {
+          "line": 20,
+          "text": "        padding.PKCS1v15(),"
+        },
+        {
+          "line": 21,
+          "text": "        hashes.SHA256(),"
+        },
+        {
+          "line": 22,
+          "text": "    )"
+        },
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "    print(signature[:8])"
+        }
+      ]
+    }
+  ],
+  "opinions": [
+    {
+      "candidate_id": "fac2f81d0578d1368ff17a64e8a0564aa6c976e837672be3f6420fd6a1218e38",
+      "algorithm": "RSA",
+      "purpose": "unknown",
+      "opinion_kind": "questions_static",
+      "rationale": "本地固定模型响应，仅验证流程，意见需人工复核",
+      "missing_information": [
+        "实际使用环境"
+      ],
+      "citations": [
+        {
+          "source_id": "src_aaa427f40293",
+          "start_line": 12,
+          "end_line": 12,
+          "quote": "    private_key = rsa.generate_private_key("
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "c4517737361673a46c91dca545c19bdf7b62820c6668ac619c6277702be2be40",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "new_candidate",
+      "rationale": "本地固定模型响应，仅验证流程，意见需人工复核",
+      "missing_information": [
+        "实际使用环境"
+      ],
+      "citations": [
+        {
+          "source_id": "src_aaa427f40293",
+          "start_line": 1,
+          "end_line": 1,
+          "quote": "from cryptography.hazmat.backends import default_backend"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "8e7446eff6218d6d556a7dccd64f064864c1c283d1f52345b9f6682cb254c8c5",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "abstain",
+      "rationale": "本地固定模型响应，仅验证流程，意见需人工复核",
+      "missing_information": [
+        "实际使用环境"
+      ],
+      "citations": [
+        {
+          "source_id": "src_aaa427f40293",
+          "start_line": 2,
+          "end_line": 2,
+          "quote": "from cryptography.hazmat.primitives import hashes"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "f1d3aaf9fb7eaf662cb544f797b77c697f42caa09a42296a124bf19d95ed849f",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "new_candidate",
+      "rationale": "本地固定模型响应，仅验证流程，意见需人工复核",
+      "missing_information": [
+        "实际使用环境"
+      ],
+      "citations": [
+        {
+          "source_id": "src_aaa427f40293",
+          "start_line": 3,
+          "end_line": 3,
+          "quote": "from cryptography.hazmat.primitives.asymmetric import padding, rsa"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "bc1293b0c3c3ad730f3ef29d75f636e49553decfe9a324f69211998a8a222949",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "abstain",
+      "rationale": "本地固定模型响应，仅验证流程，意见需人工复核",
+      "missing_information": [
+        "实际使用环境"
+      ],
+      "citations": [
+        {
+          "source_id": "src_aaa427f40293",
+          "start_line": 18,
+          "end_line": 18,
+          "quote": "    signature = private_key.sign("
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    }
+  ],
+  "diagnostics": [],
+  "usage": {
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "total_tokens": null
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "valid": true,
+  "reason": "配置有效，尚未验证模型连通性",
+  "target_origin": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "budgets": {
+    "preview_files": 20,
+    "preview_candidates": 40,
+    "context_bytes": 131072,
+    "candidate_bytes": 8192,
+    "search_files": 200,
+    "search_bytes": 8388608,
+    "prepare_seconds": 30,
+    "batch_candidates": 5,
+    "request_bytes": 32768,
+    "max_calls": 8,
+    "task_seconds": 120,
+    "request_seconds": 30,
+    "response_bytes": 262144,
+    "output_tokens": 2048,
+    "model_concurrency": 1
+  },
+  "output_parameter": "max_tokens",
+  "reasoning_effort": "none",
+  "config_version": "823a40a47e3f61685750384c4af390143121993f39fe29a51a1e7a13e0025e90"
+}

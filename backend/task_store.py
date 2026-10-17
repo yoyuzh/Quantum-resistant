@@ -62,6 +62,8 @@ class TaskStore:
         self.storage = TemporaryStorage()
         self.storage.on_pressure = self._reclaim
         self.scheduler.on_idle = self._close_storage_if_idle
+        from backend.ai.previews import PreviewStore
+        self.ai_previews = PreviewStore(self)
 
     def _close_storage_if_idle(self):
         with self.lock:
@@ -214,12 +216,18 @@ class TaskStore:
                 self.storage.remove(result_path)
                 raise RuntimeError('任务结果超过缓存容量，未保存；请缩小扫描范围后重试')
             with self.lock:
-                has_result = bool(result.get('repos') if job.kind == 'popular' else result.get('sources'))
-                partial = bool(result.get('coverage', {}).get('partial') or result.get('meta', {}).get('incomplete') or job.control.cancelled.is_set())
-                job.result = result_path if has_result else None
+                if job.kind == 'ai':
+                    ai = result['ai_coverage']
+                    has_result = bool(ai['completed'] or (ai['planned'] == 0 and not job.control.cancelled.is_set()))
+                    partial = bool(ai['partial'] or result['candidate_coverage']['source_partial'] or job.control.cancelled.is_set())
+                else:
+                    has_result = bool(result.get('repos') if job.kind == 'popular' else result.get('sources'))
+                    partial = bool(result.get('coverage', {}).get('partial') or result.get('meta', {}).get('incomplete') or job.control.cancelled.is_set())
+                job.result = result_path if has_result or job.kind == 'ai' else None
                 job.state = ('partial' if partial else 'succeeded') if has_result else ('cancelled' if job.control.cancelled.is_set() else 'failed')
                 if not has_result:
-                    job.error = '没有完整分析的文件；上次结果已保留'
+                    job.error = ('没有完整 AI 意见；请检查模型配置或诊断后重试' if job.kind == 'ai'
+                                 else '没有完整分析的文件；上次结果已保留')
                 job.size = size
         except Exception as exc:
             with self.lock:
@@ -241,7 +249,7 @@ class TaskStore:
     def _snapshot(self, job):
         end = job.ended if job.ended is not None else self.now()
         return {'id': job.id, 'kind': job.kind, 'state': job.state, 'stage': job.stage,
-                'target': job.payload.get('repository_url') or job.payload.get('package_name') or job.payload.get('filename') or (f"本地文件 {job.payload.get('file_count')} 个" if job.kind == 'files' else f"热门仓库 {job.payload.get('top', 8)} 个"),
+                'target': (f"AI 辅助分析 {job.payload.get('source_task_id', '')}" if job.kind == 'ai' else '') or job.payload.get('repository_url') or job.payload.get('package_name') or job.payload.get('filename') or (f"本地文件 {job.payload.get('file_count')} 个" if job.kind == 'files' else f"热门仓库 {job.payload.get('top', 8)} 个"),
                 'created_at': job.created_at, 'elapsed': round(max(0, end - job.started), 1) if job.started is not None else 0,
                 'collected_files': job.collected, 'analyzed_files': job.analyzed, 'completed_repos': job.repos,
                 'cancel_requested': job.control.cancelled.is_set(), 'error': job.error, 'has_result': job.result is not None,
@@ -261,7 +269,7 @@ class TaskStore:
             if not job.result:
                 raise HTTPException(409, job.error or '没有可用结果')
             result = json.loads(job.result.read_text(encoding='utf-8'))
-            if include_content:
+            if include_content and job.kind != 'ai':
                 for source in result.get('sources', []):
                     path = getattr(job.control, 'source_paths', {}).get(source.get('source_id'))
                     if path:
@@ -318,6 +326,7 @@ class TaskStore:
             if self.closed:
                 return
             self.closed = True
+            self.ai_previews.close()
             for job in list(self.jobs.values()):
                 if job.expiry:
                     job.expiry.cancel()

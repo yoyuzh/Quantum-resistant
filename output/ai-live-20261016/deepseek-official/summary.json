@@ -1,0 +1,140 @@
+{
+  "target_origin": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "budgets": {
+    "preview_files": 20,
+    "preview_candidates": 40,
+    "context_bytes": 131072,
+    "candidate_bytes": 8192,
+    "search_files": 200,
+    "search_bytes": 8388608,
+    "prepare_seconds": 30,
+    "batch_candidates": 5,
+    "request_bytes": 32768,
+    "max_calls": 8,
+    "task_seconds": 120,
+    "request_seconds": 30,
+    "response_bytes": 262144,
+    "output_tokens": 2048,
+    "model_concurrency": 1
+  },
+  "cases": [
+    {
+      "case": "rsa",
+      "task_id": "8903fa639c1c43c9a306f7d56d53bf6c",
+      "state": "failed",
+      "seconds": 14.82,
+      "candidates": 2,
+      "opinions": 0,
+      "opinion_kinds": {},
+      "citation_statuses": {},
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 0,
+        "calls": 1,
+        "partial": true
+      },
+      "usage": {
+        "prompt_tokens": 770,
+        "completion_tokens": 2048,
+        "total_tokens": 2818
+      },
+      "diagnostics": [
+        {
+          "code": "invalid_json",
+          "message": "模型未返回约定的 JSON 对象，本次不自动纠错重发",
+          "candidate_id": null,
+          "source_id": null
+        }
+      ],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "independent_wrapper",
+      "task_id": "35ad7aebd52b451ba01b4596f663e093",
+      "state": "failed",
+      "seconds": 14.28,
+      "candidates": 2,
+      "opinions": 0,
+      "opinion_kinds": {},
+      "citation_statuses": {},
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 0,
+        "calls": 1,
+        "partial": true
+      },
+      "usage": {
+        "prompt_tokens": 736,
+        "completion_tokens": 2048,
+        "total_tokens": 2784
+      },
+      "diagnostics": [
+        {
+          "code": "invalid_json",
+          "message": "模型未返回约定的 JSON 对象，本次不自动纠错重发",
+          "candidate_id": null,
+          "source_id": null
+        }
+      ],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "redaction_injection",
+      "task_id": "30182c772df54c5990a8b7fa992b8aed",
+      "state": "failed",
+      "seconds": 15.31,
+      "candidates": 2,
+      "opinions": 0,
+      "opinion_kinds": {},
+      "citation_statuses": {},
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 0,
+        "calls": 1,
+        "partial": true
+      },
+      "usage": {
+        "prompt_tokens": 866,
+        "completion_tokens": 2048,
+        "total_tokens": 2914
+      },
+      "diagnostics": [
+        {
+          "code": "invalid_json",
+          "message": "模型未返回约定的 JSON 对象，本次不自动纠错重发",
+          "candidate_id": null,
+          "source_id": null
+        }
+      ],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "non_crypto",
+      "task_id": "6547bbe3671d485ea9185fae1a8dedaf",
+      "state": "succeeded",
+      "seconds": 0.56,
+      "candidates": 0,
+      "opinions": 0,
+      "opinion_kinds": {},
+      "citation_statuses": {},
+      "ai_coverage": {
+        "planned": 0,
+        "completed": 0,
+        "calls": 0,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    }
+  ]
+}

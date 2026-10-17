@@ -1,0 +1,135 @@
+{
+  "schema_version": "1",
+  "source_task_id": "dfe42640d1a549158d9e63363cbff17c",
+  "input_digest": "841309c8378679b273b8e8c717363fd574502193a33e0b3e9b71b200795734f7",
+  "created_at": "2026-10-16T15:34:28.617526+08:00",
+  "provider": "https://api-jp.ritelt.com",
+  "model": "deepseek-v4.1-flash",
+  "rule_version": "ai-candidates-1",
+  "prompt_version": "ai-review-1",
+  "validation_version": "ai-citations-1",
+  "candidate_coverage": {
+    "source_files": 1,
+    "searched_files": 1,
+    "searched_bytes": 127,
+    "selected_files": 1,
+    "discovered_candidates": 2,
+    "selected_candidates": 2,
+    "context_bytes": 254,
+    "source_partial": false,
+    "partial": false,
+    "skip_reasons": {}
+  },
+  "ai_coverage": {
+    "planned": 2,
+    "completed": 2,
+    "calls": 1,
+    "partial": false
+  },
+  "candidates": [
+    {
+      "candidate_id": "dbb1c24e8e8798ea1f92208d50db2b192ee454415e7d9202861425e8256c6e9f",
+      "source_id": "src_d936570cd4fd",
+      "file_name": "rsa.py",
+      "start_line": 2,
+      "end_line": 2,
+      "origins": [
+        "independent",
+        "static"
+      ],
+      "rules": [
+        "python_crypto_call",
+        "static_finding"
+      ],
+      "input_digest": "6eb83ce8d589b38d291a0ee134b5fbf073285b52c410fd9bf78c5671e1458593",
+      "static_finding_refs": [
+        "8c078fc61cdc6809ebf323336cf10c0e2f6660f77b8536f8d28c74d4a6428699"
+      ],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.primitives.asymmetric import rsa"
+        },
+        {
+          "line": 2,
+          "text": "key = rsa.generate_private_key(public_exponent=65537, key_size=2048)"
+        }
+      ]
+    },
+    {
+      "candidate_id": "52053e1e0c13510fefd7d1ae904de7f8aa8417d9bda0341b739017fafafefce4",
+      "source_id": "src_d936570cd4fd",
+      "file_name": "rsa.py",
+      "start_line": 1,
+      "end_line": 1,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "6eb83ce8d589b38d291a0ee134b5fbf073285b52c410fd9bf78c5671e1458593",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.primitives.asymmetric import rsa"
+        },
+        {
+          "line": 2,
+          "text": "key = rsa.generate_private_key(public_exponent=65537, key_size=2048)"
+        }
+      ]
+    }
+  ],
+  "opinions": [
+    {
+      "candidate_id": "dbb1c24e8e8798ea1f92208d50db2b192ee454415e7d9202861425e8256c6e9f",
+      "algorithm": "RSA",
+      "purpose": "generate_private_key",
+      "opinion_kind": "supports_static",
+      "rationale": "第2行调用 rsa.generate_private_key，参数 public_exponent=65537、key_size=2048，属静态可见的 RSA 私钥生成调用，与关联静态发现一致；用途需结合上下文确认。",
+      "missing_information": [
+        "该密钥的后续用途（签名、加密、TLS 等）",
+        "是否用于生产环境及密钥存储/保护方式"
+      ],
+      "citations": [
+        {
+          "source_id": "src_d936570cd4fd",
+          "start_line": 2,
+          "end_line": 2,
+          "quote": "key = rsa.generate_private_key(public_exponent=65537, key_size=2048)"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "52053e1e0c13510fefd7d1ae904de7f8aa8417d9bda0341b739017fafafefce4",
+      "algorithm": "RSA",
+      "purpose": "unknown",
+      "opinion_kind": "abstain",
+      "rationale": "第1行仅为 from cryptography... import rsa 的导入语句，单独无法判定算法使用意图或用途，且无关联静态发现，故弃权。",
+      "missing_information": [
+        "导入后实际调用的算法与参数",
+        "该模块在代码中的具体用途"
+      ],
+      "citations": [
+        {
+          "source_id": "src_d936570cd4fd",
+          "start_line": 1,
+          "end_line": 1,
+          "quote": "from cryptography.hazmat.primitives.asymmetric import rsa"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    }
+  ],
+  "diagnostics": [],
+  "usage": {
+    "prompt_tokens": 745,
+    "completion_tokens": 376,
+    "total_tokens": 1121
+  }
+}

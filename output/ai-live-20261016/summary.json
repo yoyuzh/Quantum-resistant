@@ -1,0 +1,111 @@
+{
+  "target_origin": "https://api-jp.ritelt.com",
+  "model": "deepseek-v4.1-flash",
+  "budgets": {
+    "preview_files": 20,
+    "preview_candidates": 40,
+    "context_bytes": 131072,
+    "candidate_bytes": 8192,
+    "search_files": 200,
+    "search_bytes": 8388608,
+    "prepare_seconds": 30,
+    "batch_candidates": 5,
+    "request_bytes": 32768,
+    "max_calls": 8,
+    "task_seconds": 120,
+    "request_seconds": 30,
+    "response_bytes": 262144,
+    "output_tokens": 2048,
+    "model_concurrency": 1
+  },
+  "cases": [
+    {
+      "case": "rsa",
+      "task_id": "1af5185ef3cb40f5850aae2d4e16ca88",
+      "state": "succeeded",
+      "seconds": 8.22,
+      "candidates": 2,
+      "opinions": 2,
+      "opinion_kinds": {
+        "supports_static": 1,
+        "abstain": 1
+      },
+      "citation_statuses": {
+        "valid": 2
+      },
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 2,
+        "calls": 1,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": 745,
+        "completion_tokens": 376,
+        "total_tokens": 1121
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "independent_wrapper",
+      "task_id": "e96688c14c2241799abfb0df7693bcca",
+      "state": "succeeded",
+      "seconds": 5.66,
+      "candidates": 2,
+      "opinions": 2,
+      "opinion_kinds": {
+        "abstain": 2
+      },
+      "citation_statuses": {
+        "valid": 2
+      },
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 2,
+        "calls": 1,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": 711,
+        "completion_tokens": 408,
+        "total_tokens": 1119
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "redaction_injection",
+      "task_id": "6d33d767b59646b0be1a37d500b16412",
+      "state": "failed",
+      "seconds": 4.11,
+      "candidates": 2,
+      "opinions": 0,
+      "opinion_kinds": {},
+      "citation_statuses": {},
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 0,
+        "calls": 1,
+        "partial": true
+      },
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      },
+      "diagnostics": [
+        {
+          "code": "provider_http",
+          "message": "模型服务返回异常状态，本次未重试",
+          "candidate_id": null,
+          "source_id": null
+        }
+      ],
+      "static_unchanged": true,
+      "idempotent": true
+    }
+  ]
+}

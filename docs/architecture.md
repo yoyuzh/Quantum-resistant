@@ -1,6 +1,76 @@
 # 抗量子密码风险检测与迁移辅助软件架构说明
 
+## AI 配置与独立数据契约
+
+`backend/ai/` 实现 `add-evidence-grounded-ai-analysis` 的独立可选链路，包括数据契约、配置、双路候选、脱敏预览、模型适配、逐项引用核验、任务与导出。读取状态 HTTP 200（包括默认关闭和配置无效）；Host 不受信任为 400，写请求 Origin 不受信任为 403。状态无缓存、不联网、不声称供应商连通，不公开凭据及完整基址。配置由进程内首次读取固定，修改环境后重启。
+
+`QUANTUM_AI_ENABLED` 默认关闭；启用需要 `QUANTUM_AI_BASE_URL` 与 `QUANTUM_AI_MODEL`，`QUANTUM_AI_API_KEY` 可选。远程地址必须 HTTPS，HTTP 仅允许 localhost 或 IP 回环；禁止 userinfo、query、fragment、控制字符和重定向。公开版本来自非敏感状态；内部使用进程随机密钥 HMAC 绑定完整配置与凭据，凭据更改使预览内部版本失效，不向客户端公开凭据摘要。
+
+适配协议为非流式 OpenAI-compatible Chat Completions，基址追加 `chat/completions`，只使用 system/user 消息，不提供工具；内容严格解析 JSON。输出参数通过 `QUANTUM_AI_OUTPUT_PARAMETER=max_tokens` 或 `max_completion_tokens` 固定选择，不自动探测、不纠错重发。可选 `QUANTUM_AI_REASONING_EFFORT=none|low|high|max` 显式传递思考强度；默认不发送该参数，不支持的值使配置无效，改变强度使旧预览失效。需由服务端按供应商支持情况配置；DeepSeek 官方 `deepseek-flash` 实测使用 `none`，避免默认思考耗尽2048 token预算。
+
+预算环境变量统一为 `QUANTUM_AI_` + 下表字段的大写形式；默认值同时为首版硬上限，只能下调为正整数。错误预算使配置无效，不静默扩大上限。`GET /api/ai/config` 的 `budgets` 返回实际生效数值。
+
+| 字段 | 默认值/硬上限 | 含义 |
+| --- | ---: | --- |
+| preview_files | 20 | 预览文件 |
+| preview_candidates | 40 | 预览候选 |
+| context_bytes | 131072 | 总上下文字节 |
+| candidate_bytes | 8192 | 单候选上下文字节 |
+| search_files | 200 | 独立检索文件 |
+| search_bytes | 8388608 | 独立检索源码字节 |
+| prepare_seconds | 30 | 本地准备秒数 |
+| batch_candidates | 5 | 单次模型候选 |
+| request_bytes | 32768 | 单次模型输入字节 |
+| max_calls | 8 | 任务模型调用 |
+| task_seconds | 120 | 任务秒数 |
+| request_seconds | 30 | 请求秒数 |
+| response_bytes | 262144 | 响应字节 |
+| output_tokens | 2048 | 输出 token |
+| model_concurrency | 1 | 全局模型并发 |
+
+`models.py` 使用独立严格模型，拒绝未知字段、非法意见枚举和超长文本，不包含模型自报概率。候选含 source_id、行号、双路 origins、规则及内容指纹；静态发现引用按内容稳定指纹记录，不使用列表下标。四类意见为 supports_static/questions_static/new_candidate/abstain，引用状态为 valid/invalid/absent；算法与用途允许显式 unknown。引用有效只说明引用正确，所有意见仍需人工复核。独立范围区分候选检索和 AI 完成量，未知 token usage 为 null，不估算成本，不修改 ScanResponse、风险计数或分数。
+
 ## 数据流
+
+### 可选 AI 路径
+
+普通扫描终态 → 本地候选检索/脱敏预览 → 本次确认 → 独立 AI 任务 → 有界模型请求 → 逐项核验 → 待复核意见与专用导出。原 findings、coverage、summary、analysis 与迁移评分不变。AI 没有工具调用、代码执行或自动补丁能力；注释内指令只作数据。
+
+| API | 输入/输出与错误 |
+| --- | --- |
+| GET /api/ai/config | 启用/有效状态、origin、模型、公开配置版本、有效预算；不联网 |
+| POST /api/ai/previews | source_task_id；返回 preview_id、digest、有效期、预算、候选、脱敏行与范围 |
+| POST /api/tasks/ai | preview_id、digest、consent=true 及 X-Request-ID；202 返回 kind=ai 任务 |
+| GET /api/tasks/{id} | 共用状态；AI 实际计划/完成/调用数放在 ai_progress，不伪造 scanned_files |
+| GET /api/tasks/{id}/result | AI 返回独立 AiAnalysisResult，即使 include_content=true 也不回填源码 |
+| POST /api/tasks/{id}/cancel | 共用幂等取消；不能撤回已发送数据 |
+| GET /api/ai/tasks/{id}/export | 严格独立模型白名单；只含有限脱敏证据、静态发现指纹、意见、范围、版本、诊断和用量 |
+
+404：来源/预览/任务过期或重启；409：来源运行中、无源码、不支持的任务种类、摘要/配置不符、预览已消费或请求标识冲突；422：字段/确认/请求标识无效；503：默认关闭、配置无效或服务关闭；429：共享队列、预览或临时容量不足；504：本地准备超时。所有新增写接口经过同一 Host/Origin/JSON 字节边界。旧四报告及 CLI 不自动调用模型，AI 导出拒绝普通任务。
+
+### 候选、范围与脱敏
+
+静态通路按 source_id 与位置复核 findings 及 unknown_pem_algorithm 诊断；独立通路只解析 Python AST 和 JSON/YAML 节点，复用 BoundedSafeLoader 的节点/深度/锚点限制。独立线索包括密码导入、调用、命名封装、带 key/secret/modulus 等上下文的三参数 pow 和结构化算法字段；单独数学 pow、字符串或注释不产生独立候选。未知调用只表示候选，不能确认算法。解析失败记录 parse_failed，其他类型只保留静态局部复核。
+
+按 source_id 稳定顺序检索；所有文件元数据计入范围，源码读取最多200文件/8MiB（静态通路也受此保守上限约束）。按位置合并重合候选、保留 origins；独立通路去除与静态重复的排队项后两路轮转，避免重复项挤掉新候选。上下文优先所属最小函数、邻接行与导入；超大函数退为窗口，核心行过长则跳过，不拆行或插入伪源码。候选 ID 绑定原内容摘要、source_id、行范围和规则，静态引用为稳定发现指纹。
+
+预览最多20文件/40候选/128KiB源码上下文，单候选最多8KiB完整行。候选范围中的 context_bytes 是脱敏源码行 UTF-8 字节数（每行加一个 LF）；模型 request_bytes 另计完整协议 JSON、提示与元数据。JSON 包装会转义字符，预览候选中的脱敏 lines 与实际发送的 lines 逐项相同。静态扫描范围保留在原结果；candidate_coverage 描述检索、预算和跳过原因；ai_coverage 描述所选候选实际完整返回量，三者不能混同。
+
+脱敏逐行屏蔽识别到的 PEM 正文、password/secret/API key/access token 等赋值、YAML 块/Python 三引号秘密、已识别令牌格式和 URL 凭据，保留头与原行号；只向模型发送已识别 PEM 头及必要用途上下文。引用按同一脱敏快照核验。无法保证识别自定义、编码、拆分或动态生成的秘密，因此每次须由用户检查预览。
+
+### 模型、核验与任务收尾
+
+httpx 非流式 Chat Completions 请求不跟随重定向，无自动重试；供应商响应体不进入错误或日志。请求要求 identity 编码并拒绝压缩响应，有界读取256KiB；HTTPX 操作超时外增加 asyncio.wait_for 墙钟截止，限制持续滴流。全局模型并发1，任务预算120秒/8次，单次30秒、5候选、32KiB输入、2048输出token；较大候选按实际协议字节分批，单项装不下记录 request_budget 而不发送。
+
+固定提示版本 ai-review-1。只接受 choices[0].message.content 内严格 JSON 对象，不从代码围栏或散文猜测内容；无 JSON Schema 扩展依赖，不自动纠错重发。外层错误拒绝整次响应，可解析列表逐项验证：缺字段/非法枚举/超长项拒绝，未知候选拒绝，重复候选全部拒绝，遗漏项为未完成而非伪造弃答。合法 unknown 与 abstain 接受；引用的 source_id、所有行及完整 quote 必须匹配候选实际发送的脱敏行，否则标 invalid，缺引用标 absent。即便 valid 也不确认语义或安全。
+
+错误诊断包括 invalid_json、invalid_opinion、unknown_candidate、duplicate_candidate、missing_candidate、provider_auth、provider_rate_limit、provider_http、provider_format、provider_timeout、provider_connection、response_encoding、response_budget、request_budget、call_budget、task_timeout 和 cancelled。验证与对应测试见[场景映射](ai-scenario-matrix.md)。未获得所有已发送请求的真实 usage 时任务用量为 null，不用局部和估算真实成本。
+
+PreviewStore 共用 TaskStore 锁、调度和临时存储，TTL 300秒/4份/总2MiB，准备截止30秒。准备时短暂持有来源读者，结束后释放；只保留脱敏快照，不固定大体积原源码。到期定时及访问时清理，关闭时回收。提交在同一锁内先按请求标识幂等查询，再验证摘要/配置/TTL；复制有界快照交给任务后消费预览，容量或提交失败回滚，不能重复消费。已经接纳的任务不受预览或来源随后到期影响。
+
+AI 与扫描共用2执行/4排队及2GiB临时存储。零候选成功并说明范围，全弃答也是完整处理；没有完整意见则失败，取消前没有意见则 cancelled；有完整项但未完成/取消为 partial。来源不完整时继承 partial。独立结果不伪造 sources；失败仍保存结构化诊断供读取。终态15分钟/8份/512MiB，沿用读者保护与清理；取消/截止后迟到批次不接纳，状态终态后不再被进度回调改变。
+
+前端 AI 分析与分析概览、资产清单、发现明细、迁移待办使用同级标签页；面板持续挂载，切换标签不取消进行中的分析。意见按展示用复核优先级稳定排序，已核验的传统算法支持/新候选优先；质疑为中优先级，弃答/引用未核验/算法未知为待确认，纯导入和PQC资产为信息。混合算法仍检查传统成分，不因PQC标签覆盖高优先级。标题同时显示文字等级与主题色；不改模型意见、静态风险数或评分。列表复用 paginate，每页8条，筛选/新结果重置页码。\n\n前端 createAiAnalysis/useAiAnalysis 复用统一请求与 followTask 轮询，按来源隔离、终止旧查询并丢弃迟到响应；同预览重试保留相同请求标识。sessionStorage 只存 AI 任务 ID，刷新可先恢复独立结果，不保存源码、凭据或默认发送同意。失败保留上次有效意见及其导出任务标识。源码按 source_id 读取；来源过期时显示保存的脱敏证据。
 
 输入 → 请求模型/上传边界 → 采集文档（可附带范围和诊断）→ 扫描服务 → 扫描器 → 结果与报告。
 

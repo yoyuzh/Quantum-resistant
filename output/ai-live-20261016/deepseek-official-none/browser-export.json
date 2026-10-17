@@ -1,0 +1,137 @@
+{
+  "schema_version": "1",
+  "source_task_id": "19c05df370f2492fabc0b035f6729785",
+  "input_digest": "1c000b1ce8ff5b70446308b64725ce255ac58531749b155338605b91bcd70f07",
+  "created_at": "2026-10-16T15:41:54.031061+08:00",
+  "provider": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "rule_version": "ai-candidates-1",
+  "prompt_version": "ai-review-1",
+  "validation_version": "ai-citations-1",
+  "candidate_coverage": {
+    "source_files": 1,
+    "searched_files": 1,
+    "searched_bytes": 127,
+    "selected_files": 1,
+    "discovered_candidates": 2,
+    "selected_candidates": 2,
+    "context_bytes": 254,
+    "source_partial": false,
+    "partial": false,
+    "skip_reasons": {}
+  },
+  "ai_coverage": {
+    "planned": 2,
+    "completed": 2,
+    "calls": 1,
+    "partial": false
+  },
+  "candidates": [
+    {
+      "candidate_id": "72477ec9fc9c9c88c929beb62343274ffb1bfd8b0c9439b13cc25723965fb347",
+      "source_id": "src_2d78dd79eca8",
+      "file_name": "snippet.py",
+      "start_line": 2,
+      "end_line": 2,
+      "origins": [
+        "independent",
+        "static"
+      ],
+      "rules": [
+        "python_crypto_call",
+        "static_finding"
+      ],
+      "input_digest": "6eb83ce8d589b38d291a0ee134b5fbf073285b52c410fd9bf78c5671e1458593",
+      "static_finding_refs": [
+        "fbb79aa8c16ec0e2463b6409f20ccd3677c62b36d7c7fd58239cbacbb6eaa96f"
+      ],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.primitives.asymmetric import rsa"
+        },
+        {
+          "line": 2,
+          "text": "key = rsa.generate_private_key(public_exponent=65537, key_size=2048)"
+        }
+      ]
+    },
+    {
+      "candidate_id": "8c1c4b17eb686c29b956626b08256ec133a07e200e6134466a15a43ffa8f2825",
+      "source_id": "src_2d78dd79eca8",
+      "file_name": "snippet.py",
+      "start_line": 1,
+      "end_line": 1,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "6eb83ce8d589b38d291a0ee134b5fbf073285b52c410fd9bf78c5671e1458593",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from cryptography.hazmat.primitives.asymmetric import rsa"
+        },
+        {
+          "line": 2,
+          "text": "key = rsa.generate_private_key(public_exponent=65537, key_size=2048)"
+        }
+      ]
+    }
+  ],
+  "opinions": [
+    {
+      "candidate_id": "72477ec9fc9c9c88c929beb62343274ffb1bfd8b0c9439b13cc25723965fb347",
+      "algorithm": "RSA key generation (cryptography.hazmat rsa.generate_private_key)",
+      "purpose": "unknown",
+      "opinion_kind": "supports_static",
+      "rationale": "第2行调用 rsa.generate_private_key(public_exponent=65537, key_size=2048) 生成 RSA 私钥，与静态发现一致；仅凭该行无法判断密钥用途或安全性目标。",
+      "missing_information": [
+        "密钥的具体用途（签名/加密/密钥交换/测试）",
+        "是否用于生产环境或仅示例代码",
+        "密钥存储与保护方式"
+      ],
+      "citations": [
+        {
+          "source_id": "src_2d78dd79eca8",
+          "start_line": 2,
+          "end_line": 2,
+          "quote": "key = rsa.generate_private_key(public_exponent=65537, key_size=2048)"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    },
+    {
+      "candidate_id": "8c1c4b17eb686c29b956626b08256ec133a07e200e6134466a15a43ffa8f2825",
+      "algorithm": "unknown",
+      "purpose": "unknown",
+      "opinion_kind": "abstain",
+      "rationale": "第1行仅为导入 cryptography 的 rsa 模块，单独看仅为导入语句，不足以判定算法或用途；无关联静态发现可引用。",
+      "missing_information": [
+        "导入后实际调用的算法与参数",
+        "该模块在程序中的用途",
+        "是否存在其他相关加密调用"
+      ],
+      "citations": [
+        {
+          "source_id": "src_2d78dd79eca8",
+          "start_line": 1,
+          "end_line": 1,
+          "quote": "from cryptography.hazmat.primitives.asymmetric import rsa"
+        }
+      ],
+      "citation_status": "valid",
+      "citation_errors": []
+    }
+  ],
+  "diagnostics": [],
+  "usage": {
+    "prompt_tokens": 745,
+    "completion_tokens": 392,
+    "total_tokens": 1137
+  }
+}

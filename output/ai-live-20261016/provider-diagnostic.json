@@ -1,0 +1,8 @@
+{
+  "http_status": 400,
+  "seconds": 2.81,
+  "response_bytes": 786,
+  "error_code": "",
+  "error_type": "invalid_request_error",
+  "error_message": "{\"code\":11128,\"msg\":\"conversation id missing\",\"requestId\":\"a8d3027d-f2a2-46f7-8c48-12ab775fd04f\",\"displayMsg\":{\"en\":\"Request blocked. Please send it again\",\"zh\":\"请求被拦截，请重新发送\",\"zh-hant\":\"請求已被攔截，請重新傳送\"},\"displayTips\":{\"en\":\"This call failed channel verification, possibly because it was not sent from an official client. Please resend from the official client.\",\"zh\":\"这次调用没通过渠道校验，可能不是官方客户端发出的。请用官方版本重新发送。\",\"zh-hant\":\"本次呼叫未通過通路驗證，可能不是官方用戶端發出。請使用官方版本重新傳送。\"},\"actions\":[\"EDIT_INPUT\",\"SUBMIT_FEEDBACK\"]}"
+}

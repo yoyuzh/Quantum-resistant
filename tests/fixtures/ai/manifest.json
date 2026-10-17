@@ -1,0 +1,125 @@
+{
+  "version": "ai-fixtures-1",
+  "samples": [
+    {
+      "id": "alias",
+      "split": "dev",
+      "project_family": "library-alias",
+      "path": "dev/crypto.py",
+      "sha256": "f241d5851ea701480e1f1267e54c6be8264cf4f510f5f6e2bd8f3f387047244b",
+      "labels": [
+        {
+          "line": 2,
+          "algorithm": "RSA",
+          "purpose": "key_generation",
+          "category": "quantum_vulnerable"
+        }
+      ]
+    },
+    {
+      "id": "wrapper",
+      "split": "dev",
+      "project_family": "wrapped-unknown",
+      "path": "dev/wrapper.py",
+      "sha256": "7efeb280cde989078bc2d4d5c9b31a22d1ec54121b4815e0a8d8b714706cb011",
+      "labels": [
+        {
+          "line": 2,
+          "algorithm": "unknown",
+          "purpose": "encryption",
+          "category": "quantum_vulnerable"
+        }
+      ]
+    },
+    {
+      "id": "math",
+      "split": "dev",
+      "project_family": "math-dev",
+      "path": "dev/math.py",
+      "sha256": "3c257b9907a2ced4b74a4436754b8823cd1b6d112d3c38882b4ff496925c8c3f",
+      "labels": [
+        {
+          "line": 1,
+          "algorithm": "unknown",
+          "purpose": "unknown",
+          "category": "non_crypto"
+        }
+      ]
+    },
+    {
+      "id": "pqc",
+      "split": "dev",
+      "project_family": "pqc-dev",
+      "path": "dev/config.json",
+      "sha256": "ee921622f9d977aca8515b776e64087bb2cab3eca917d6bd58ee264b50bf0976",
+      "labels": [
+        {
+          "line": 1,
+          "algorithm": "ML-KEM",
+          "purpose": "key_encapsulation",
+          "category": "pqc_asset"
+        }
+      ]
+    },
+    {
+      "id": "unknown",
+      "split": "test",
+      "project_family": "external-api",
+      "path": "test/crypto.py",
+      "sha256": "79199bba5e5e9080c2696763f58c5c9ebdcc81f672c13662eda29bb5f25120c1",
+      "labels": [
+        {
+          "line": 2,
+          "algorithm": "RSA",
+          "purpose": "encryption",
+          "category": "quantum_vulnerable"
+        }
+      ]
+    },
+    {
+      "id": "pem",
+      "split": "test",
+      "project_family": "pem-test",
+      "path": "test/key.pem",
+      "sha256": "39f995ae802adb5c8671cc2a43c424460f17425c43eca2ef95cc8442fcec6554",
+      "labels": [
+        {
+          "line": 1,
+          "algorithm": "RSA",
+          "purpose": "key_material",
+          "category": "quantum_vulnerable"
+        }
+      ]
+    },
+    {
+      "id": "negative",
+      "split": "test",
+      "project_family": "math-test",
+      "path": "test/math.py",
+      "sha256": "4550467371e1068c51cb9a7854df0cf124d5ba9dd3160faa30ceb05e7c659158",
+      "labels": [
+        {
+          "line": 2,
+          "algorithm": "unknown",
+          "purpose": "unknown",
+          "category": "non_crypto"
+        }
+      ]
+    },
+    {
+      "id": "uncertain",
+      "split": "test",
+      "project_family": "opaque-api",
+      "path": "test/opaque.py",
+      "sha256": "c3cfc0faa0d91fae13a75cbc602fa06743a3b5a4003aab8a6e0dacfe3f95100b",
+      "labels": [
+        {
+          "line": 1,
+          "algorithm": "unknown",
+          "purpose": "unknown",
+          "category": "non_crypto"
+        }
+      ]
+    }
+  ]
+}

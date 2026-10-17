@@ -14,7 +14,7 @@
 - 导出 HTML、Markdown、JSON、CSV 报告；HTML 可通过浏览器打印为 PDF。默认不附带完整源码。
 - 提供明暗主题、键盘操作和窄屏布局。
 
-迁移评分为启发式优先级，不是风险概率。通用 PEM 头仅提示算法待复核，不能推断 RSA。零发现不代表安全或完整覆盖。迁移知识为静态参考；软件没有自动改写代码、真实依赖传播分析、数据库、LLM 或完整多语言语义分析。
+迁移评分为启发式优先级，不是风险概率。通用 PEM 头仅提示算法待复核，不能推断 RSA。零发现不代表安全或完整覆盖。迁移知识为静态参考；软件没有自动改写代码、真实依赖传播分析、数据库或完整多语言语义分析；可选 AI 辅助分析的范围与验证边界见下文。
 
 ## 安装与运行
 
@@ -41,6 +41,16 @@ python start.py --port 8010 --strict-port
 
 桌面安装包包含 Electron 和冻结的 Python 后端，使用者无需另行安装 Python、Node.js 或 WebView2。支持 Windows x64、Linux x64、macOS Intel 与 Apple Silicon 的原生构建。桌面运行、数据位置及打包方法见 [桌面使用说明](docs/desktop.md)。本次名称整理不会更新此前已发布的安装包。
 
+## 可选 AI 辅助分析
+
+AI 默认关闭。四类普通扫描完成并保留源码后，切换结果区与“分析概览”等同级的“AI 分析”标签页，生成本地脱敏预览，检查目标、预算、片段和跳过范围，再点击“确认本次范围并发送给模型”。打开面板及生成预览不调用模型；每次分析都需主动确认。读取配置只进行本地校验，返回“配置有效”不代表模型连通。原扫描、CLI 和报告不自动调用模型。
+
+AI 意见分为支持原发现、质疑原发现、新候选、无法判定；均需人工复核。引用有效仅表示匹配本次脱敏片段，不改变原始发现或迁移评分。支持取消后续分析、部分结果、刷新恢复及独立 JSON 导出。预览保留 5 分钟、最多 4 份、共 2 MiB；终态与普通任务一样保留 15 分钟、最多 8 份、共 512 MiB 结果，预览及任务纳入同一 2 GiB 临时存储。来源源码过期后仍可查看有限脱敏证据，服务重启后任务失效。取消不能撤回已发送数据，脱敏不能保证发现所有秘密。热门任务不支持 AI 分析。
+
+启用配置需在服务端设置 `QUANTUM_AI_ENABLED=true`、`QUANTUM_AI_BASE_URL=https://model.example/v1` 和 `QUANTUM_AI_MODEL=review-model`，按供应商要求设置可选的 `QUANTUM_AI_API_KEY`，然后重启服务。凭据不要放入网页、版本库或日志。基址仅允许远程 HTTPS 或本机回环 HTTP，不允许 userinfo、查询参数、片段；公开接口只返回目标 origin，不返回完整基址或凭据。
+
+首版兼容非流式 Chat Completions：基址追加 `chat/completions`，system/user 消息及严格 JSON 内容；`QUANTUM_AI_OUTPUT_PARAMETER` 可设置为 `max_tokens`（默认）或 `max_completion_tokens`，不自动试探参数或重试模型请求。可选 `QUANTUM_AI_REASONING_EFFORT=none|low|high|max`，默认不发送。DeepSeek 官方可配置 `QUANTUM_AI_BASE_URL=https://api.deepseek.com/v1`、`QUANTUM_AI_MODEL=deepseek-flash`、`QUANTUM_AI_REASONING_EFFORT=none`；密钥通过进程环境传入。有效预算及全部配置变量见[架构说明](docs/architecture.md#ai-配置与独立数据契约)。
+
 ## 命令行
 
 ```sh
@@ -65,7 +75,7 @@ $env:QUANTUM_ALLOWED_HOSTS = 'localhost,127.0.0.1,::1,192.168.1.10'
 python start.py --host 0.0.0.0 --port 8010 --strict-port
 ```
 
-写请求的 Origin 必须同源或属于显式配置的 `QUANTUM_ALLOWED_ORIGINS`；开发脚本自动配置。远程仅访问固定 HTTPS 服务域名，逐跳校验重定向。完整 API、生命周期与安全边界见 [架构说明](docs/architecture.md)。
+写请求的 Origin 必须同源或属于显式配置的 `QUANTUM_ALLOWED_ORIGINS`；开发脚本自动配置。远程采集仅访问固定 HTTPS 服务域名，逐跳校验重定向；AI 仅连接服务端配置的受信端点且不跟随重定向。完整 API、生命周期与安全边界见 [架构说明](docs/architecture.md)。
 
 ## 目录与维护
 

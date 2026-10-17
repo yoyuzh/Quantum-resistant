@@ -1,0 +1,37 @@
+{
+  "schema_version": "1",
+  "source_task_id": "449378c7a6fc429fb5d2d45827f8cae4",
+  "input_digest": "533d8813577f6829ae963c411244819195ddfc8585045b0d7d23ba4576a5b282",
+  "created_at": "2026-10-16T15:38:24.234898+08:00",
+  "provider": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "rule_version": "ai-candidates-1",
+  "prompt_version": "ai-review-1",
+  "validation_version": "ai-citations-1",
+  "candidate_coverage": {
+    "source_files": 1,
+    "searched_files": 1,
+    "searched_bytes": 51,
+    "selected_files": 0,
+    "discovered_candidates": 0,
+    "selected_candidates": 0,
+    "context_bytes": 0,
+    "source_partial": false,
+    "partial": false,
+    "skip_reasons": {}
+  },
+  "ai_coverage": {
+    "planned": 0,
+    "completed": 0,
+    "calls": 0,
+    "partial": false
+  },
+  "candidates": [],
+  "opinions": [],
+  "diagnostics": [],
+  "usage": {
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "total_tokens": null
+  }
+}

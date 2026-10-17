@@ -1,0 +1,103 @@
+{
+  "schema_version": "1",
+  "source_task_id": "f8b633b48ce146008022a79dee4a7906",
+  "input_digest": "030d8d7a37ce9df51cf34108ae3e3730f44269dcc4bbf212430a72146dfb962c",
+  "created_at": "2026-10-16T15:37:54.629363+08:00",
+  "provider": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "rule_version": "ai-candidates-1",
+  "prompt_version": "ai-review-1",
+  "validation_version": "ai-citations-1",
+  "candidate_coverage": {
+    "source_files": 1,
+    "searched_files": 1,
+    "searched_bytes": 127,
+    "selected_files": 1,
+    "discovered_candidates": 2,
+    "selected_candidates": 2,
+    "context_bytes": 254,
+    "source_partial": false,
+    "partial": false,
+    "skip_reasons": {}
+  },
+  "ai_coverage": {
+    "planned": 2,
+    "completed": 0,
+    "calls": 1,
+    "partial": true
+  },
+  "candidates": [
+    {
+      "candidate_id": "ff38977d0d9d46194d034229541033b5f83613928802b335ecda53ca34288d74",
+      "source_id": "src_96e32cf34021",
+      "file_name": "independent_wrapper.py",
+      "start_line": 1,
+      "end_line": 1,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_import"
+      ],
+      "input_digest": "5d919140ca357977aa060e7e9ca7f6a3e4d46094ec6379f3951053254e3e92d1",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from custom_crypto import encrypt"
+        },
+        {
+          "line": 2,
+          "text": "def protect_message(data, public_key):"
+        },
+        {
+          "line": 3,
+          "text": "    return encrypt(data, public_key, algorithm=\"RSA\")"
+        }
+      ]
+    },
+    {
+      "candidate_id": "cee87b54a81a4c03540e58a0fc9b9ade64dc7e0e7326636ee82e1e9b32c41cbd",
+      "source_id": "src_96e32cf34021",
+      "file_name": "independent_wrapper.py",
+      "start_line": 3,
+      "end_line": 3,
+      "origins": [
+        "independent"
+      ],
+      "rules": [
+        "python_crypto_call"
+      ],
+      "input_digest": "5d919140ca357977aa060e7e9ca7f6a3e4d46094ec6379f3951053254e3e92d1",
+      "static_finding_refs": [],
+      "lines": [
+        {
+          "line": 1,
+          "text": "from custom_crypto import encrypt"
+        },
+        {
+          "line": 2,
+          "text": "def protect_message(data, public_key):"
+        },
+        {
+          "line": 3,
+          "text": "    return encrypt(data, public_key, algorithm=\"RSA\")"
+        }
+      ]
+    }
+  ],
+  "opinions": [],
+  "diagnostics": [
+    {
+      "code": "invalid_json",
+      "message": "模型未返回约定的 JSON 对象，本次不自动纠错重发",
+      "candidate_id": null,
+      "source_id": null
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 736,
+    "completion_tokens": 2048,
+    "total_tokens": 2784
+  }
+}

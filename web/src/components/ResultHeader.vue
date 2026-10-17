@@ -7,11 +7,12 @@ import { fileLabel } from '../utils/presentation.js';
 import { methodLabel } from '../utils/analysis.js';
 const props = defineProps({ result: Object, tab: String, filters: Object, origin: Object, announcement: String });
 const emit = defineEmits(['select-tab', 'back', 'reset']);
-const tabs = [
+const tabs = computed(() => [
   ['overview', '分析概览', 'graph'], ['assets', '资产清单', 'file'],
   ['findings', '发现明细', 'code'], ['migration', '迁移待办', 'list'],
-];
-const originLabel = computed(() => tabs.find(([value]) => value === props.origin?.tab)?.[1]);
+  ['ai', 'AI 分析', 'scan'],
+].filter(([value]) => props.result || ['overview', 'ai'].includes(value)));
+const originLabel = computed(() => tabs.value.find(([value]) => value === props.origin?.tab)?.[1]);
 const hasFilters = computed(() => ['assets', 'findings'].includes(props.tab) && Object.values(props.filters).some(Boolean));
 const context = computed(() => {
   if (props.announcement) return props.announcement.replace(/^发现明细 · /, '');
@@ -24,9 +25,9 @@ const context = computed(() => {
 function tabKeys(event, index) {
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
   event.preventDefault();
-  const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
-    (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-  emit('select-tab', tabs[next][0]);
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.value.length - 1 :
+    (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.value.length) % tabs.value.length;
+  emit('select-tab', tabs.value[next][0]);
   event.currentTarget.parentElement.children[next].focus();
 }
 </script>
@@ -35,9 +36,9 @@ function tabKeys(event, index) {
     <div class="result-heading">
       <div>
         <h2>密码资产与迁移分析</h2>
-        <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
+        <p v-if="result" class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
       </div>
-      <ExportMenu :result="result" />
+      <ExportMenu v-if="result" :result="result" />
     </div>
     <div class="result-tabs" role="tablist" aria-label="分析视图">
       <button v-for="([value, label, icon], index) in tabs" :id="`tab-${value}`" :key="value"

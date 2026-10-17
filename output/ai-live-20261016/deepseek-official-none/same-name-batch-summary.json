@@ -1,0 +1,18 @@
+{
+  "state": "succeeded",
+  "seconds": 6.13,
+  "task_id": "43b75abd4f394562a82306535e0e6637",
+  "source_ids": 2,
+  "ai_coverage": {
+    "planned": 6,
+    "completed": 6,
+    "calls": 2,
+    "partial": false
+  },
+  "usage": {
+    "prompt_tokens": 1754,
+    "completion_tokens": 1069,
+    "total_tokens": 2823
+  },
+  "static_unchanged": true
+}

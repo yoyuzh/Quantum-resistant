@@ -14,11 +14,9 @@ defineProps({ state: Object, mode: String });
       :has-result="!!state.result"
       :progress="state.progress"
     />
-    <Transition v-else name="content" appear>
-      <ScanResults v-if="state.result" :result="state.result" />
+    <ScanResults v-show="!state.busy" :key="mode" :result="state.result" :mode="mode">
       <div
-        v-else
-        class="panel-body stack welcome-body"
+        class="stack welcome-body"
         role="region"
         tabindex="0"
         aria-label="扫描指引与迁移知识"
@@ -37,7 +35,7 @@ defineProps({ state: Object, mode: String });
         </div>
         <KnowledgePanel />
       </div>
-    </Transition>
+    </ScanResults>
   </section>
 </template>
 <style scoped>

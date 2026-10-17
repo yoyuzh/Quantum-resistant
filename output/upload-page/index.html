@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>上传文件 · Q-SCAN</title>
+  <style>
+    :root { --paper: #f2f5f4; --white: #fff; --ink: #203b38; --muted: #657873; --line: #dae4df; --green: #087c71; --mint: #e4f0eb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: "PingFang SC", "Microsoft YaHei", sans-serif; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid #72b3a4; outline-offset: 5px; }
+    .topbar { height: 88px; display: flex; align-items: center; justify-content: space-between; padding: 0 6%; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark { width: 32px; height: 32px; border: 2px solid var(--green); border-radius: 50%; position: relative; }
+    .brand-mark::before { content: ""; position: absolute; inset: 7px; border: 2px solid var(--green); border-radius: 50%; }
+    .brand-mark::after { content: ""; position: absolute; width: 13px; height: 2px; background: var(--green); bottom: 0; right: -4px; transform: rotate(45deg); }
+    .brand-name { font: 700 22px "Avenir Next", Arial, sans-serif; letter-spacing: 2px; }
+    .brand-caption { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 2px; }
+    .top-note { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 9px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    main { max-width: 1160px; margin: 0 auto; padding: 62px 36px 40px; }
+    .intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 34px; }
+    .eyebrow { color: var(--green); font-size: 11px; letter-spacing: 2px; margin: 0 0 13px; font-family: "SFMono-Regular", Consolas, monospace; }
+    h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 600; letter-spacing: -1.5px; margin: 0 0 15px; }
+    .description { font-size: 14px; color: var(--muted); line-height: 1.8; margin: 0; }
+    .step { color: var(--muted); font-size: 12px; padding-bottom: 5px; white-space: nowrap; }
+    .step strong { color: var(--green); font-weight: 500; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 288px; border: 1px solid var(--line); border-radius: 22px; background: var(--white); overflow: hidden; box-shadow: 0 18px 60px #203b3805; }
+    .upload-panel { padding: 30px; }
+    .panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 23px; gap: 12px; }
+    h2 { font-size: 16px; margin: 0; font-weight: 600; }
+    .tag { background: var(--paper); border: 1px solid var(--line); padding: 5px 9px; border-radius: 6px; font-size: 10px; color: var(--muted); }
+    .dropzone { min-height: 354px; border: 1px dashed #a8c4b8; border-radius: 13px; background: #f8fbf9; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 35px 20px; text-align: center; }
+    .file-art { width: 150px; height: 105px; position: relative; margin-bottom: 20px; }
+    .sheet { position: absolute; width: 68px; height: 88px; border: 1px solid #b8cfc3; border-radius: 7px; background: #fff; top: 3px; left: 42px; box-shadow: 0 5px 10px #234b3b08; }
+    .sheet.back { transform: rotate(-17deg); left: 23px; top: 7px; background: #e1ede6; }
+    .sheet.middle { transform: rotate(14deg); left: 62px; top: 7px; background: #eef5f0; }
+    .sheet.front { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; }
+    .code { font: 500 25px Consolas, monospace; color: var(--green); }
+    .file-lines { width: 30px; height: 9px; border-top: 2px solid #c6d8cf; border-bottom: 2px solid #c6d8cf; }
+    .upload-arrow { position: absolute; bottom: 0; right: 19px; width: 33px; height: 33px; border: 4px solid #f8fbf9; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 19px; }
+    .dropzone h3 { margin: 0 0 9px; font-size: 21px; font-weight: 500; letter-spacing: -.5px; }
+    .dropzone p { font-size: 12px; color: var(--muted); margin: 0 0 22px; }
+    .choose { border: 0; background: var(--green); color: #fff; padding: 12px 25px; border-radius: 8px; font-size: 13px; display: inline-flex; gap: 14px; align-items: center; cursor: default; box-shadow: 0 4px 9px #087c7114; }
+    .choose:hover { background: #06695f; }
+    .formats { margin-top: 16px; display: flex; gap: 9px; font: 10px "SFMono-Regular", Consolas, monospace; color: var(--muted); }
+    .formats span { padding: 3px 6px; background: #edf3ef; border-radius: 3px; }
+    .upload-footer { margin-top: 20px; display: flex; justify-content: space-between; gap: 16px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .upload-footer .label { color: var(--ink); }
+    aside { background: #f6f9f7; padding: 32px 27px; border-left: 1px solid var(--line); }
+    aside h2 { margin-bottom: 26px; }
+    .guide { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+    .guide:last-of-type { margin-bottom: 0; padding-bottom: 0; border: 0; }
+    .guide-title { display: flex; gap: 10px; align-items: center; font-size: 13px; font-weight: 500; margin: 0 0 10px; }
+    .guide svg { width: 17px; height: 17px; stroke: var(--green); fill: none; stroke-width: 1.5; flex: none; }
+    .guide p { color: var(--muted); font-size: 12px; line-height: 1.9; margin: 0; }
+    .aside-note { margin-top: 33px; padding: 13px; border-radius: 8px; background: var(--mint); color: #48675b; font-size: 11px; line-height: 1.8; }
+    .below { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 34px; padding: 31px 5px 0; }
+    .benefit { display: flex; gap: 13px; align-items: flex-start; }
+    .benefit-icon { color: var(--green); font-size: 17px; width: 25px; height: 25px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; }
+    .benefit h3 { font-size: 12px; font-weight: 500; margin: 1px 0 6px; }
+    .benefit p { font-size: 11px; color: var(--muted); line-height: 1.7; margin: 0; }
+    footer { max-width: 1088px; margin: 36px auto 0; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 15px; font-size: 10px; letter-spacing: .5px; color: var(--muted); }
+    @media (max-width: 850px) { main { padding-top: 40px; } .workspace { grid-template-columns: minmax(0, 1fr) 240px; } aside { padding: 30px 20px; } .upload-panel { padding: 24px; } .below { gap: 20px; } .step { display: none; } }
+    @media (max-width: 640px) { .topbar { height: 75px; padding: 0 23px; } .top-note { font-size: 10px; } .brand-name { font-size: 18px; } .brand-caption { font-size: 9px; } main { padding: 34px 18px 25px; } h1 { letter-spacing: -1px; } .description { font-size: 12px; } .workspace { grid-template-columns: 1fr; border-radius: 16px; } .upload-panel { padding: 20px; } .dropzone { min-height: 325px; } .dropzone h3 { font-size: 18px; } .upload-footer { flex-direction: column; gap: 5px; } aside { border-left: 0; border-top: 1px solid var(--line); padding: 24px; } aside h2 { margin-bottom: 20px; } .guide { margin-bottom: 18px; padding-bottom: 18px; } .aside-note { margin-top: 22px; } .below { grid-template-columns: 1fr; gap: 20px; padding: 26px 8px 0; } footer { margin-top: 27px; font-size: 9px; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><div class="brand-name">Q-SCAN</div><div class="brand-caption">抗量子密码识别</div></div></div>
+    <div class="top-note"><span class="status-dot" aria-hidden="true"></span>源码扫描工作台</div>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div><p class="eyebrow">SOURCE CODE / FILE UPLOAD</p><h1 id="page-title">从一份源码开始。</h1><p class="description">上传项目文件，发现密码算法的使用位置，为抗量子迁移做好准备。</p></div>
+      <div class="step"><strong>上传源码</strong> <span aria-hidden="true">／</span> 查看扫描结果</div>
+    </section>
+    <div class="workspace">
+      <section class="upload-panel" aria-labelledby="upload-title">
+        <div class="panel-heading"><h2 id="upload-title">上传文件</h2><span class="tag">本地文件</span></div>
+        <div class="dropzone">
+          <div class="file-art" aria-hidden="true"><div class="sheet back"></div><div class="sheet middle"></div><div class="sheet front"><span class="code">&lt;/&gt;</span><span class="file-lines"></span></div><span class="upload-arrow">↑</span></div>
+          <h3>把需要检查的源码放在这里</h3>
+          <p>拖放文件至此，或从电脑中选择</p>
+          <button class="choose" type="button" aria-describedby="preview-note">选择文件 <span aria-hidden="true">＋</span></button>
+          <div class="formats" aria-label="文件格式示例"><span>.py</span><span>.js</span><span>.java</span><span>.zip</span></div>
+        </div>
+        <div class="upload-footer"><span><span class="label">支持多文件</span> · 单个源码文件不超过 2 MiB</span><span>源码文本总量不超过 100 MiB</span></div>
+      </section>
+      <aside aria-labelledby="guide-title">
+        <h2 id="guide-title">上传前，了解这些</h2>
+        <div class="guide"><h3 class="guide-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h4"/></svg>源码文件与归档</h3><p>可准备单个源码文件，也可以把整个项目打包为 ZIP。</p></div>
+        <div class="guide"><h3 class="guide-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM8 7V4h8v3M8 12h8M8 16h5"/></svg>保留项目结构</h3><p>归档中保留原始目录，方便在结果中找到对应文件。</p></div>
+        <div class="guide"><h3 class="guide-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6zM8 12l3 3 5-6"/></svg>检查文件内容</h3><p>使用 UTF-8 编码。上传前移除密钥、凭据等敏感内容。</p></div>
+        <div class="aside-note">准备好源码后，即可定位密码算法调用与相关配置。</div>
+      </aside>
+    </div>
+    <section class="below" aria-label="扫描内容">
+      <div class="benefit"><span class="benefit-icon" aria-hidden="true">⌕</span><div><h3>定位算法使用</h3><p>从源码中识别密码算法调用及配置。</p></div></div>
+      <div class="benefit"><span class="benefit-icon" aria-hidden="true">↗</span><div><h3>了解迁移方向</h3><p>结合算法参考资料，查看替代建议。</p></div></div>
+      <div class="benefit"><span class="benefit-icon" aria-hidden="true">≡</span><div><h3>回到具体代码</h3><p>按文件与行号，逐项查看扫描发现。</p></div></div>
+    </section>
+    <footer><span>Q-SCAN · 抗量子迁移静态扫描</span><span id="preview-note">页面设计预览 · 上传未接入</span></footer>
+  </main>
+</body>
+</html>

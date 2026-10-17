@@ -1,0 +1,133 @@
+{
+  "target_origin": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "budgets": {
+    "preview_files": 20,
+    "preview_candidates": 40,
+    "context_bytes": 131072,
+    "candidate_bytes": 8192,
+    "search_files": 200,
+    "search_bytes": 8388608,
+    "prepare_seconds": 30,
+    "batch_candidates": 5,
+    "request_bytes": 32768,
+    "max_calls": 8,
+    "task_seconds": 120,
+    "request_seconds": 30,
+    "response_bytes": 262144,
+    "output_tokens": 2048,
+    "model_concurrency": 1
+  },
+  "cases": [
+    {
+      "case": "rsa",
+      "task_id": "8586fdf73bae4b7ab6f61a3fb25a61ae",
+      "state": "succeeded",
+      "seconds": 3.62,
+      "candidates": 2,
+      "opinions": 2,
+      "opinion_kinds": {
+        "supports_static": 1,
+        "new_candidate": 1
+      },
+      "citation_statuses": {
+        "valid": 2
+      },
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 2,
+        "calls": 1,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": 745,
+        "completion_tokens": 424,
+        "total_tokens": 1169
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "independent_wrapper",
+      "task_id": "dae35f48f1964137b958c431303d9881",
+      "state": "succeeded",
+      "seconds": 3.59,
+      "candidates": 2,
+      "opinions": 2,
+      "opinion_kinds": {
+        "abstain": 2
+      },
+      "citation_statuses": {
+        "valid": 2
+      },
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 2,
+        "calls": 1,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": 711,
+        "completion_tokens": 415,
+        "total_tokens": 1126
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "redaction_injection",
+      "task_id": "6e3929c3d05f410eb06be9c39066668e",
+      "state": "succeeded",
+      "seconds": 3.61,
+      "candidates": 2,
+      "opinions": 2,
+      "opinion_kinds": {
+        "supports_static": 1,
+        "abstain": 1
+      },
+      "citation_statuses": {
+        "valid": 2
+      },
+      "ai_coverage": {
+        "planned": 2,
+        "completed": 2,
+        "calls": 1,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": 841,
+        "completion_tokens": 446,
+        "total_tokens": 1287
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    },
+    {
+      "case": "non_crypto",
+      "task_id": "a01846381d764ac68ff2ff52266a5194",
+      "state": "succeeded",
+      "seconds": 0.56,
+      "candidates": 0,
+      "opinions": 0,
+      "opinion_kinds": {},
+      "citation_statuses": {},
+      "ai_coverage": {
+        "planned": 0,
+        "completed": 0,
+        "calls": 0,
+        "partial": false
+      },
+      "usage": {
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null
+      },
+      "diagnostics": [],
+      "static_unchanged": true,
+      "idempotent": true
+    }
+  ]
+}
