@@ -4,6 +4,7 @@ import ScanLoading from './ScanLoading.vue';
 import ScanResults from './ScanResults.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
 defineProps({ state: Object, mode: String });
+defineEmits(['deep-view']);
 </script>
 <template>
   <section class="panel results" aria-label="扫描结果区域" :aria-busy="state.busy">
@@ -14,9 +15,11 @@ defineProps({ state: Object, mode: String });
       :has-result="!!state.result"
       :progress="state.progress"
     />
-    <ScanResults v-show="!state.busy" :key="mode" :result="state.result" :mode="mode">
+    <Transition v-else name="content" appear>
+      <ScanResults v-if="state.result" :result="state.result" :mode="mode" @deep-view="$emit('deep-view', $event)" />
       <div
-        class="stack welcome-body"
+        v-else
+        class="panel-body stack welcome-body"
         role="region"
         tabindex="0"
         aria-label="扫描指引与迁移知识"
@@ -35,7 +38,7 @@ defineProps({ state: Object, mode: String });
         </div>
         <KnowledgePanel />
       </div>
-    </ScanResults>
+    </Transition>
   </section>
 </template>
 <style scoped>

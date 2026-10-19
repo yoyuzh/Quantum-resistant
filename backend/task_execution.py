@@ -8,7 +8,7 @@ from backend.scanning import build_scan_response
 from backend.popular import batch_incomplete
 
 
-def remote_work(kind, value, budget, *, collector):
+def remote_work(kind, value, budget, *, collector, analysis_mode='basic'):
     source_type = 'github_repository' if kind == 'github' else 'pypi_package'
     pipeline = ScanPipeline(budget, source_type)
     try:
@@ -20,12 +20,14 @@ def remote_work(kind, value, budget, *, collector):
             docs = CollectedSources(pipeline.documents, partial=True, diagnostics=[{'code': 'collection_interrupted', 'message': str(exc)}])
         if not docs:
             raise CollectionError('未找到可扫描的文本文件')
-        return build_scan_response(docs, source_type, deadline=budget).model_dump()
+        from backend.deep_work import complete_scan
+        result = build_scan_response(docs, source_type, deadline=budget).model_dump()
+        return complete_scan(result, pipeline.documents, budget, analysis_mode)
     finally:
         pipeline.finish()
 
 
-def local_work(documents, source_type, budget):
+def local_work(documents, source_type, budget, *, analysis_mode='basic', relative_paths=None):
     pipeline = ScanPipeline(budget, source_type)
     budget.control.emit(stage='读取与分析', candidate_files=len(documents), analysis_total=len(documents), totals_final=True)
     accepted = []
@@ -45,7 +47,9 @@ def local_work(documents, source_type, budget):
                 break
         docs = CollectedSources(accepted, candidates=len(documents), skipped=len(documents) - len(accepted), partial=len(accepted) < len(documents),
                                 skip_reasons={failure_reason: len(documents) - len(accepted)} if len(accepted) < len(documents) else {}, diagnostics=diagnostics)
-        return build_scan_response(docs, source_type, deadline=budget).model_dump()
+        from backend.deep_work import complete_scan
+        result = build_scan_response(docs, source_type, deadline=budget).model_dump()
+        return complete_scan(result, pipeline.documents, budget, analysis_mode, relative_paths=relative_paths)
     finally:
         pipeline.finish()
 

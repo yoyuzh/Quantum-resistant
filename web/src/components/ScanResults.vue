@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import DeepWorkspace from './DeepWorkspace.vue';
 import { useResultSelection } from '../composables/useResultSelection.js';
 import { useSourceContent } from '../composables/useSourceContent.js';
 import CoverageNotice from './CoverageNotice.vue';
@@ -13,6 +14,7 @@ import AssetInventory from './AssetInventory.vue';
 import MigrationChecklist from './MigrationChecklist.vue';
 import AiAnalysisPanel from './AiAnalysisPanel.vue';
 const props = defineProps({ result: Object, mode: String });
+const emit = defineEmits(['deep-view']);
 const emptyResult = { findings: [], sources: [] };
 const result = computed(() => props.result || emptyResult);
 const loadSource = useSourceContent(result);
@@ -20,6 +22,7 @@ const body = ref(null);
 const header = ref(null);
 const { tab, filters, findings, assetFindings, selectedKey, visited, origin, announcement,
   reset, select, reveal, back, switchTab, updateFilters, keepFocusVisible } = useResultSelection(result, { body, header });
+watch(tab, value => emit('deep-view', value === 'deep'), { immediate: true });
 </script>
 <template>
   <div class="result-layout">
@@ -30,23 +33,26 @@ const { tab, filters, findings, assetFindings, selectedKey, visited, origin, ann
     </div>
     <div id="result-panel" ref="body" class="panel-body stack" role="tabpanel" tabindex="0"
       :aria-labelledby="`tab-${tab}`" @focusin="keepFocusVisible">
+      <DeepWorkspace v-if="visited.has('deep')" v-show="tab === 'deep'" :result="result" :mode="mode" />
+      <template v-if="tab !== 'deep'">
       <slot v-if="!props.result && tab !== 'ai'" />
       <ScanSummary v-if="props.result && tab !== 'ai'" :summary="result.summary" :compact="tab !== 'overview'" />
       <CoverageNotice v-if="props.result && tab !== 'ai'" :coverage="result.coverage" :diagnostics="result.diagnostics" :compact="tab !== 'overview'" />
-      <AnalysisOverview v-if="props.result && visited.has('overview')" v-show="tab === 'overview'"
+      <AnalysisOverview v-if="visited.has('overview')" v-show="tab === 'overview'"
         class="result-view" :class="{ 'view-active': tab === 'overview' }" :result="result" @select="select" />
-      <AssetInventory v-if="props.result && visited.has('assets')" v-show="tab === 'assets'"
+      <AssetInventory v-if="visited.has('assets')" v-show="tab === 'assets'"
         class="result-view" :class="{ 'view-active': tab === 'assets' }"
         :analysis="result.analysis" :findings="assetFindings" @reveal="reveal" />
-      <FindingsList v-if="props.result && visited.has('findings')" v-show="tab === 'findings'"
+      <FindingsList v-if="visited.has('findings')" v-show="tab === 'findings'"
         class="result-view" :class="{ 'view-active': tab === 'findings' }"
         :findings="result.findings" :sources="result.sources" :filters="filters" :matching="findings"
         :selected-key="selectedKey" :load-source="loadSource" @update:filters="updateFilters" />
-      <MigrationChecklist v-if="props.result && visited.has('migration')" v-show="tab === 'migration'"
+      <MigrationChecklist v-if="visited.has('migration')" v-show="tab === 'migration'"
         class="result-view" :class="{ 'view-active': tab === 'migration' }" :analysis="result.analysis" @select="select" />
       <AiAnalysisPanel v-show="tab === 'ai'" :source-task-id="props.result?.task_id" :mode="mode" :active="tab === 'ai'" />
       <ResultHelp v-if="props.result && tab !== 'ai'" :score="result.summary.migration_score" />
       <KnowledgePanel v-if="tab === 'migration'" />
+      </template>
     </div>
   </div>
 </template>

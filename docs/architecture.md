@@ -107,6 +107,12 @@ AI 与扫描共用2执行/4排队及2GiB临时存储。零候选成功并说明�
 
 ## 后台任务接口与生命周期
 
+路径上传 `POST /api/tasks/files-with-paths` 复用流式multipart、共享预留/暂存和原任务查询；manifest将source_id与规范相对路径/文本摘要绑定，模式参与幂等。协议、422/409/413、包根和快照/AST结构索引见[来源与索引说明](python-deep-inputs.md)。`deep_analysis.engine` 提供按上下文隔离的有界传播，`pipeline.analyze_crypto` 使用三库明确规则及独立AST见证核验，详见[参数语义](python-deep-semantics.md)和[密码规则/证据](python-deep-evidence.md)。内部候选不能直接作为已证明操作。
+
+四类后台输入已接入可选 `analysis_mode=basic|deep`，默认basic；同步/热门/CLI不自动deep。基础结果先原子保存，deep最多120秒且不超过普通600秒剩余，CPU等待/队列计入绝对预算。`POST /api/tasks/deep-analysis` 在共享队列复用已结束来源，不重采集或重扫；排队期间不固定旧TTL，实际快照读者退出后释放原来源，选中副本计新任务正常暂存。普通来源后新deep任务总计最多120秒。
+
+deep直接复用任务线程与全局CPU2，标准AST adapter合作退出，无新执行池。200文件/8MiB的读取前选择、主语义/复验索引/证据共享结构余额与实际用量公开；只提交完整核验操作检查点，失败/取消有基础结果则外层partial，迟到回调不改终态。basic/deep共用900秒/8份/512MiB和2GiB，实际读者保护来源与延迟清理。`GET /api/tasks/{id}/deep-analysis/export` 仅从服务端结果生成deep-static-1白名单；源码过期/改变明确不可复验，不输出完整源码/密钥/宿主路径。协议、状态、计量及单次AST不可抢占边界见[后台任务说明](python-deep-workflow.md)。网页deep入口仍待第7组实施。
+
 - `POST /api/tasks/github`、`/pypi`、`/popular`、`/snippet` 使用对应原请求模型，`/files`使用multipart。要求 `X-Request-ID`（16–64位字母、数字、短横线或下划线；网页生成UUID）。返回202和状态快照。同标识与同输入在保留期内返回同一任务；输入冲突409，队列满429。上传指纹包括文件顺序、规范化名称和内容摘要；片段任务只保存名称与摘要。
 - `GET /api/tasks/{id}` 保留原状态字段，增加candidate_files、processed_files、skipped_files、analysis_total、totals_final、download_bytes、download_total和repositories。并发仓库按scope独立记录阶段，不能覆盖全局阶段。阶段与计数来自实际回调，总数未知时不显示百分比；候选处理数包括已确认跳过项，分析数只计完整完成文件。
 - `GET /api/tasks/{id}/result` 默认返回原完整ScanResponse或热门响应；网页使用 `include_content=false`，sources.content为空字符串、content_available标记是否可读。`GET /api/tasks/{id}/sources/{source_id}` 按需返回source_id/content。未结束或无结果409，过期/重启404。读取时临时固定任务，文件读取和JSON解码不持有状态锁；报告提交只带文件元数据，不回传源码。

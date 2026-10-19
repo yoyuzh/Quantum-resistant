@@ -9,7 +9,7 @@ const props = defineProps({ result: Object, tab: String, filters: Object, origin
 const emit = defineEmits(['select-tab', 'back', 'reset']);
 const tabs = computed(() => [
   ['overview', '分析概览', 'graph'], ['assets', '资产清单', 'file'],
-  ['findings', '发现明细', 'code'], ['migration', '迁移待办', 'list'],
+  ['findings', '发现明细', 'code'], ['deep', '深度分析', 'code'], ['migration', '迁移待办', 'list'],
   ['ai', 'AI 分析', 'scan'],
 ].filter(([value]) => props.result || ['overview', 'ai'].includes(value)));
 const originLabel = computed(() => tabs.value.find(([value]) => value === props.origin?.tab)?.[1]);
@@ -36,9 +36,9 @@ function tabKeys(event, index) {
     <div class="result-heading">
       <div>
         <h2>密码资产与迁移分析</h2>
-        <p v-if="result" class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
+        <p class="small muted">{{ formatTime(result.scanned_at) }} · 北京时间</p>
       </div>
-      <ExportMenu v-if="result" :result="result" />
+      <ExportMenu :result="result" />
     </div>
     <div class="result-tabs" role="tablist" aria-label="分析视图">
       <button v-for="([value, label, icon], index) in tabs" :id="`tab-${value}`" :key="value"

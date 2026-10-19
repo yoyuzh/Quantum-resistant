@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from './AppIcon.vue';
+import { version as appVersion } from '../../../desktop/package.json';
 const overlay = ['win32', 'linux'].includes(window.quantumDesktop?.platform);
 defineProps({ theme: String });
 defineEmits(['toggle-theme']);
@@ -9,8 +10,9 @@ defineEmits(['toggle-theme']);
   <header class="app-header" :class="{ 'desktop-overlay': overlay }">
     <div class="brand">
       <span class="brand-mark"><AppIcon name="shield" :size="overlay ? 18 : 26" /></span>
-      <h1>抗量子密码风险检测与迁移辅助软件</h1>
+      <h1>抗量子密码风险检测与迁移辅助软件 <small>V{{ appVersion }}</small></h1>
     </div>
+    <div class="header-navigation"><slot /></div>
     <div class="header-actions">
     <button
       class="button secondary"
@@ -26,6 +28,7 @@ defineEmits(['toggle-theme']);
 
 <style scoped>
 .app-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -34,6 +37,9 @@ defineEmits(['toggle-theme']);
   background: var(--bg-surface);
   box-shadow: var(--shadow-card);
 }
+.header-navigation { min-width: 0; }
+h1 small { font-size: .75rem; font-weight: 400; color: var(--text-secondary); white-space: nowrap; }
+@media (max-width: 1199px) { .app-header { flex-wrap: wrap; } .header-navigation { order: 3; width: 100%; } }
 .brand {
   min-width: 0;
   display: flex;
@@ -94,6 +100,8 @@ h1 {
   .app-header {
     padding: 0.85rem 1rem;
   }
+  .brand { flex: 1; }
+  .app-header { gap: .5rem; }
   .brand-mark {
     display: none;
   }

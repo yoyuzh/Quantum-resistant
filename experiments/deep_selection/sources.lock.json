@@ -1,0 +1,380 @@
+[
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/SSA/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/SSA/__init__.py",
+    "sha256": "3fd4e5dc59076092ab6aa84553b3276d3f3677facc5c4e958b81abc4a7c7583c",
+    "size": 781
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/SSA/alg.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/SSA/alg.py",
+    "sha256": "46b2c915705da82e7e929b34f66936f053576e9f044ab98e0955e35f83e79c57",
+    "size": 3917
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/SSA/const.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/SSA/const.py",
+    "sha256": "868ad725a66393d8dd480940be3e00678486b1eb8b29294ac5388f8e6dd36ea2",
+    "size": 16485
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/SSA/def_use.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/SSA/def_use.py",
+    "sha256": "dc9b15c866a1c979b2c9ce5406fa51292c7a3efc50c54398bd0ee9c7c801a308",
+    "size": 407
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/SSA/ssa.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/SSA/ssa.py",
+    "sha256": "f64983a09a1bf9d70435f1db9bf8d51b9055dbf6e21b8a603ef77f9719a5847c",
+    "size": 19377
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/__init__.py",
+    "sha256": "16971d4aa7d6b908d47e77f89e073f8339987fbb7eeca7349b7e5eeec154cf41",
+    "size": 717
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/call_graph/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/call_graph/__init__.py",
+    "sha256": "2962e876b649030d1ebf83db993a0875ce925e66e74d76a431af6a6c89207f6c",
+    "size": 550
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/call_graph/pycg.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/call_graph/pycg.py",
+    "sha256": "d5d6738e4b617f7a88ed66e1408cc5a7a2a0d3c2d4c0b5b7c5d04b7caa5de28a",
+    "size": 1001
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/cfg/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/cfg/__init__.py",
+    "sha256": "eb662038b67efd9d02e7360e935c2e4dcb3f0e8dfb7c6364e06735201653dfd1",
+    "size": 767
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/cfg/builder.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/cfg/builder.py",
+    "sha256": "443fd313db4f6df32eee39dbee7727d015f74bae192799aa54e088dfd3220809",
+    "size": 27068
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/cfg/model.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/cfg/model.py",
+    "sha256": "9e76afa386d4b9d467c5360d6240988eb0f30bbe8eb83121c25713feedb567f3",
+    "size": 12611
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/__init__.py",
+    "sha256": "36490225683f94b1ebc200953784922282b7f8bb223f1c285c9804ad7363150f",
+    "size": 558
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/_scope_graph.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/_scope_graph.py",
+    "sha256": "005efdd0ea950b2ab4ea72dcbd2552682a5444be57bb79c381aa1016148ae05e",
+    "size": 7423
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/scalpel_class.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/scalpel_class.py",
+    "sha256": "c011ea87cb06119520f0406904f812e46727d45751c15dc2b13f1146cd0da6cd",
+    "size": 413
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/scalpel_method.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/scalpel_method.py",
+    "sha256": "7f5636d3af72fc3aaf88e85efe22f6ceea0070c881c6084073b4955c94dc1f37",
+    "size": 348
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/scalpel_module.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/scalpel_module.py",
+    "sha256": "c1724b68482ea349b8ed83308d77083fc48321246749a6e5575fc45073694795",
+    "size": 371
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/stmt/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/stmt/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/stmt/assign_stmt.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/stmt/assign_stmt.py",
+    "sha256": "67dcd7819217010e4e58ad0dad021857e81dc579196fc83bee7ca11c4a9d6ddb",
+    "size": 212
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/stmt/invoke_stmt.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/stmt/invoke_stmt.py",
+    "sha256": "97c3c23ee21138fee35fe9a350f40dcb90691320102d4f3698cc21602da1ea7e",
+    "size": 388
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/base/stmt/stmt.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/base/stmt/stmt.py",
+    "sha256": "df6051e30bea16eb4459f7e3bf7f7c60fa92a597174ae0d8c6b14b5579f11d6e",
+    "size": 5647
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/class_visitor.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/class_visitor.py",
+    "sha256": "6448910f5a404af856c4d34cc6b6dc27dfe99de6c940fdb241dfea0e1236568b",
+    "size": 619
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/fun_def_visitor.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/fun_def_visitor.py",
+    "sha256": "66b6cdc4e7c772e850c45f741f15376c9531be507a7b72211642cc51da9e37db",
+    "size": 379
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/func_call_visitor.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/func_call_visitor.py",
+    "sha256": "647694f171f5ac982aee483de0a3fb32fc3963537a8be34d6ed0f94730048472",
+    "size": 7127
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/kw_visitor.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/kw_visitor.py",
+    "sha256": "1fcc641eb73ff05a04a6fbe0a513f59638a76d16fd7619cd4bdf978fb40c8984",
+    "size": 250
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/mnode.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/mnode.py",
+    "sha256": "10115f90fc7f79e801d9a599942314ee0026f94554a6f0315887f376b1814783",
+    "size": 11198
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/source_visitor.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/source_visitor.py",
+    "sha256": "bcb4dcf170e474217e504dc4e30674eca3654ff016db8961d668d7c25d9a2bd1",
+    "size": 1044
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/util.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/util.py",
+    "sha256": "345a71231f29c37b56af6707664d068ea09b3dd79f8807bfc31ba8f0635a0270",
+    "size": 6141
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/vars_visitor.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/vars_visitor.py",
+    "sha256": "55f4d96c4826726e484b1b9c50f4452b93625447045f068a5a917b65726971f1",
+    "size": 5666
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/core/visitors.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/core/visitors.py",
+    "sha256": "c670dff94e5749b5b531c4ba6ba532c2cc0e90a6df0703392fd38acf7907be5c",
+    "size": 19614
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/duc.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/duc.py",
+    "sha256": "fc6ac0b033a1f4d3b90bc8f6a998147c3edfaaa54590d4a306c47a538825ebac",
+    "size": 11925
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/file_system.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/file_system.py",
+    "sha256": "0bb85348e9b7967664d2cf93326ce25e7dd5c9102789940acc5d5c5516357109",
+    "size": 6849
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/fqn/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/fqn/__init__.py",
+    "sha256": "d6bb1c668294126039d49a809002ccfd316139797e5df5fa08a936b32481a148",
+    "size": 72
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/fqn/fully_qualified_name_inference.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/fqn/fully_qualified_name_inference.py",
+    "sha256": "6487393ba4b4fbb47ffe47b1db9e31d863279a3a7522e5042c2a280bff12239a",
+    "size": 6829
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/import_graph/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/import_graph/__init__.py",
+    "sha256": "f6e588a6ae3ce25b000155c2b3a16909c535f68b17ab9929798b26e4b209e7b6",
+    "size": 507
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/import_graph/import_graph.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/import_graph/import_graph.py",
+    "sha256": "46f5a3362e9b419aaf0248365466d14f1204acad01f29df1a358842e716b0b50",
+    "size": 7962
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/rewriter.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/rewriter.py",
+    "sha256": "c165ac1623f4e64612603fecc0f30e2c3e5fb2b1de0a6ce58f6423740f62fc6d",
+    "size": 13715
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/typeinfer/__init__.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/typeinfer/__init__.py",
+    "sha256": "57efcd44a95f2c4e161950d2d7bd5a9238a902aba1cd5ab1812e4e9200502c36",
+    "size": 354
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/typeinfer/analysers.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/typeinfer/analysers.py",
+    "sha256": "a9f09c54067411aa64a13bc5ae28536f85c7e87311f686a3774986c07d31d50c",
+    "size": 53307
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/typeinfer/classes.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/typeinfer/classes.py",
+    "sha256": "0063f9b668d31cb611dfd0477f7696945a7870326321f67ca3ac858cffb62725",
+    "size": 2934
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/typeinfer/folding.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/typeinfer/folding.py",
+    "sha256": "4e152041436f3e0d9663c594ae96f7c75c243995cf010add16f370cd6533cbb7",
+    "size": 2836
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/typeinfer/typeinfer.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/typeinfer/typeinfer.py",
+    "sha256": "64b814df3db2ec8c461e28c11420958c561d52752baa4b0711258ad6ca79f740",
+    "size": 25855
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/typeinfer/utilities.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/typeinfer/utilities.py",
+    "sha256": "a8145ac22f5754af4a79d4f75a019fb169a7f5267837a82e70f6bad2eb35301c",
+    "size": 15397
+  },
+  {
+    "tool": "scalpel",
+    "path": "src/scalpel/util.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/src/scalpel/util.py",
+    "sha256": "fac92b97cc0f36c375f1912ff69e588f00b8f14b71e75d37ca8cbead28a904b4",
+    "size": 908
+  },
+  {
+    "tool": "scalpel",
+    "path": "tests/test_cfg.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/tests/test_cfg.py",
+    "sha256": "282833a5f4394da0afbbf628c2a2f1a21963a0b1bf4b08defe14430c2e00bdfc",
+    "size": 3143
+  },
+  {
+    "tool": "scalpel",
+    "path": "tests/test_constant_prop.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/tests/test_constant_prop.py",
+    "sha256": "d00d2ab43bbb89f6bf45e2ed659d3e7cb4609b9330dc6703dab36d79a78937ef",
+    "size": 2750
+  },
+  {
+    "tool": "scalpel",
+    "path": "tests/test_duc.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/tests/test_duc.py",
+    "sha256": "78877733dae0e8099240b2cf9819822451ebedef5d139c47b8888f6953492230",
+    "size": 9678
+  },
+  {
+    "tool": "scalpel",
+    "path": "tests/test_ssa.py",
+    "url": "https://raw.githubusercontent.com/SMAT-Lab/Scalpel/dd48ba0cb1d4b252439849856caee8d878b6206e/tests/test_ssa.py",
+    "sha256": "a484134cb16483b32a7d4f37888688852194f1e223b7fd709b3864eff5e842e9",
+    "size": 3939
+  },
+  {
+    "tool": "codegraph",
+    "path": "codegraph/__init__.py",
+    "url": "https://raw.githubusercontent.com/xnuinside/codegraph/effefc709e73e1eedbbfcb850146ed603ce257ec/codegraph/__init__.py",
+    "sha256": "329013e6180da079d3b46d57443fc657f03b42b1d553abc98c64b0ffca8c180e",
+    "size": 22
+  },
+  {
+    "tool": "codegraph",
+    "path": "codegraph/core.py",
+    "url": "https://raw.githubusercontent.com/xnuinside/codegraph/effefc709e73e1eedbbfcb850146ed603ce257ec/codegraph/core.py",
+    "sha256": "327bd8e1fb969bacc14b894bcaa2a7091d3a4bc028da182f7fc3f471e5614665",
+    "size": 15192
+  },
+  {
+    "tool": "codegraph",
+    "path": "codegraph/main.py",
+    "url": "https://raw.githubusercontent.com/xnuinside/codegraph/effefc709e73e1eedbbfcb850146ed603ce257ec/codegraph/main.py",
+    "sha256": "1b113b35407b6064960ff5515b421deba42eac69f4a62789d6cae3235a5e8674",
+    "size": 2830
+  },
+  {
+    "tool": "codegraph",
+    "path": "codegraph/parser.py",
+    "url": "https://raw.githubusercontent.com/xnuinside/codegraph/effefc709e73e1eedbbfcb850146ed603ce257ec/codegraph/parser.py",
+    "sha256": "690e46d8a0cb0c1ef1b32600b82a7cc808867fadcde8f1c7d604656bcc72e791",
+    "size": 10843
+  },
+  {
+    "tool": "codegraph",
+    "path": "codegraph/utils.py",
+    "url": "https://raw.githubusercontent.com/xnuinside/codegraph/effefc709e73e1eedbbfcb850146ed603ce257ec/codegraph/utils.py",
+    "sha256": "1d56ba6f8ce3d204222a06ab7d2a0a5a24f8157721f0a0517abfdee53a1c6170",
+    "size": 983
+  },
+  {
+    "tool": "codegraph",
+    "path": "codegraph/vizualyzer.py",
+    "url": "https://raw.githubusercontent.com/xnuinside/codegraph/effefc709e73e1eedbbfcb850146ed603ce257ec/codegraph/vizualyzer.py",
+    "sha256": "68008626b7ef38f7184dd34b3a05a1ff4491297e4477eebb8df8dab737f97003",
+    "size": 14693
+  }
+]

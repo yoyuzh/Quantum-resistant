@@ -1,6 +1,7 @@
 """Bounded producer/consumer analysis shared by remote and local scans."""
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from queue import Empty, Queue
 from threading import BoundedSemaphore, Condition, Thread
@@ -63,6 +64,12 @@ class ScanPipeline:
             elif control.storage:
                 path = control.storage.write_source(control.folder, data)
                 stored = StoredDocument(origin, name, path, source_id)
+            hashes = getattr(control, 'source_hashes', None)
+            if hashes is None:
+                hashes = control.source_hashes = {}
+            hashes[source_id] = hashlib.sha256(data).hexdigest()
+            if isinstance(stored, StoredDocument):
+                stored.expected_sha256 = hashes[source_id]
             self.documents.append(stored)
             self.published_ids.add(source_id)
             if not control.storage:

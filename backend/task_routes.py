@@ -5,7 +5,8 @@ import hashlib
 from typing import Annotated
 from fastapi import APIRouter, Header, Request, HTTPException
 
-from backend.models import GitHubScanRequest, PyPIScanRequest, PopularScanRequest, SnippetScanRequest
+from backend.models import PopularScanRequest
+from backend.deep_models import DeepGitHubRequest as GitHubScanRequest, DeepPyPIRequest as PyPIScanRequest, DeepSnippetRequest as SnippetScanRequest, ExistingDeepRequest
 from backend.upload_stream import read_upload
 from backend.uploads import normalize_filename
 from backend.collection_config import MAX_COLLECTED_FILE_BYTES
@@ -18,11 +19,18 @@ router = APIRouter(prefix='/api/tasks')
 RequestId = Annotated[str, Header(alias='X-Request-ID', min_length=16, max_length=64, pattern=r'^[A-Za-z0-9_-]+$')]
 
 
-def remote_work(kind, value, budget, *, collector=None):
+def mode_payload(payload):
+    value = payload.model_dump()
+    if value.get('analysis_mode') == 'basic':
+        value.pop('analysis_mode', None)
+    return value
+
+
+def remote_work(kind, value, budget, *, collector=None, analysis_mode='basic'):
     # Compatibility seams for callers and the offline fixture stay at the adapter.
     from backend import main
     collector = collector or (main.collect_github_sources if kind == 'github' else main.collect_pypi_sources)
-    return execute_remote(kind, value, budget, collector=collector)
+    return execute_remote(kind, value, budget, collector=collector, analysis_mode=analysis_mode)
 
 
 def popular_work(payload, budget):
@@ -33,12 +41,12 @@ def popular_work(payload, budget):
 
 @router.post('/github', status_code=202)
 def github(payload: GitHubScanRequest, request_id: RequestId):
-    return store.submit('github', payload.model_dump(), request_id, lambda budget: remote_work('github', payload.repository_url, budget))
+    return store.submit('github', mode_payload(payload), request_id, lambda budget: remote_work('github', payload.repository_url, budget, analysis_mode=payload.analysis_mode))
 
 
 @router.post('/pypi', status_code=202)
 def pypi(payload: PyPIScanRequest, request_id: RequestId):
-    return store.submit('pypi', payload.model_dump(), request_id, lambda budget: remote_work('pypi', payload.package_name, budget))
+    return store.submit('pypi', mode_payload(payload), request_id, lambda budget: remote_work('pypi', payload.package_name, budget, analysis_mode=payload.analysis_mode))
 
 
 @router.post('/snippet', status_code=202)
@@ -51,6 +59,11 @@ def snippet(payload: SnippetScanRequest, request_id: RequestId):
     # The job payload is a fingerprint, not another copy of the submitted code.
     name = normalize_filename(payload.filename)
     fingerprint = {'filename': name, 'digest': hashlib.sha256(data).hexdigest()}
+    if payload.analysis_mode == 'deep':
+        fingerprint['analysis_mode'] = 'deep'
+    replay = store.replay('snippet', fingerprint, request_id)
+    if replay:
+        return replay
     admission = store.reserve()
     folder = None
     from backend.temp_storage import StoredDocument
@@ -59,8 +72,31 @@ def snippet(payload: SnippetScanRequest, request_id: RequestId):
         folder = store.storage.folder()
         path = store.storage.write_source(folder, data)
         document = StoredDocument(None, name, path, make_source_id(f'0:{name}', payload.content))
-        result = store.submit('snippet', fingerprint, request_id, lambda budget: local_work([document], 'snippet', budget), folder=folder, admission=admission)
+        result = store.submit('snippet', fingerprint, request_id, lambda budget: local_work([document], 'snippet', budget, analysis_mode=payload.analysis_mode), folder=folder, admission=admission)
         return result
+    except RuntimeError as exc:
+        admission.release()
+        if folder:
+            store.storage.remove_folder(folder)
+        raise HTTPException(413, str(exc)) from exc
+    except BaseException:
+        admission.release()
+        if folder:
+            store.storage.remove_folder(folder)
+        raise
+
+
+@router.post('/files-with-paths', status_code=202)
+async def files_with_paths(request: Request, request_id: RequestId):
+    from backend.path_upload import read_path_upload
+    admission = store.reserve()
+    folder = None
+    try:
+        folder = store.storage.folder()
+        documents, fingerprint = await read_path_upload(request, store.storage, folder)
+        return store.submit('files-with-paths', fingerprint, request_id,
+                            lambda budget: local_work(documents, 'manual_upload', budget, analysis_mode=fingerprint['analysis_mode'], relative_paths=True),
+                            folder=folder, admission=admission)
     except RuntimeError as exc:
         admission.release()
         if folder:
@@ -79,8 +115,8 @@ async def files(request: Request, request_id: RequestId):
     folder = None
     try:
         folder = store.storage.folder()
-        documents, fingerprint = await read_upload(request, store.storage, folder)
-        result = store.submit('files', fingerprint, request_id, lambda budget: local_work(documents, 'manual_upload', budget), folder=folder, admission=admission)
+        documents, fingerprint = await read_upload(request, store.storage, folder, allow_mode=True)
+        result = store.submit('files', fingerprint, request_id, lambda budget: local_work(documents, 'manual_upload', budget, analysis_mode=fingerprint.get('analysis_mode', 'basic')), folder=folder, admission=admission)
         return result
     except RuntimeError as exc:
         admission.release()
@@ -98,6 +134,19 @@ async def files(request: Request, request_id: RequestId):
 def popular(payload: PopularScanRequest, request_id: RequestId):
     from backend.main import POPULAR_SCAN_LOCK
     return store.submit('popular', payload.model_dump(), request_id, lambda budget: popular_work(payload, budget), POPULAR_SCAN_LOCK)
+
+
+@router.post('/deep-analysis', status_code=202)
+def deep_analysis(payload: ExistingDeepRequest, request_id: RequestId):
+    from backend.deep_tasks import submit_existing
+    return submit_existing(store, payload.source_task_id, request_id)
+
+
+@router.get('/{identity}/deep-analysis/export')
+def deep_export(identity: str):
+    from backend.deep_tasks import export_result
+    from fastapi.responses import JSONResponse
+    return JSONResponse(export_result(store, identity), headers={'Content-Disposition': 'attachment; filename="deep-analysis.json"'})
 
 
 @router.get('/{identity}')

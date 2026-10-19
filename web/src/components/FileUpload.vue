@@ -7,6 +7,8 @@ import { ACCEPT, fileKey, mergeFiles } from '../utils/files.js';
 const props = defineProps({ files: Array, disabled: Boolean });
 const emit = defineEmits(['update:files']);
 const picker = ref(null);
+const directoryPicker = ref(null);
+const directorySupported = typeof document !== 'undefined' && 'webkitdirectory' in document.createElement('input');
 const errors = ref([]);
 const loading = ref(false);
 const page = ref(1);
@@ -40,6 +42,9 @@ async function samples() {
 
 <template>
   <div class="stack">
+    <input ref="directoryPicker" class="sr-only" tabindex="-1" type="file" webkitdirectory multiple :disabled="disabled" aria-label="选择源码目录" @change="select" />
+    <button v-if="directorySupported" type="button" class="button secondary" :disabled="disabled" @click="directoryPicker.click()">选择目录 · 保留相对路径</button>
+    <p class="small muted">{{ directorySupported ? "目录与普通文件请分开上传。目录保留完整相对路径。" : "此浏览器不支持目录选择，请使用普通文件上传。" }} 普通文件上传为平铺路径，不进行跨模块证明。</p>
     <input
       ref="picker"
       class="sr-only"
@@ -72,7 +77,7 @@ async function samples() {
         :disabled="disabled || loading"
       >
         {{ loading ? '正在读取示例…' : '导入示例代码' }}</button
-      ><strong>已选 {{ files.length }} 个文件</strong>
+      ><strong>已选 {{ files.length }} 个文件</strong><button type="button" class="button text-action compact" :disabled="disabled || !files.length" @click="$emit('update:files', [])">清空文件</button>
     </div>
     <div v-if="errors.length" class="notice error" role="alert">
       <p v-for="error in errors" :key="error">{{ error }}</p>
@@ -80,7 +85,7 @@ async function samples() {
     <ul class="file-list">
       <li v-for="file in pagination.items" :key="fileKey(file)">
         <span
-          >{{ file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
+          >{{ file.webkitRelativePath || file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
         ><button
           type="button"
           class="button text-action subtle compact"

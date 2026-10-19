@@ -1,0 +1,4 @@
+# Experiment-only, pure wheels. No scanned-project dependencies are installed.
+astor==0.8.1
+graphviz==0.17
+networkx==3.0

@@ -1,7 +1,7 @@
 <script setup>
 import AppIcon from './AppIcon.vue';
-defineProps({ modelValue: String });
-defineEmits(['update:modelValue']);
+defineProps({ modelValue: String, showSourceEdit: Boolean });
+defineEmits(['update:modelValue', 'edit-source']);
 const modes = [
   ['snippet', '代码片段', 'code'],
   ['files', '文件上传', 'upload'],
@@ -12,7 +12,11 @@ const modes = [
 </script>
 
 <template>
-  <nav class="mode-tabs" aria-label="选择扫描来源">
+  <nav class="mode-tabs" :class="{ 'has-source-edit': showSourceEdit }" aria-label="选择扫描来源">
+    <button v-if="showSourceEdit" class="button source-edit" aria-label="编辑来源与扫描模式"
+      title="编辑来源与扫描模式" @click="$emit('edit-source')">
+      <AppIcon name="arrow" :size="20" />
+    </button>
     <button
       v-for="[value, label, icon] in modes"
       :key="value"
@@ -31,9 +35,15 @@ const modes = [
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin: 0 auto 0.85rem;
+  margin: 0 auto;
   width: fit-content;
   max-width: 100%;
+}
+.has-source-edit {
+  position: relative;
+  width: 100%;
+  padding-left: calc(var(--control-height) + .65rem);
+  justify-content: center;
 }
 .button {
   background: transparent;
@@ -43,6 +53,18 @@ const modes = [
   color: var(--accent-dim);
   background: var(--control-selected);
   font-weight: 600;
+}
+.button.source-edit {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--control-height);
+  min-height: var(--control-height);
+  padding: 0;
+  justify-self: start;
+  flex-shrink: 0;
+  color: var(--accent-dim);
+  background: var(--control-bg);
 }
 .button:hover:not(.active) {
   color: var(--accent-dim);
@@ -56,5 +78,6 @@ const modes = [
   .button {
     padding-inline: 0.4rem;
   }
+  .has-source-edit { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 </style>

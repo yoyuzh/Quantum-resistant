@@ -26,7 +26,7 @@ export function useRemoteTask(kind, state) {
   }
   async function execute(body, signal, resumeId = '') {
     const signature = body instanceof FormData
-      ? JSON.stringify([...body.entries()].map(([name, file]) => [name, file.name, file.size, file.lastModified]))
+      ? JSON.stringify([...body.entries()].map(([name, file]) => [name, typeof file === 'string' ? file : file.name, file.size, file.lastModified]))
       : JSON.stringify(body);
     if (!resumeId && pendingSubmission?.signature !== signature)
       pendingSubmission = { signature, requestId: createRequestId() };
@@ -43,7 +43,7 @@ export function useRemoteTask(kind, state) {
           ? uploadRequest(path, { ...args, signal: submissionController.signal, timeout: 600000,
               onProgress: (progress) => { if (!signal.aborted) state.progress = progress; } })
           : request(path, args),
-        kind,
+        kind: kind === 'files' && body instanceof FormData && body.has('manifest') ? 'files-with-paths' : kind,
         body,
         signal: submissionController.signal,
         id: resumeId,
@@ -78,11 +78,11 @@ export function useRemoteTask(kind, state) {
         !state.result.meta?.incomplete
       )
         state.previous = state.result;
-      save('');
+      save(status.id || state.taskId);
       result.task_id = status.id || state.taskId;
       return result;
     } catch (error) {
-      if (!signal.aborted) save('');
+      if (!signal.aborted) save(state.result?.task_id || '');
       throw error;
     } finally {
       signal.removeEventListener('abort', stop);

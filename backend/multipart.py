@@ -10,7 +10,7 @@ from backend.collectors import is_supported_source_path
 
 
 class MultipartParser:
-    def __init__(self, content_type: str, *, max_file_bytes=MAX_COLLECTED_FILE_BYTES, max_files=MAX_COLLECTED_FILES):
+    def __init__(self, content_type: str, *, max_file_bytes=MAX_COLLECTED_FILE_BYTES, max_files=MAX_COLLECTED_FILES, path_fields=False):
         header = Message()
         header['Content-Type'] = content_type
         boundary = header.get_param('boundary')
@@ -24,16 +24,20 @@ class MultipartParser:
         self.state, self.name = 'initial', ''
         self.count = 0
         self.max_file_bytes, self.max_files = max_file_bytes, max_files
+        self.path_fields = path_fields
+        self.field = 'files'
+        self.part_limit = max_file_bytes
+        self.file_count = 0
 
     def append_body(self, size: int) -> None:
-        if len(self.body) + size > self.max_file_bytes:
+        if len(self.body) + size > self.part_limit:
             raise HTTPException(413, f'{self.name} 超过 2 MiB 限制')
         self.body.extend(self.buffer[:size])
         del self.buffer[:size]
 
     def complete(self):
         self.count += 1
-        result = self.name, bytes(self.body)
+        result = (self.field, self.name, bytes(self.body)) if self.path_fields else (self.name, bytes(self.body))
         self.body.clear()
         return result
 
@@ -59,14 +63,21 @@ class MultipartParser:
                 if len(headers.get_all('content-disposition', [])) != 1 or len(headers.get_all('content-type', [])) > 1 or headers.defects:
                     raise HTTPException(400, '上传文件头格式不正确或存在重复头')
                 filename = headers.get_filename()
-                if not filename or headers.get_param('name', header='content-disposition') != 'files':
-                    raise HTTPException(400, '上传文件字段必须为 files')
-                from backend.uploads import normalize_filename
-                self.name = normalize_filename(filename, 'uploaded.py')
-                if not is_supported_source_path(self.name):
-                    raise HTTPException(400, f'{self.name} 不是受支持的文本文件')
-                if self.count >= self.max_files:
-                    raise HTTPException(413, '单次最多上传 5000 个文件')
+                self.field = headers.get_param('name', header='content-disposition')
+                if self.path_fields and self.field in ('manifest', 'analysis_mode') and filename is None:
+                    self.name = self.field
+                    self.part_limit = 4 * 1024 * 1024 if self.field == 'manifest' else 16
+                else:
+                    if not filename or self.field != 'files':
+                        raise HTTPException(422 if self.path_fields else 400, '上传文件字段必须为 files')
+                    from backend.uploads import normalize_filename
+                    self.name = normalize_filename(filename, 'uploaded.py')
+                    if not is_supported_source_path(self.name):
+                        raise HTTPException(400, f'{self.name} 不是受支持的文本文件')
+                    if self.file_count >= self.max_files:
+                        raise HTTPException(413, '单次最多上传 5000 个文件')
+                    self.file_count += 1
+                    self.part_limit = self.max_file_bytes
                 del self.buffer[:end + 4]
                 self.state = 'body'
             elif self.state == 'body':

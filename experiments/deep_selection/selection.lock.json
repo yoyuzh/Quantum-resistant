@@ -1,0 +1,22 @@
+{
+  "schema_version": "deep-selection-1",
+  "decision_date": "2026-10-18",
+  "selected": "stdlib_ast_bounded_fallback",
+  "additional_production_dependencies": [],
+  "production_vendor_modules": [],
+  "production_index_implemented": false,
+  "target_grammar": "3.10",
+  "tested_host_python": "3.14.7",
+  "tested_platform": "macOS",
+  "support_now": ["experiment_only_ast_call_import_definition_spans"],
+  "not_proven": ["cross_module_resolution", "argument_and_return_flow", "context_separation", "crypto_semantics", "E3_verification"],
+  "experiment_dependencies": {"astor": "0.8.1", "graphviz": "0.17", "networkx": "3.0"},
+  "candidate_commits": {
+    "SMAT-Lab/Scalpel": "dd48ba0cb1d4b252439849856caee8d878b6206e",
+    "xnuinside/codegraph": "effefc709e73e1eedbbfcb850146ed603ce257ec",
+    "cbomkit/cbomkit": "eea204303f53bd13192cc9770a917c938238f6ed",
+    "cbomkit/sonar-cryptography": "58eea48bde9c5757ebef991c0861c08b70689e15"
+  },
+  "codeql": "unavailable_not_tested",
+  "performance_gate": "not_passed_no_benchmark"
+}

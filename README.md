@@ -9,6 +9,7 @@
 - Python 使用 AST 识别已知密码库的完整导入目标、调用与常见绑定遮蔽；JSON/YAML 使用结构化配置分析；其他支持文件采用有限文本规则。
 - 展示算法、文件、行号、证据、识别依据、原因及迁移建议；支持搜索、分页与筛选，同名文件按 `source_id` 独立定位。
 - 提供分析概览、密码资产清单、文件与算法的证据关系、迁移待办和静态算法知识。
+- 提供显式启动的 Python 深度分析源码对照台、相对目录上传、独立调用上下文、逐项证据等级与服务端深度 JSON 导出，无需模型。使用与边界见 [网页说明](docs/python-deep-ui.md)。
 - 后台扫描显示实际上传/下载字节、采集与分析计数，支持取消、部分结果保留和刷新后恢复任务查询。
 - 按 Star 检索并批量扫描热门密码学 Python 仓库；完整结束后原子更新最近一次有效快照。
 - 导出 HTML、Markdown、JSON、CSV 报告；HTML 可通过浏览器打印为 PDF。默认不附带完整源码。
@@ -88,3 +89,5 @@ python start.py --host 0.0.0.0 --port 8010 --strict-port
 - `sample_inputs/`、`sample_rsa_code.py`：仅用于静态扫描的样例。
 
 开发启动、CI 和打包发布机制见 [开发与构建](docs/development.md)；检查命令、验收范围和本次整理结果见 [验证说明](docs/validation.md)。
+
+Python 静态深度分析正按 OpenSpec 分阶段实施，已提供快照/路径上传、有界参数及密钥类型流、三库规则和独立证据核验。四类后台输入可显式设置 `analysis_mode=deep`，默认basic；已有来源可通过 `POST /api/tasks/deep-analysis` 复用，服务端提供独立JSON导出。模式、共享预算、取消/保留及导出协议见 [后台任务说明](docs/python-deep-workflow.md)，支持API、逐项等级与实际评测见 [密码规则与独立核验](docs/python-deep-evidence.md)。网页源码对照台已接入并通过本地浏览器验收，见 [网页说明](docs/python-deep-ui.md)；第8组最终人工精度门槛和真实仓库试点仍未完成。路径协议见 [来源与索引说明](docs/python-deep-inputs.md)，兼容基线与逐阶段验证见 [实施记录](docs/python-deep-analysis.md)，候选失败证据和复现命令见 [选型记录](docs/python-deep-selection.md)。

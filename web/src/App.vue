@@ -18,7 +18,11 @@ import { useTheme } from './composables/useTheme.js';
 import { DEFAULT_RSA_CODE } from './utils/defaults.js';
 import { focusDestination } from './utils/navigation.js';
 
+const nativeOverlay = ['win32', 'linux'].includes(window.quantumDesktop?.platform);
 const mode = ref('snippet');
+const analysisMode = ref('basic');
+const deepView = ref(false);
+watch(mode, () => { deepView.value = false; });
 const drafts = reactive({
   snippet: { filename: 'snippet.py', content: DEFAULT_RSA_CODE },
   files: { files: [] },
@@ -47,8 +51,14 @@ const titles = {
 watch(mode, (value) => {
   if (value === 'popular' && !popular.loaded) runPopular();
 });
+async function editSource() {
+  deepView.value = false;
+  await nextTick();
+  inputBody.value?.focus();
+}
 function submit() {
-  start(mode.value, drafts[mode.value]);
+  deepView.value = false;
+  start(mode.value, drafts[mode.value], analysisMode.value);
 }
 async function prepareRepository(value) {
   mode.value = 'github';
@@ -61,9 +71,9 @@ async function prepareRepository(value) {
 </script>
 
 <template>
-  <AppHeader :theme="theme" @toggle-theme="toggle" />
-  <main class="app-main">
-    <ModeTabs v-model="mode" />
+  <AppHeader :theme="theme" @toggle-theme="toggle"><ModeTabs v-if="!nativeOverlay" v-model="mode" :show-source-edit="deepView" @edit-source="editSource" /></AppHeader>
+  <main class="app-main" :class="{ 'native-overlay-main': nativeOverlay }">
+    <ModeTabs v-if="nativeOverlay" v-model="mode" :show-source-edit="deepView" @edit-source="editSource" />
     <PopularView
       v-if="mode === 'popular'"
       :state="popular"
@@ -73,8 +83,8 @@ async function prepareRepository(value) {
       @cancel="cancelPopular"
       @scan-repository="prepareRepository"
     />
-    <div v-else class="workspace-grid">
-      <section class="panel input-panel" aria-label="扫描输入区域">
+    <div v-else class="workspace-grid" :class="{ 'deep-wide': deepView }">
+      <section class="panel input-panel" :inert="deepView" :aria-hidden="deepView" aria-label="扫描输入区域">
         <div class="panel-heading">
           <h2>{{ titles[mode] }}</h2>
         </div>
@@ -119,6 +129,8 @@ async function prepareRepository(value) {
             <ScanHelp :mode="mode" />
           </div>
           <div class="panel-actions stack">
+            <label>扫描模式<select v-model="analysisMode" aria-label="扫描模式" :disabled="current.busy"><option value="basic">基础扫描</option><option value="deep">基础扫描 + Python 深度分析</option></select></label>
+            <p class="small muted">深度分析无需模型；片段只分析局部，目录保留相对路径，GitHub / PyPI 仅覆盖已采集文件。</p>
             <button type="submit" class="button primary" :disabled="current.busy">
               <AppIcon name="scan" :size="18" />
               {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
@@ -126,7 +138,7 @@ async function prepareRepository(value) {
           </div>
         </form>
       </section>
-      <ResultsWorkspace :key="mode" :state="current" :mode="mode" />
+      <ResultsWorkspace :key="mode" :state="current" :mode="mode" @deep-view="deepView = $event" />
     </div>
     <footer>抗量子密码风险检测与迁移辅助软件 V{{ appVersion }}</footer>
   </main>

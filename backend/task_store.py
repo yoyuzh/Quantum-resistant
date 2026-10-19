@@ -48,6 +48,8 @@ class Job:
     readers: int = 0
     expiry: object = None
     admission: Admission | None = None
+    enqueued: float = field(default_factory=time.monotonic)
+    cleanup_pending: bool = False
 
 
 class TaskStore:
@@ -69,6 +71,7 @@ class TaskStore:
         with self.lock:
             if self.closed and not self.scheduler.used and not any(j.readers for j in self.jobs.values()):
                 self.storage.close()
+                self.ai_previews.close()
 
     def _reclaim(self, size):
         with self.lock:
@@ -108,10 +111,10 @@ class TaskStore:
     def run_sync(self, work: Callable, admission: Admission | None = None):
         return self.scheduler.run(work, admission)
 
-    def submit(self, kind: str, payload: dict, request_id: str, work: Callable, reservation=None, *, folder=None, admission=None) -> dict:
+    def submit(self, kind: str, payload: dict, request_id: str, work: Callable, reservation=None, *, folder=None, admission=None, initial_result=None) -> dict:
         ticket = admission
         try:
-            return self._submit(kind, payload, request_id, work, reservation, folder, ticket)
+            return self._submit(kind, payload, request_id, work, reservation, folder, ticket, initial_result)
         except BaseException:
             if ticket:
                 ticket.release()
@@ -119,7 +122,7 @@ class TaskStore:
                 self.storage.remove_folder(folder)
             raise
 
-    def _submit(self, kind, payload, request_id, work, reservation, folder, admission):
+    def _submit(self, kind, payload, request_id, work, reservation, folder, admission, initial_result=None):
         with self.lock:
             self._prune()
             if self.closed:
@@ -144,9 +147,13 @@ class TaskStore:
                 job = Job(uuid.uuid4().hex, kind, payload, request_id, reservation=reservation, admission=ticket)
                 job.folder = folder or self.storage.folder()
                 job.control.storage, job.control.folder = self.storage, job.folder
+                if initial_result is not None:
+                    job.result, job.size = initial_result, initial_result.stat().st_size
                 self.jobs[job.id] = job
                 job.control.grace_seconds = 2
                 job.control.report = lambda **values: self._progress(job, **values)
+                job.control.checkpoint_result = lambda value: self.checkpoint(job, value)
+                job.control.read_checkpoint = lambda: json.loads(job.result.read_text(encoding='utf-8'))
                 job.future = self.executor.submit(self._run, job, work)
             except BaseException as exc:
                 if job:
@@ -160,6 +167,20 @@ class TaskStore:
                     raise HTTPException(503, '服务正在关闭，请稍后重试') from exc
                 raise
             return self._snapshot(job)
+
+    def replay(self, kind, payload, request_id):
+        with self.lock:
+            self._prune()
+            for job in self.jobs.values():
+                if job.request_id == request_id:
+                    if job.kind != kind or job.payload != payload:
+                        raise HTTPException(409, '请求标识已用于其他扫描')
+                    return self._snapshot(job)
+        return None
+
+    def checkpoint(self, job, result):
+        from backend.task_results import persist_result
+        return persist_result(self, job, result)
 
     def _progress(self, job, stage=None, collected_delta=0, analyzed_delta=0, repos_delta=0, scope=None, **values):
         with self.lock:
@@ -186,60 +207,46 @@ class TaskStore:
     def _run(self, job, work):
         with self.lock:
             job.state, job.stage, job.started = 'running', '准备扫描', self.now()
-        budget = Deadline(time.monotonic() + (POPULAR_TIMEOUT_SECONDS if job.kind == 'popular' else SCAN_TIMEOUT_SECONDS), job.control)
+        seconds = 120 if job.kind == 'deep-analysis' else POPULAR_TIMEOUT_SECONDS if job.kind == 'popular' else SCAN_TIMEOUT_SECONDS
+        start = job.enqueued if job.kind == 'deep-analysis' or job.payload.get('analysis_mode') == 'deep' else time.monotonic()
+        job.control.queue_seconds = max(0, time.monotonic() - job.enqueued)
+        budget = Deadline(start + seconds, job.control)
         try:
             result = work(budget)
-            result = {**result, **({'sources': [dict(source) for source in result['sources']]} if 'sources' in result else {})}
             job.control.emit(stage='汇总结果')
-            paths = getattr(job.control, 'source_paths', {})
-            job.control.source_paths = paths
-            for source in result.get('sources', []):
-                if source.get('source_id') and source.get('content') is not None:
-                    if source['source_id'] not in paths:
-                        paths[source['source_id']] = self.storage.write_source(job.folder, source['content'].encode('utf-8'))
-                    source['content'], source['content_available'] = '', True
-            try:
-                result_path = self.storage.write_json(job.folder, result)
-            except RuntimeError:
-                # Analysis is already complete. Preserve it before optional raw code.
-                self.storage.discard_sources(job.folder)
-                job.control.source_paths = {}
-                note = {'code': 'source_storage_evicted', 'message': '临时存储容量不足，完整分析结果已保留；本次源码未保留，查看源码需重新扫描。'}
-                for source in result.get('sources', []):
-                    source['content_available'] = False
-                result.setdefault('diagnostics', []).append(note)
-                for repo in result.get('repos', []):
-                    repo.setdefault('diagnostics', []).append(note)
-                result_path = self.storage.write_json(job.folder, result)
-            size = result_path.stat().st_size
-            if size > self.max_bytes:
-                self.storage.remove(result_path)
-                raise RuntimeError('任务结果超过缓存容量，未保存；请缩小扫描范围后重试')
+            self.checkpoint(job, result)
             with self.lock:
+                ai_partial = False
                 if job.kind == 'ai':
                     ai = result['ai_coverage']
                     has_result = bool(ai['completed'] or (ai['planned'] == 0 and not job.control.cancelled.is_set()))
-                    partial = bool(ai['partial'] or result['candidate_coverage']['source_partial'] or job.control.cancelled.is_set())
+                    ai_partial = bool(ai['partial'] or result['candidate_coverage']['source_partial'] or job.control.cancelled.is_set())
                 else:
                     has_result = bool(result.get('repos') if job.kind == 'popular' else result.get('sources'))
-                    partial = bool(result.get('coverage', {}).get('partial') or result.get('meta', {}).get('incomplete') or job.control.cancelled.is_set())
-                job.result = result_path if has_result or job.kind == 'ai' else None
+                deep_partial = result.get('deep_analysis', {}).get('status') not in (None, 'completed', 'skipped')
+                partial = bool(result.get('coverage', {}).get('partial') or result.get('meta', {}).get('incomplete')
+                               or job.control.cancelled.is_set() or deep_partial or ai_partial)
+                if not has_result:
+                    job.result = None if job.kind != 'ai' else job.result
                 job.state = ('partial' if partial else 'succeeded') if has_result else ('cancelled' if job.control.cancelled.is_set() else 'failed')
                 if not has_result:
                     job.error = ('没有完整 AI 意见；请检查模型配置或诊断后重试' if job.kind == 'ai'
                                  else '没有完整分析的文件；上次结果已保留')
-                job.size = size
         except Exception as exc:
             with self.lock:
-                job.state = 'cancelled' if job.control.cancelled.is_set() else 'failed'
-                job.error = str(exc) if isinstance(exc, (CollectionTimeout, RuntimeError, ValueError)) else '扫描服务异常，请重试；上次结果已保留'
+                job.state = 'partial' if job.result else 'cancelled' if job.control.cancelled.is_set() else 'failed'
+                job.error = ('后续阶段未能保存，已保留上一完整结果' if job.result else
+                             str(exc) if isinstance(exc, (CollectionTimeout, RuntimeError, ValueError)) else '扫描服务异常，请重试；上次结果已保留')
                 logger.warning('scan_job kind=%s error=%s', job.kind, type(exc).__name__)
         finally:
             with self.lock:
                 job.stage, job.ended = '已结束', self.now()
                 self._arm_expiry(job)
                 if not job.result:
-                    self.storage.remove_folder(job.folder)
+                    if job.readers:
+                        job.cleanup_pending = True
+                    else:
+                        self.storage.remove_folder(job.folder)
                 if job.reservation:
                     job.reservation.release()
                     job.reservation = None
@@ -249,10 +256,12 @@ class TaskStore:
     def _snapshot(self, job):
         end = job.ended if job.ended is not None else self.now()
         return {'id': job.id, 'kind': job.kind, 'state': job.state, 'stage': job.stage,
-                'target': (f"AI 辅助分析 {job.payload.get('source_task_id', '')}" if job.kind == 'ai' else '') or job.payload.get('repository_url') or job.payload.get('package_name') or job.payload.get('filename') or (f"本地文件 {job.payload.get('file_count')} 个" if job.kind == 'files' else f"热门仓库 {job.payload.get('top', 8)} 个"),
+                'target': (f"AI 辅助分析 {job.payload.get('source_task_id', '')}" if job.kind == 'ai' else '') or (f"已有来源 {job.payload['source_task_id']}" if job.kind == 'deep-analysis' else None) or job.payload.get('repository_url') or job.payload.get('package_name') or job.payload.get('filename') or (f"本地文件 {job.payload.get('file_count')} 个" if job.kind in ('files', 'files-with-paths') else f"热门仓库 {job.payload.get('top', 8)} 个"),
                 'created_at': job.created_at, 'elapsed': round(max(0, end - job.started), 1) if job.started is not None else 0,
                 'collected_files': job.collected, 'analyzed_files': job.analyzed, 'completed_repos': job.repos,
                 'cancel_requested': job.control.cancelled.is_set(), 'error': job.error, 'has_result': job.result is not None,
+                **({'analysis_mode': 'deep'} if job.payload.get('analysis_mode') == 'deep' else {}),
+                **({'source_task_id': job.payload['source_task_id']} if job.kind == 'deep-analysis' else {}),
                 **job.progress, 'repositories': [dict(value) for value in job.repo_progress.values()]}
 
     def get(self, identity):
@@ -298,6 +307,9 @@ class TaskStore:
         finally:
             with self.lock:
                 job.readers -= 1
+                if not job.readers and job.cleanup_pending:
+                    self.storage.remove_folder(job.folder)
+                    job.cleanup_pending = False
                 self._prune()
                 self._close_storage_if_idle()
 
@@ -313,7 +325,22 @@ class TaskStore:
                 if job.future.cancel():
                     job.state, job.ended = 'cancelled', self.now()
                     job.stage = '已取消'
-                    self.storage.remove_folder(job.folder)
+                    if job.result:
+                        from backend.deep_work import empty_result, DEEP_BUDGETS
+                        data = json.loads(job.result.read_text(encoding='utf-8'))
+                        data['deep_analysis'] = empty_result(data['source_type'], 'cancelled', 'deep_cancelled', DEEP_BUDGETS).model_dump(mode='json')
+                        try:
+                            path = self.storage.write_json(job.folder, data)
+                            old, job.result, job.size = job.result, path, path.stat().st_size
+                            self.storage.remove(old)
+                        except (OSError, RuntimeError):
+                            job.error = '取消后保存状态失败，上一完整基础结果保留'
+                        job.state = 'partial'
+                    else:
+                        if job.readers:
+                            job.cleanup_pending = True
+                        else:
+                            self.storage.remove_folder(job.folder)
                     self._arm_expiry(job)
                     if job.reservation:
                         job.reservation.release()
@@ -326,7 +353,6 @@ class TaskStore:
             if self.closed:
                 return
             self.closed = True
-            self.ai_previews.close()
             for job in list(self.jobs.values()):
                 if job.expiry:
                     job.expiry.cancel()
