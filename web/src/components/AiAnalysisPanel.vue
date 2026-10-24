@@ -60,8 +60,10 @@ async function exportResult() {
       <div v-if="state.result" class="stack">
         <p>{{ state.result.created_at }} · {{ state.result.provider }} · {{ state.result.model }}</p>
         <p>候选检索：{{ state.result.candidate_coverage.searched_files }} / {{ state.result.candidate_coverage.source_files }} 文件；
-          AI 完成：{{ state.result.ai_coverage.completed }} / {{ state.result.ai_coverage.planned }} 候选；
-          调用 {{ state.result.ai_coverage.calls }} 次。{{ state.result.ai_coverage.partial ? '分析未完整结束。' : '' }}</p>
+          发现 {{ state.result.candidate_coverage.discovered_candidates }} 个位置，聚合后 {{ state.result.candidate_coverage.aggregated_candidates ?? state.result.candidates.length }} 个候选；
+          AI 完成 {{ state.result.ai_coverage.completed }} / {{ state.result.ai_coverage.planned }}；
+          请求 {{ state.result.ai_coverage.calls }} 次，重试 {{ state.result.ai_coverage.retries ?? 0 }} 次。
+          <span v-if="state.result.ai_coverage.partial">未完成 {{ state.result.ai_coverage.unfinished ?? 0 }} 个：{{ state.result.ai_coverage.stop_reason || '范围不完整' }}。</span></p>
         <p>规则 {{ state.result.rule_version }} · 提示 {{ state.result.prompt_version }} · 核验 {{ state.result.validation_version }}；
           token 用量 {{ state.result.usage.total_tokens ?? '未知' }}</p>
         <ul v-if="state.result.diagnostics.length"><li v-for="(item, index) in state.result.diagnostics" :key="index">{{ item.message }}</li></ul>

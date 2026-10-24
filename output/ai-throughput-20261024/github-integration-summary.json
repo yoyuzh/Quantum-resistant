@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-24",
+  "repository": "https://github.com/miguelgrinberg/microblog",
+  "config": {
+    "enabled": true,
+    "valid": true,
+    "origin": "http://127.0.0.1:8080",
+    "model": "gpt-6.1-sol"
+  },
+  "ordinary_scan": {
+    "submit_status": 202,
+    "state": "succeeded",
+    "elapsed_seconds": 5.877,
+    "progress": null,
+    "result_status": 200,
+    "source_count": 40,
+    "finding_count": 0,
+    "coverage": {
+      "scanned_files": 40,
+      "file_limit": 5000,
+      "candidate_files": 40,
+      "skipped_files": 0,
+      "partial": false,
+      "skip_reasons": {}
+    },
+    "diagnostic_count": 0,
+    "migration_score": {
+      "score": 0,
+      "risk_level": "低",
+      "priority": "持续观察",
+      "high_risk_findings": 0,
+      "affected_files": 0,
+      "algorithm_variety": 0,
+      "source_count": 40
+    }
+  },
+  "ai_preview": {
+    "status": 200,
+    "candidate_discovered": 4,
+    "candidate_aggregated": 4,
+    "candidate_selected": 4,
+    "context_bytes": 2336,
+    "skip_reasons": {
+      "unsupported": 6
+    },
+    "preview_candidate_count": 4
+  },
+  "ai_analysis": {
+    "submit_status": 202,
+    "state": "failed",
+    "progress": null,
+    "result_status": 200,
+    "planned": 4,
+    "completed": 0,
+    "unfinished": 4,
+    "requests": 3,
+    "retries": 2,
+    "stop_reason": "provider_timeout",
+    "elapsed_seconds": 93.018926,
+    "opinion_count": 0,
+    "citation_valid_rate": null,
+    "citation_valid_count": 0,
+    "cited_count": 0,
+    "migration_validation": {},
+    "usage": {
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null
+    },
+    "diagnostic_codes": [
+      "provider_timeout",
+      "usage_unavailable"
+    ],
+    "diagnostic_count": 2
+  },
+  "assessment": {
+    "status": "failed",
+    "static_findings_preserved": true,
+    "static_migration_score_preserved": true,
+    "aggregation_observed": true,
+    "full_candidate_completion": false
+  },
+  "credentials_logged": false,
+  "raw_response_saved": false
+}

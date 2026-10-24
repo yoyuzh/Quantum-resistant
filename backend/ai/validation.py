@@ -7,6 +7,24 @@ from pydantic import ValidationError
 from backend.ai.models import AiDiagnostic, Candidate, ModelOpinion, Opinion
 
 
+def migration_validation(item: ModelOpinion) -> str:
+    """独立检查算法/用途与迁移方向；不改变静态 finding 或迁移评分。"""
+    direction = (item.migration_direction or "").lower()
+    algorithm = item.algorithm.lower()
+    purpose = item.purpose.lower()
+    if not direction or direction in {"unknown", "abstain"}:
+        return "unknown"
+    if "ml-dsa" in direction and "rsa" in algorithm:
+        if any(word in purpose for word in ("encrypt", "encryption", "decrypt", "cipher")):
+            return "invalid"
+        if any(word in purpose for word in ("sign", "signature", "verify")):
+            return "needs_review"
+        return "needs_review"
+    if item.opinion_kind in {"abstain", "new_candidate"} or purpose in {"unknown", "abstain"}:
+        return "needs_review"
+    return "needs_review"
+
+
 def parse_opinions(content: str, candidates: list[Candidate]) -> tuple[list[Opinion], list[AiDiagnostic]]:
     def reject_constant(value):
         raise ValueError("非 JSON 常量")
@@ -61,7 +79,9 @@ def parse_opinions(content: str, candidates: list[Candidate]) -> tuple[list[Opin
         if item.opinion_kind in {"supports_static", "questions_static"} and not candidate.static_finding_refs:
             errors.append("候选没有可复核的静态发现引用")
         status = "invalid" if errors else "valid" if item.citations else "absent"
-        opinions.append(Opinion(**item.model_dump(), citation_status=status, citation_errors=errors))
+        opinions.append(Opinion(**item.model_dump(), citation_status=status,
+                                     migration_validation=migration_validation(item),
+                                     citation_errors=errors))
     completed = {opinion.candidate_id for opinion in opinions}
     for identity in sorted(known.keys() - completed):
         diagnostics.append(AiDiagnostic(code="missing_candidate", message="模型未完整返回此候选，未伪造弃答", candidate_id=identity))

@@ -38,6 +38,8 @@ const pager = ref(null);
       <p>用途：{{ displayUnknown(item.purpose) }} · {{ citationLabels[item.citation_status] }}</p>
       <p>{{ item.rationale }}</p>
       <p>文件：{{ candidateFor(item)?.file_name }} · 来源 {{ candidateFor(item)?.source_id }}</p>
+      <p v-if="item.migration_direction">迁移方向：{{ item.migration_direction }} · 适用性：{{ item.applicability?.join('；') || '未知' }} · 校验：{{ item.migration_validation || 'unknown' }}</p>
+      <ul v-if="item.manual_checks?.length"><li v-for="text in item.manual_checks" :key="text">人工核查：{{ text }}</li></ul>
       <ul v-if="item.missing_information.length"><li v-for="text in item.missing_information" :key="text">缺失信息：{{ text }}</li></ul>
       <ul v-if="item.citation_errors.length"><li v-for="text in item.citation_errors" :key="text">{{ text }}</li></ul>
       <div v-for="(ref, index) in item.citations" :key="index">

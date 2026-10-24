@@ -16,6 +16,23 @@ class AiContextTests(unittest.TestCase):
         return build_context({"sources": sources, "findings": list(findings)}, lambda key: texts[key][1],
                              {**LIMITS, **limits}, lambda: None)
 
+    def test_reassignment_and_branch_confidence_boundaries(self):
+        text = """
+from cryptography import rsa
+def sample(key, payload, flag):
+    value = key.sign(payload)
+    value = key.decrypt(payload)
+    if flag:
+        return key.sign(payload)
+    return key.decrypt(payload)
+"""
+        candidates, coverage = self.build({"a": ("a.py", text)})
+        by_line = {item.start_line: item.semantic_evidence for item in candidates}
+        self.assertTrue(any(item.confidence == "possible" and item.reassigned for item in by_line.values()))
+        self.assertTrue(any(item.confidence == "unknown" and item.branch_sensitive for item in by_line.values()))
+        self.assertTrue(all(item.member_locations for item in candidates))
+        self.assertGreaterEqual(coverage.discovered_candidates, coverage.aggregated_candidates)
+
     def test_zero_static_unknown_calls_wrappers_math_negative(self):
         text = "from unknown_crypto import build\ndef encrypt_message(data):\n    return service.encrypt(data)\npow(a, b, c)\nvalue = 'RSA'\n# encrypt(data)"
         candidates, coverage = self.build({"one": ("a.py", text)})
@@ -61,8 +78,10 @@ class AiContextTests(unittest.TestCase):
         self.assertEqual(coverage.skip_reasons["search_file_limit"], 1)
         self.assertEqual(coverage.skip_reasons["preview_file_limit"], 180)
         candidates, coverage = self.build({"a": ("a.py", "encrypt()\n" * 45)})
-        self.assertEqual(len(candidates), 40)
-        self.assertEqual(coverage.skip_reasons["candidate_limit"], 5)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(coverage.discovered_candidates, 45)
+        self.assertEqual(coverage.aggregated_candidates, 1)
+        self.assertEqual(len(candidates[0].member_locations), 45)
         self.assertLessEqual(coverage.context_bytes, 128 * 1024)
         candidates, coverage = self.build({"a": ("a.py", "encrypt('" + "x" * 9000 + "')")})
         self.assertFalse(candidates)

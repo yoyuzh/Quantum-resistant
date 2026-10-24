@@ -36,6 +36,23 @@ def opinion(candidate, **extra):
 
 
 class AiValidationTests(unittest.TestCase):
+    def test_migration_validation_is_independent(self):
+        candidate = candidates()[0]
+        valid = opinion(candidate, citations=[{"source_id": candidate.source_id, "start_line": 1,
+                                               "end_line": 1, "quote": candidate.lines[0].text}],
+                       algorithm="RSA", purpose="signature",
+                       migration_direction="ML-DSA")
+        parsed, diagnostics = parse_opinions(json.dumps({"opinions": [valid]}), [candidate])
+        self.assertFalse(diagnostics)
+        self.assertEqual(parsed[0].citation_status, "valid")
+        self.assertEqual(parsed[0].migration_validation, "needs_review")
+        mismatch = dict(valid, purpose="encryption", citations=valid["citations"])
+        parsed, _ = parse_opinions(json.dumps({"opinions": [mismatch]}), [candidate])
+        self.assertEqual(parsed[0].migration_validation, "invalid")
+        unknown = dict(valid, purpose="unknown", migration_direction="ML-DSA")
+        parsed, _ = parse_opinions(json.dumps({"opinions": [unknown]}), [candidate])
+        self.assertEqual(parsed[0].migration_validation, "needs_review")
+
     def test_valid_abstention_and_fake_citations(self):
         candidate = candidates()[0]
         for citations, status in ((opinion(candidate)["citations"], "valid"), ([], "absent"),

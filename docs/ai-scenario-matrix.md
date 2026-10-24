@@ -51,3 +51,14 @@
 - 临时容量/预览清理/来源读者释放/失败回滚：test_preview_limits_cleanup_and_storage_failure、test_submit_storage_failure_rolls_back_and_queue_snapshot_survives；TaskStore 原有 TTL/结果数量/存储读者保护继续由 test_tasks_and_reports.py、test_storage_scheduler.py 覆盖。
 - 主线程复核：凭据只入 Authorization；受信端点固定且不重定向；HTTP 并发仍共用8槽；模型并发1；请求标识查询先于预览检查；提交和消费在同锁内；快照与来源读者分离；存储回收与任务终态沿用同一 TaskStore。
 - 页面已检查预览零调用、确认后发送、独立意见、风险计数不变、刷新恢复、390px无横向溢出、源码过期显示快照、专用下载。真实供应商连通、效果、成本与安装包 GUI 尚未验收。
+
+## improve-ai-analysis-throughput-and-actionability（2026-10-24）
+
+| 场景 | 自动验证 | 证据 |
+| --- | --- | --- |
+| 重复调用与同 API 不同用途 | `tests.test_ai_baseline`、`AiContextTests.test_reassignment_and_branch_confidence_boundaries` | 固定 fixture；聚合保留全部成员位置，签名/加密用途不误合并 |
+| 动态批次与 partial | `tests.test_ai_provider`、`tests.test_ai_workflow` | 输入/输出/时间预算、取消、迟到响应、重试和停止原因 |
+| 迁移建议校验 | `AiValidationTests.test_migration_validation_is_independent` | RSA 签名→ML-DSA 为 needs_review；RSA 加密→ML-DSA 为 invalid |
+| usage 缺失 | `AiWorkflowTests.test_timeout_retry_recovers_with_actual_call_count_and_unknown_usage` | 重试后无法覆盖全部实际请求时 usage 保持 null，并记录 usage_unavailable |
+| 四组消融 | `scripts/run_ai_ablation.py` | `output/ai-throughput-20261024/ablation-summary.json`，固定脱敏 fixture，不代表真实模型效果 |
+| 真实代理验收 | `/tmp/ai_provider_acceptance.py` | 本机代理一次受控请求；仅保存指标，不保存原始响应或凭据 |

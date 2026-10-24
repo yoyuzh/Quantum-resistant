@@ -7,7 +7,8 @@ defineEmits(['submit']);
   <div class="ai-preview stack">
     <h3>检查本次发送范围</h3>
     <p>{{ preview.target_origin }} · {{ preview.model }}</p>
-    <p>{{ preview.candidate_coverage.selected_files }} 个文件，{{ preview.candidates.length }} 个候选，
+    <p>{{ preview.candidate_coverage.selected_files }} 个文件；发现 {{ preview.candidate_coverage.discovered_candidates }} 个位置，
+      聚合后 {{ preview.candidate_coverage.aggregated_candidates ?? preview.candidates.length }} 个候选，
       {{ preview.candidate_coverage.context_bytes }} 字节源码上下文。</p>
     <p>预览有效期至 {{ preview.expires_at }}；单次最多 {{ preview.budgets.request_bytes }} 字节输入，
       {{ preview.budgets.output_tokens }} 输出 token，最多 {{ preview.budgets.max_calls }} 次调用，

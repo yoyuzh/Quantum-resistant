@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-24",
+  "repository": "https://github.com/miguelgrinberg/microblog",
+  "config": {
+    "enabled": true,
+    "valid": true,
+    "origin": "http://127.0.0.1:8080",
+    "model": "gpt-6.1-sol"
+  },
+  "ordinary_scan": {
+    "submit_status": 202,
+    "state": "succeeded",
+    "elapsed_seconds": 0.263,
+    "progress": null,
+    "result_status": 200,
+    "source_count": 40,
+    "finding_count": 0,
+    "coverage": {
+      "scanned_files": 40,
+      "file_limit": 5000,
+      "candidate_files": 40,
+      "skipped_files": 0,
+      "partial": false,
+      "skip_reasons": {}
+    },
+    "diagnostic_count": 0,
+    "migration_score": {
+      "score": 0,
+      "risk_level": "低",
+      "priority": "持续观察",
+      "high_risk_findings": 0,
+      "affected_files": 0,
+      "algorithm_variety": 0,
+      "source_count": 40
+    }
+  },
+  "ai_preview": {
+    "status": 200,
+    "candidate_discovered": 4,
+    "candidate_aggregated": 4,
+    "candidate_selected": 4,
+    "context_bytes": 2336,
+    "skip_reasons": {
+      "unsupported": 6
+    },
+    "preview_candidate_count": 4
+  },
+  "ai_analysis": {
+    "submit_status": 202,
+    "state": "succeeded",
+    "progress": null,
+    "result_status": 200,
+    "planned": 4,
+    "completed": 4,
+    "unfinished": 0,
+    "requests": 4,
+    "retries": 0,
+    "stop_reason": null,
+    "elapsed_seconds": 59.9627,
+    "opinion_count": 4,
+    "citation_valid_rate": 1.0,
+    "citation_valid_count": 4,
+    "cited_count": 4,
+    "migration_validation": {
+      "unknown": 3,
+      "needs_review": 1
+    },
+    "usage": {
+      "prompt_tokens": 3670,
+      "completion_tokens": 1961,
+      "total_tokens": 5631
+    },
+    "diagnostic_codes": [],
+    "diagnostic_messages": [],
+    "diagnostic_count": 0,
+    "opinion_summary": [
+      {
+        "candidate_id_prefix": "14a14e41",
+        "algorithm": "unknown",
+        "purpose": "unknown",
+        "opinion_kind": "abstain",
+        "citation_status": "valid",
+        "migration_validation": "unknown",
+        "migration_direction": "",
+        "applicability_count": 1,
+        "manual_checks_count": 4
+      },
+      {
+        "candidate_id_prefix": "b46d192b",
+        "algorithm": "unknown",
+        "purpose": "unknown",
+        "opinion_kind": "abstain",
+        "citation_status": "valid",
+        "migration_validation": "unknown",
+        "migration_direction": "",
+        "applicability_count": 2,
+        "manual_checks_count": 4
+      },
+      {
+        "candidate_id_prefix": "69cb3c56",
+        "algorithm": "unknown",
+        "purpose": "unknown",
+        "opinion_kind": "abstain",
+        "citation_status": "valid",
+        "migration_validation": "unknown",
+        "migration_direction": "",
+        "applicability_count": 2,
+        "manual_checks_count": 4
+      },
+      {
+        "candidate_id_prefix": "0a4caadd",
+        "algorithm": "JWT with HMAC-SHA-256 (HS256)",
+        "purpose": "验证密码重置令牌并提取用户标识",
+        "opinion_kind": "abstain",
+        "citation_status": "valid",
+        "migration_validation": "needs_review",
+        "migration_direction": "若需迁移，应在保持算法白名单和签名密钥保护的前提下评估令牌生命周期、密钥轮换、受众/发行者约束及重放防护；具体替代方案需结合系统兼容性和调用链人工确定。",
+        "applicability_count": 3,
+        "manual_checks_count": 5
+      }
+    ]
+  },
+  "assessment": {
+    "status": "completed",
+    "static_findings_preserved": true,
+    "static_migration_score_preserved": true,
+    "aggregation_observed": true,
+    "full_candidate_completion": true
+  },
+  "credentials_logged": false,
+  "raw_response_saved": false
+}

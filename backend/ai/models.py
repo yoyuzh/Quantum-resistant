@@ -15,6 +15,7 @@ Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 Label = Annotated[str, Field(min_length=1, max_length=120)]
 OpinionKind = Literal["supports_static", "questions_static", "new_candidate", "abstain"]
 CitationStatus = Literal["valid", "invalid", "absent"]
+MigrationValidation = Literal["accepted", "needs_review", "invalid", "unknown"]
 
 
 def stable_digest(value: Any) -> str:
@@ -39,6 +40,29 @@ class EvidenceLine(AiModel):
     text: str = Field(max_length=8192)
 
 
+class EvidenceLocation(AiModel):
+    source_id: Identifier
+    start_line: int = Field(ge=1)
+    end_line: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def ordered_range(self) -> EvidenceLocation:
+        if self.end_line < self.start_line:
+            raise ValueError("成员位置范围无效")
+        return self
+
+
+class SemanticEvidence(AiModel):
+    api: Label = "unknown"
+    normalized_parameters: str = Field(default="unknown", max_length=512)
+    scope: str = Field(default="unknown", max_length=512)
+    purpose: Label = "unknown"
+    confidence: Literal["confirmed_local", "possible", "unknown"] = "unknown"
+    evidence_priority: Literal["P0", "P1", "P2", "P3", "P4"] = "P4"
+    missing_information: list[Label] = Field(default_factory=list, max_length=10)
+    branch_sensitive: bool = False
+    reassigned: bool = False
+
 class Candidate(AiModel):
     candidate_id: Digest
     source_id: Identifier
@@ -50,6 +74,10 @@ class Candidate(AiModel):
     input_digest: Digest
     static_finding_refs: list[Digest] = Field(default_factory=list, max_length=100)
     lines: list[EvidenceLine] = Field(default_factory=list, max_length=500)
+    group_id: Digest | None = None
+    member_locations: list[EvidenceLocation] = Field(default_factory=list, max_length=100)
+    semantic_evidence: SemanticEvidence = Field(default_factory=SemanticEvidence)
+    context_levels: list[Literal["P0", "P1", "P2", "P3", "P4"]] = Field(default_factory=list, max_length=5)
 
     @model_validator(mode="after")
     def ordered_range(self) -> Candidate:
@@ -60,6 +88,9 @@ class Candidate(AiModel):
             raise ValueError("上下文行号必须递增且唯一")
         if sum(len(item.text.encode("utf-8")) + 1 for item in self.lines) > 8192:
             raise ValueError("候选上下文超过 8 KiB")
+        for location in self.member_locations:
+            if location.source_id != self.source_id:
+                raise ValueError("成员位置必须属于候选 source_id")
         return self
 
 
@@ -83,11 +114,15 @@ class ModelOpinion(AiModel):
     opinion_kind: OpinionKind
     rationale: str = Field(min_length=1, max_length=2000)
     missing_information: list[Annotated[str, Field(min_length=1, max_length=500)]] = Field(max_length=10)
+    migration_direction: str | None = Field(default=None, max_length=500)
+    applicability: list[Annotated[str, Field(min_length=1, max_length=500)]] = Field(default_factory=list, max_length=10)
+    manual_checks: list[Annotated[str, Field(min_length=1, max_length=500)]] = Field(default_factory=list, max_length=10)
     citations: list[Citation] = Field(max_length=10)
 
 
 class Opinion(ModelOpinion):
     citation_status: CitationStatus
+    migration_validation: MigrationValidation
     citation_errors: list[str] = Field(default_factory=list, max_length=20)
 
 
@@ -96,6 +131,7 @@ class AiDiagnostic(AiModel):
     message: str = Field(min_length=1, max_length=500)
     candidate_id: Digest | None = None
     source_id: Identifier | None = None
+    scope: Literal["global", "batch", "task"] = "task"
 
 
 class CandidateCoverage(AiModel):
@@ -104,7 +140,9 @@ class CandidateCoverage(AiModel):
     searched_bytes: int = Field(default=0, ge=0)
     selected_files: int = Field(default=0, ge=0)
     discovered_candidates: int = Field(default=0, ge=0)
+    aggregated_candidates: int = Field(default=0, ge=0)
     selected_candidates: int = Field(default=0, ge=0)
+    analyzed_candidates: int = Field(default=0, ge=0)
     context_bytes: int = Field(default=0, ge=0)
     source_partial: bool = False
     partial: bool = False
@@ -115,6 +153,10 @@ class AiCoverage(AiModel):
     planned: int = Field(ge=0)
     completed: int = Field(default=0, ge=0)
     calls: int = Field(default=0, ge=0)
+    retries: int = Field(default=0, ge=0)
+    unfinished: int = Field(default=0, ge=0)
+    stop_reason: str | None = None
+    elapsed_seconds: float | None = Field(default=None, ge=0)
     partial: bool = False
 
 

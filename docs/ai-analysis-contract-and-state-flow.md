@@ -130,3 +130,12 @@ stateDiagram-v2
 当前后端状态、终态判定、取消边界、预览消费和调用预算与契约一致。用户当前页面中的来源任务 ID `a4b87441c9bd48d9b04b7ee9bc2a7d15` 仍可读取且已有结果；页面提示对应的是 AI 预览/AI 任务缓存过期，不是 GitHub 来源任务过期。
 
 需要修正的用户可见状态文案是前端 404 分支：来源任务仍然存在时，应保留来源和静态结果，把操作引导到“生成本地脱敏预览”，不要求用户重新扫描。另需补充一个前端回归断言，确保过期 AI 任务清理任务 ID后仍可对当前来源重新生成预览。
+
+## 本变更补充：吞吐与可操作意见（2026-10-24）
+
+- 候选先按 `(source_id, line)` 保留位置，再按 API、规范化参数、局部作用域和已确认用途证据进行保守语义分组。`group_id`、`member_locations` 和 `semantic_evidence` 允许从代表候选回溯全部原始位置；用途为 `possible` 或 `unknown` 时不跨位置合并。
+- `candidate_coverage` 同时记录 `discovered_candidates`、`aggregated_candidates`、`selected_candidates` 和 `analyzed_candidates`。AI 任务单独记录 `calls`、`retries`、`completed`、`unfinished`、`stop_reason` 与耗时。
+- 上下文优先级为 P0 静态 API/证据、P1 赋值与直接使用、P2 函数/import、P3 调用方、P4 配置。轻量 AST 只建立定义—使用索引，不执行输入源码；分支和变量重赋值分别保留 `unknown` 与 `possible` 边界。
+- 迁移意见的 `citation_status` 与 `migration_validation` 独立。RSA 签名到 ML-DSA 仅作为 `needs_review` 的有条件方向；RSA 加密到 ML-DSA 标记 `invalid`；新候选意见不改变静态 findings 或迁移评分。
+- `usage` 只接受供应商标准整数；缺失、部分返回或无法覆盖所有实际请求时保持 `null` 并生成 `usage_unavailable`，不按字符数估算 token。
+- 自动化测试使用固定 fixture 与 mock；`scripts/run_ai_ablation.py` 仅输出脱敏指标摘要。真实模型验收只对本机配置代理发送最小脱敏候选，不保存原始响应或凭据。

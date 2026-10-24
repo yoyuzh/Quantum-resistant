@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-24",
+  "mode": "configured local provider",
+  "provider_origin": "http://127.0.0.1:8080",
+  "model": "gpt-6.1-sol",
+  "source": "synthetic one-candidate redacted snippet",
+  "status": "completed",
+  "requests": 1,
+  "retries": 0,
+  "opinions": 1,
+  "citations": 1,
+  "citation_valid_rate": null,
+  "elapsed_seconds": 16.746,
+  "usage": {"prompt_tokens": 569, "completion_tokens": 318, "total_tokens": 887},
+  "credentials_logged": false,
+  "raw_response_saved": false
+}

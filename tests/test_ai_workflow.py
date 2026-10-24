@@ -42,8 +42,11 @@ class AiWorkflowTests(unittest.TestCase):
             self.assertEqual(self.wait(identity)["state"], "succeeded")
         result = self.store.result(identity)
         self.assertEqual(result["ai_coverage"]["calls"], 2)
+        self.assertEqual(result["ai_coverage"]["retries"], 1)
         self.assertEqual(result["ai_coverage"]["completed"], len(preview["candidates"]))
+        self.assertEqual(result["ai_coverage"]["unfinished"], 0)
         self.assertIsNone(result["usage"]["total_tokens"])
+        self.assertIn("usage_unavailable", [item["code"] for item in result["diagnostics"]])
 
     def test_timeout_retry_shares_task_call_budget_and_preserves_completed_batch(self):
         requests = []
@@ -69,6 +72,7 @@ class AiWorkflowTests(unittest.TestCase):
         self.assertEqual(len(result["opinions"]), 1)
         self.assertIn("call_budget", [item["code"] for item in result["diagnostics"]])
         self.assertIsNone(result["usage"]["total_tokens"])
+        self.assertIn("usage_unavailable", [item["code"] for item in result["diagnostics"]])
 
     def setUp(self):
         self.store = TaskStore()
@@ -134,6 +138,7 @@ class AiWorkflowTests(unittest.TestCase):
         self.assertNotIn("findings", result)
         self.assertEqual(result["opinions"][0]["citation_status"], "valid")
         self.assertIsNone(result["usage"]["total_tokens"])
+        self.assertIn("usage_unavailable", [item["code"] for item in result["diagnostics"]])
         self.assertEqual(before, self.store.result(source))
         exported = self.client.get(f"/api/ai/tasks/{identity}/export")
         self.assertEqual(exported.status_code, 200)
@@ -173,6 +178,16 @@ class AiWorkflowTests(unittest.TestCase):
             self.assertEqual(self.submit(preview).status_code, 409)
         self.assertFalse(self.calls)
 
+    def test_invalid_batch_diagnostic_does_not_raise_typeerror(self):
+        preview = self.preview(self.source("encrypt(data)"))
+        with patch("backend.ai.runner.complete", return_value=("not-json", Usage())):
+            identity = self.submit(preview).json()["id"]
+            status = self.wait(identity)
+        self.assertIn(status["state"], {"partial", "failed"})
+        result = self.store.result(identity)
+        self.assertIn("invalid_json", [item["code"] for item in result["diagnostics"]])
+        self.assertEqual(result["diagnostics"][0]["scope"], "batch")
+
     def test_zero_candidates_all_abstention_error_diagnostics_and_source_expiry(self):
         preview = self.preview(self.source("x = 1"))
         identity = self.submit(preview).json()["id"]
@@ -194,7 +209,7 @@ class AiWorkflowTests(unittest.TestCase):
             self.assertEqual(self.store.result(identity)["diagnostics"][0]["code"], "provider_auth")
 
     def test_cancel_discards_late_batch_and_keeps_complete_items(self):
-        preview = self.preview(self.source("\n".join("encrypt(x)" for _ in range(6))))
+        preview = self.preview(self.source("\n".join(f"encrypt(x{index})" for index in range(6))))
         entered, release = Event(), Event()
         count = 0
 
