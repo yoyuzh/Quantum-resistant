@@ -118,6 +118,12 @@ class CryptoRulesTests(unittest.TestCase):
         result = run('from cryptography.hazmat.primitives.asymmetric import rsa\nk=rsa.generate_private_key(65537,2048)\ns=k.sign(data)\n')
         self.assertEqual([o.operation_type for o in result.operations], ['key_generation'])
 
+    def test_class_method_template_is_discovered_without_receiver_proof(self):
+        result = run('import jwt\nclass Token:\n def issue(self):\n  return jwt.encode({}, key, algorithm="RS256")\n')
+        self.assertEqual(len(result.operations), 1)
+        self.assertEqual(result.operations[0].context.kind, 'uninstantiated_template')
+        self.assertEqual(result.operations[0].algorithm.reason, 'uninstantiated_template')
+
     def test_use_before_import_and_lexical_conditions_cannot_be_E3_by_omission(self):
         result = run('x=jwt.encode({},key,algorithm=\"RS256\")\nimport jwt\n')
         self.assertNotEqual(claim(result.operations[0]).level, 'E3')

@@ -66,6 +66,11 @@ class Replay:
         self.active = 0
         self.visits = 0
 
+    def _is_class_method(self, module: Module, scope: str) -> bool:
+        prefix = scope.rsplit('.', 1)[0] if '.' in scope else ''
+        return any(symbol.kind == 'class' and symbol.scope == prefix.rsplit('.', 1)[0]
+                   for symbol in module.symbols if prefix)
+
     def expr(self, node: ast.AST, scope: Scope) -> Witness:
         self.checkpoint()
         self.visits += 1
@@ -359,7 +364,7 @@ class Replay:
                 scope = self.enter(self.nodes[call_span], scope, entry[1].target)
         if scope.module != indexed[0] or scope.name != indexed[1].scope:
             return None
-        if not chain and scope.name != '<module>':
+        if not chain and scope.name != '<module>' and not self._is_class_method(scope.module, scope.name):
             scope = replace(scope, blocked=True)
         return scope
 
@@ -373,7 +378,7 @@ class Replay:
             stmt = next((n for n in body if (n.lineno, n.col_offset) <= point < (n.end_lineno, n.end_col_offset)), None)
             if isinstance(stmt, ast.If):
                 flag = any((n.lineno, n.col_offset) <= point < (n.end_lineno, n.end_col_offset) for n in stmt.body)
-                conditions.append(stable_id('condition', [location(module.source_id, stmt.test).model_dump(mode='json'), flag]))
+                conditions.append(stable_id(f'condition:{str(flag).lower()}', [location(module.source_id, stmt.test).model_dump(mode='json')]))
                 body = stmt.body if flag else stmt.orelse
             else:
                 break

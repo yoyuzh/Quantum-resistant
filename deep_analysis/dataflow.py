@@ -160,7 +160,7 @@ class Evaluator:
         return self.edge(self.store.unknown('unsupported_transform', conditions=frame.conditions), 'DERIVED', node, node, frame)
 
     def branch(self, frame: Frame, test: ast.expr, truth: bool) -> Frame:
-        condition = stable_id('condition', [location(frame.module.source_id, test).model_dump(mode='json'), truth])
+        condition = stable_id(f'condition:{str(truth).lower()}', [location(frame.module.source_id, test).model_dump(mode='json')])
         if len(frame.conditions) >= 16:
             return replace(frame, blocked='condition_limit')
         return replace(frame, conditions=(*frame.conditions, condition))

@@ -271,6 +271,28 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["supported_end_to_end"]["fn"], 2)
         self.assertEqual(metrics["outside_support_end_to_end"]["fp"], 0)
 
+    def test_semantic_evaluation_normalizes_internal_unknown_reasons(self):
+        case = next(item for item in load_cases() if item.case_id == "recursion")
+        predicted = OperationLabel.model_validate(case.expected.operations[0].model_dump() | {
+            "algorithm": Unknown(reason="recursive_call")
+        })
+        metrics = evaluate(case.expected, Prediction(operations=(predicted,)))
+        self.assertEqual(metrics["end_to_end"]["tp"], 1)
+
+    def test_semantic_evaluation_normalizes_branch_condition_identity(self):
+        case = next(item for item in load_cases() if item.case_id == "branches_multiple")
+        predicted = OperationLabel.model_validate(case.expected.operations[0].model_dump() | {
+            "algorithm": {
+                "kind": "ambiguous",
+                "alternatives": [
+                    {"value": "RS256", "conditions": ["condition:true:abc"]},
+                    {"value": "HS256", "conditions": ["condition:false:def"]},
+                ],
+            }
+        })
+        metrics = evaluate(case.expected, Prediction(operations=(predicted,)))
+        self.assertEqual(metrics["end_to_end"]["tp"], 1)
+
 
 class LegacyBaselineTests(unittest.TestCase):
     def test_four_inputs_sync_tasks_cli_reports_and_old_schemas(self):

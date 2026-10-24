@@ -226,7 +226,8 @@ def index_calls(module: Module, modules: list[Module], cross_module: bool,
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             inner = scope + '.' + node.name
             if isinstance(node, ast.ClassDef):
-                continue  # Class/method dispatch is indexed as symbols; calls need later receiver proof.
+                pending.extend((child, inner) for child in reversed(node.body))
+                continue  # Class dispatch remains unresolved; method bodies are still useful templates.
             pending.extend((child, inner) for child in reversed(node.body))
             continue
         if isinstance(node, (ast.Lambda, ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
