@@ -134,7 +134,7 @@ export function createAiAnalysis(state, {
       if (!preserveSaved) save(state.taskId);
     } catch (error) {
       if (active(version)) {
-        state.error = error.status === 404 ? 'AI 任务或预览已过期，请重新扫描并分析' : error.message;
+        state.error = error.status === 404 ? 'AI 任务或预览已过期，请重新生成分析预览' : error.message;
         if ([404, 409].includes(error.status)) {
           state.preview = null;
           if (!preserveSaved) save('');

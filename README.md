@@ -32,6 +32,8 @@ python start.py
 
 GitHub 仓库扫描和热门检索仅使用公开匿名访问，无需配置令牌；系统中已有的 `GITHUB_TOKEN` 不会被使用。仓库扫描在 API 请求受限时尝试下载公开归档；热门检索受搜索额度限制，受限后可稍后重试。只支持公开仓库。
 
+GitHub 仓库和 PyPI 包的完整采集结果会缓存到本机远程源缓存目录，默认有效期 24 小时、上限 512 MiB，使用原子写入并按最早写入时间淘汰。桌面版使用配置的缓存目录；普通运行使用 macOS `~/Library/Caches/quantum-resistant-scans/remote-sources`、Linux `$XDG_CACHE_HOME/quantum-resistant-scans/remote-sources` 或 Windows `%LOCALAPPDATA%/quantum-resistant-scans/remote-sources`。可通过 `QUANTUM_REMOTE_CACHE_DIR` 指定目录。缓存只保存完整采集结果，不保存鉴权凭据；缓存失效或损坏时自动回退远程采集。
+
 固定端口：
 
 ```sh
@@ -48,9 +50,9 @@ AI 默认关闭。四类普通扫描完成并保留源码后，切换结果区�
 
 AI 意见分为支持原发现、质疑原发现、新候选、无法判定；均需人工复核。引用有效仅表示匹配本次脱敏片段，不改变原始发现或迁移评分。支持取消后续分析、部分结果、刷新恢复及独立 JSON 导出。预览保留 5 分钟、最多 4 份、共 2 MiB；终态与普通任务一样保留 15 分钟、最多 8 份、共 512 MiB 结果，预览及任务纳入同一 2 GiB 临时存储。来源源码过期后仍可查看有限脱敏证据，服务重启后任务失效。取消不能撤回已发送数据，脱敏不能保证发现所有秘密。热门任务不支持 AI 分析。
 
-启用配置需在服务端设置 `QUANTUM_AI_ENABLED=true`、`QUANTUM_AI_BASE_URL=https://model.example/v1` 和 `QUANTUM_AI_MODEL=review-model`，按供应商要求设置可选的 `QUANTUM_AI_API_KEY`，然后重启服务。凭据不要放入网页、版本库或日志。基址仅允许远程 HTTPS 或本机回环 HTTP，不允许 userinfo、查询参数、片段；公开接口只返回目标 origin，不返回完整基址或凭据。
+启用配置可写入项目根目录 `.env`，服务启动时自动读取；已有进程环境变量优先。至少设置 `QUANTUM_AI_ENABLED=true`、`QUANTUM_AI_BASE_URL=https://model.example/v1` 和 `QUANTUM_AI_MODEL=review-model`，按供应商要求设置可选的 `QUANTUM_AI_API_KEY`，修改后必须重启服务。凭据不要放入网页、版本库或日志。基址仅允许远程 HTTPS 或本机回环 HTTP，不允许 userinfo、查询参数、片段；公开接口只返回目标 origin，不返回完整基址或凭据。
 
-首版兼容非流式 Chat Completions：基址追加 `chat/completions`，system/user 消息及严格 JSON 内容；`QUANTUM_AI_OUTPUT_PARAMETER` 可设置为 `max_tokens`（默认）或 `max_completion_tokens`，不自动试探参数或重试模型请求。可选 `QUANTUM_AI_REASONING_EFFORT=none|low|high|max`，默认不发送。DeepSeek 官方可配置 `QUANTUM_AI_BASE_URL=https://api.deepseek.com/v1`、`QUANTUM_AI_MODEL=deepseek-flash`、`QUANTUM_AI_REASONING_EFFORT=none`；密钥通过进程环境传入。有效预算及全部配置变量见[架构说明](docs/architecture.md#ai-配置与独立数据契约)。
+首版兼容非流式 Chat Completions：基址追加 `chat/completions`，system/user 消息及严格 JSON 内容；`QUANTUM_AI_OUTPUT_PARAMETER` 可设置为 `max_tokens`（默认）或 `max_completion_tokens`。模型请求遇到超时最多自动重试两次，退避1秒、2秒，每次发送计入调用预算；鉴权、限流、HTTP 状态、格式和响应预算错误不重试。可选 `QUANTUM_AI_REASONING_EFFORT=none|low|high|max`，默认不发送。DeepSeek 官方可配置 `QUANTUM_AI_BASE_URL=https://api.deepseek.com/v1`、`QUANTUM_AI_MODEL=deepseek-flash`、`QUANTUM_AI_REASONING_EFFORT=none`；密钥通过进程环境传入。有效预算及全部配置变量见[架构说明](docs/architecture.md#ai-配置与独立数据契约)。
 
 ## 命令行
 
@@ -90,4 +92,4 @@ python start.py --host 0.0.0.0 --port 8010 --strict-port
 
 开发启动、CI 和打包发布机制见 [开发与构建](docs/development.md)；检查命令、验收范围和本次整理结果见 [验证说明](docs/validation.md)。
 
-Python 静态深度分析正按 OpenSpec 分阶段实施，已提供快照/路径上传、有界参数及密钥类型流、三库规则和独立证据核验。四类后台输入可显式设置 `analysis_mode=deep`，默认basic；已有来源可通过 `POST /api/tasks/deep-analysis` 复用，服务端提供独立JSON导出。模式、共享预算、取消/保留及导出协议见 [后台任务说明](docs/python-deep-workflow.md)，支持API、逐项等级与实际评测见 [密码规则与独立核验](docs/python-deep-evidence.md)。网页源码对照台已接入并通过本地浏览器验收，见 [网页说明](docs/python-deep-ui.md)；第8组最终人工精度门槛和真实仓库试点仍未完成。路径协议见 [来源与索引说明](docs/python-deep-inputs.md)，兼容基线与逐阶段验证见 [实施记录](docs/python-deep-analysis.md)，候选失败证据和复现命令见 [选型记录](docs/python-deep-selection.md)。
+Python 静态深度分析正按 OpenSpec 分阶段实施，已提供快照/路径上传、有界参数及密钥类型流、三库规则和独立证据核验。四类后台输入可显式设置 `analysis_mode=deep`，默认basic；已有来源可通过 `POST /api/tasks/deep-analysis` 复用，服务端提供独立JSON导出。模式、共享预算、取消/保留及导出协议见 [后台任务说明](docs/python-deep-workflow.md)，支持API、逐项等级与实际评测见 [密码规则与独立核验](docs/python-deep-evidence.md)。网页源码对照台已接入并通过本地浏览器验收，见 [网页说明](docs/python-deep-ui.md)。当前49/51项：工程及故障回归通过，真实仓库单文件试跑存在漏检，独立人审与最终95%/90%精度门槛仍未完成；当前支持范围Precision/Recall均87.10%，详见 [收尾与审查包](docs/python-deep-closeout.md)。路径协议见 [来源与索引说明](docs/python-deep-inputs.md)，兼容基线与逐阶段验证见 [实施记录](docs/python-deep-analysis.md)，候选失败证据和复现命令见 [选型记录](docs/python-deep-selection.md)。

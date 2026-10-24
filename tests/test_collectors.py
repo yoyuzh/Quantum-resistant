@@ -4,6 +4,7 @@ import base64
 import io
 import os
 import tarfile
+import tempfile
 import threading
 import unittest
 import urllib.request
@@ -15,6 +16,7 @@ import httpx
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes, safe_archive_member_name
 from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries, remote_client_options
 from backend.remote_sources import decode_github_blob, github_get, github_headers, github_sources, pypi_sources
+from backend.remote_cache import RemoteSourceCache
 
 
 def zip_bytes(files):
@@ -57,6 +59,45 @@ class ArchiveTests(unittest.TestCase):
 
 
 class HttpCollectionTests(unittest.TestCase):
+    def test_github_cache_avoids_second_remote_download(self):
+        source = b'algorithm = "RS256"\n'
+        with tempfile.TemporaryDirectory() as directory:
+            cache = RemoteSourceCache(directory)
+            real_client = httpx.Client
+
+            def handle(request):
+                if request.url.host == "api.github.com" and request.url.path.endswith("/repos/a/b"):
+                    return httpx.Response(200, json={"default_branch": "main"})
+                if request.url.path.endswith("/git/trees/main"):
+                    return httpx.Response(200, json={"sha": "abc", "tree": [{"type": "blob", "path": "crypto.py", "size": 22, "url": "https://api.github.com/repos/a/b/git/blobs/one"}]})
+                if request.url.path.endswith("/git/blobs/one"):
+                    return httpx.Response(200, json={"encoding": "base64", "content": base64.b64encode(source).decode()})
+                return httpx.Response(404)
+
+            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
+                first = github_sources("https://github.com/a/b", 2, Deadline.after(3), cache=cache)
+            self.assertEqual(len(first), 1)
+            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: self.fail("network attempted")):
+                second = github_sources("https://github.com/a/b", 2, Deadline.after(3), cache=cache)
+            self.assertEqual(second, first)
+
+    def test_pypi_cache_avoids_second_remote_download(self):
+        archive = zip_bytes([("package/a.py", "x=1")])
+        with tempfile.TemporaryDirectory() as directory:
+            cache = RemoteSourceCache(directory)
+            real_client = httpx.Client
+
+            def handle(request):
+                if request.url.host == "pypi.org":
+                    return httpx.Response(200, json={"urls": [{"filename": "package.whl", "url": "https://files.pythonhosted.org/package.whl"}]})
+                return httpx.Response(200, content=archive)
+
+            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
+                first = pypi_sources("cached-package", Deadline.after(3), cache=cache)
+            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: self.fail("network attempted")):
+                second = pypi_sources("cached-package", Deadline.after(3), cache=cache)
+            self.assertEqual(second, first)
+
     def test_windows_proxy_and_explicit_environment_priority(self):
         registry = {"https": "http://127.0.0.1:7890"}
         with patch.dict(os.environ, {"NO_PROXY": "localhost"}, clear=True), \

@@ -12,6 +12,7 @@ import httpx
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes
 from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries, has_environment_proxy, remote_client_options
 from backend.collection_config import MAX_ARCHIVE_BYTES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
+from backend.remote_cache import RemoteSourceCache
 from backend.collectors import is_supported_source_path, source_priority
 
 
@@ -91,8 +92,14 @@ def decode_github_blob(payload: dict) -> str:
         raise FileCollectionError("文件不是有效 UTF-8 文本", 'encoding') from exc
 
 
-def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSources:
+def github_sources(url: str, max_files: int, deadline: Deadline, *, cache: RemoteSourceCache | None = None) -> CollectedSources:
     limit = max(1, min(max_files, MAX_COLLECTED_FILES))
+    cache_key = f"{url}|{limit}"
+    if cache:
+        cached = cache.load("github", cache_key, deadline=deadline)
+        if cached:
+            deadline.control.emit(stage="使用 GitHub 本地缓存", collected_files=len(cached))
+            return cached
     owner, repo = urlparse(url).path.strip("/").split("/")
     api = f"https://api.github.com/repos/{owner}/{repo}"
     headers, branches, last_error = github_headers(), ["main", "master"], None
@@ -131,7 +138,10 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                                              max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
                         archive_path = archive.extensions.get('archive_path')
                         try:
-                            return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
+                            docs = collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
+                            if cache:
+                                cache.save("github", cache_key, docs)
+                            return docs
                         finally:
                             if archive_path:
                                 deadline.control.storage.remove(archive_path)
@@ -189,8 +199,11 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                             reasons[getattr(value, 'reason', 'download_failure')] += 1
                     reasons['cancelled' if deadline.control.cancelled.is_set() else 'timeout'] += max(0, len(eligible) - len(completed))
                     deadline.control.emit(processed_files=len(candidates), skipped_files=skipped, analysis_total=len(docs), totals_final=True)
-                    return CollectedSources(docs, limit=limit, candidates=None if payload.get("truncated") else len(candidates),
-                                            skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
+                    result = CollectedSources(docs, limit=limit, candidates=None if payload.get("truncated") else len(candidates),
+                                              skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
+                    if cache:
+                        cache.save("github", cache_key, result)
+                    return result
                 if timed_out:
                     raise CollectionTimeout("GitHub 文件采集超时")
                 if access_error:
@@ -216,6 +229,8 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     if archive_path:
                         deadline.control.storage.remove(archive_path)
                 if docs:
+                    if cache:
+                        cache.save("github", cache_key, docs)
                     return docs
             except (CollectionTimeout, GitHubAccessError):
                 raise
@@ -229,7 +244,13 @@ def pypi_candidate_score(item: dict) -> tuple:
     return (0 if item.get("packagetype") == "sdist" else 1, 0 if "py3-none-any.whl" in filename else 1, filename)
 
 
-def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
+def pypi_sources(name: str, deadline: Deadline, *, cache: RemoteSourceCache | None = None) -> CollectedSources:
+    cache_key = name.lower()
+    if cache:
+        cached = cache.load("pypi", cache_key, deadline=deadline)
+        if cached:
+            deadline.control.emit(stage="使用 PyPI 本地缓存", collected_files=len(cached))
+            return cached
     last_error: Exception | None = None
     configured = remote_client_options()
     options = [configured]
@@ -274,6 +295,8 @@ def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
                             if archive_path:
                                 deadline.control.storage.remove(archive_path)
                         if docs:
+                            if cache:
+                                cache.save("pypi", cache_key, docs)
                             return docs
                     except CollectionTimeout:
                         raise

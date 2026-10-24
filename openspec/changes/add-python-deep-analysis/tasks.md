@@ -76,7 +76,11 @@
 
 ## 8. 集成回归、真实试点与交付门槛
 
-- [ ] 8.1 运行python -B -m unittest discover -s tests -v、npm --prefix web test、npm --prefix web run build及python start.py --port 8010 --strict-port后的HTTP页面检查，保存日志，验证旧URL/CLI/评分/四报告和新deep契约。
-- [ ] 8.2 执行跨层故障回归：路径/链接/摘要攻击、解析失败、配额、取消/超时/迟到、源清理/存储满/写失败/adapter退出；交付七规格scenario覆盖表及资源回收证据（V-05）。
+- [x] 8.1 运行python -B -m unittest discover -s tests -v、npm --prefix web test、npm --prefix web run build及python start.py --port 8010 --strict-port后的HTTP页面检查，保存日志，验证旧URL/CLI/评分/四报告和新deep契约。
+- [x] 8.2 执行跨层故障回归：路径/链接/摘要攻击、解析失败、配额、取消/超时/迟到、源清理/存储满/写失败/adapter退出；交付七规格scenario覆盖表及资源回收证据（V-05）。
 - [ ] 8.3 选择至少一个许可允许的真实Python仓库，固定版本/内容和人工审查范围，按只读静态路线运行，交付逐操作裁决、TP/FP/FN/区间、耗时/RSS/暂存及失败；不足全仓审查不报全仓召回（V-04）。
 - [ ] 8.4 汇总错误E3=0/串值=0/源码改写=0/未授权外发=0及支持范围Precision>=95%/Recall>=90%证据，未达或缺人审则明确未完成；更新支持/验收说明，不外推论文指标或自动发布。
+
+2026-10-19收尾记录：49/51项。8.1/8.2证据见docs/python-deep-closeout.md和output/deep-closeout-20261019：Python398/Node73、构建、当前新进程HTTP、33个Scenario索引与资源回收。使用项目.venv/bin/python；8010已有服务且页面200，严格端口启动拒绝，另用8011新进程验当前代码（两端页面资源均与本次构建一致），原8010未停止。
+
+8.3已冻结Microblog v0.23的MIT许可/单文件内容摘要及预审范围并只读试跑，0条操作，漏掉代理预审的两处JWT调用；独立人审和正式TP/FP/FN/区间仍缺，不勾选。8.4复跑固定标签仍为支持范围27TP/4FP/4FN，Precision/Recall均87.10%，低于95%/90%；算法错误E3=0仅相对现有标签，不代替全部claim的人审。人审草稿human-review-decisions.json全部保留待审，不改标签/计分/支持范围，不归档此变更。

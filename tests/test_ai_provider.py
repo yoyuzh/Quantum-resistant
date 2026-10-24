@@ -4,7 +4,7 @@ import asyncio
 import json
 import unittest
 from dataclasses import replace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import httpx
 
@@ -14,7 +14,7 @@ from backend.ai.models import Usage
 from backend.ai.provider import ProviderError, complete, request_body
 from backend.ai.runner import analyze
 from backend.ai.validation import parse_opinions
-from backend.collection_common import Deadline
+from backend.collection_common import CollectionCancelled, CollectionTimeout, Deadline
 
 
 def config(**budgets):
@@ -72,6 +72,69 @@ class AiValidationTests(unittest.TestCase):
 
 
 class AiProviderTests(unittest.TestCase):
+    def test_timeout_retries_same_request_and_counts_each_send(self):
+        calls = []
+        sent = Mock()
+
+        def handler(request):
+            calls.append(request.content)
+            if len(calls) < 3:
+                raise httpx.ReadTimeout("test-secret")
+            return httpx.Response(200, json={"choices": [{"message": {"content": "recovered"}}]})
+
+        with patch.object(Deadline, "pause") as pause:
+            content, _ = complete(config(), candidates(), Deadline.after(10),
+                                  transport=httpx.MockTransport(handler), on_send=sent)
+        self.assertEqual(content, "recovered")
+        self.assertEqual(calls, [calls[0]] * 3)
+        self.assertEqual(sent.call_count, 3)
+        self.assertEqual([call.args[0] for call in pause.call_args_list], [1, 2])
+
+    def test_timeout_retry_limit_and_call_limit(self):
+        for maximum, expected in ((8, 3), (1, 1)):
+            sent = Mock()
+
+            def handler(_):
+                raise httpx.ReadTimeout("test-secret")
+
+            with self.subTest(maximum=maximum), patch.object(Deadline, "pause"), self.assertRaises(ProviderError) as caught:
+                complete(config(max_calls=maximum), candidates(), Deadline.after(10),
+                         transport=httpx.MockTransport(handler), on_send=sent)
+            self.assertEqual(caught.exception.code, "provider_timeout")
+            self.assertNotIn("test-secret", str(caught.exception))
+            self.assertNotIn("未重试", str(caught.exception))
+            self.assertEqual(sent.call_count, expected)
+
+    def test_retry_wait_respects_cancellation_and_task_deadline(self):
+        for cancel in (False, True):
+            deadline = Deadline.after(0.03 if not cancel else 10)
+            calls = []
+
+            def handler(request):
+                calls.append(request)
+                if cancel:
+                    deadline.control.request_cancel()
+                raise httpx.ReadTimeout("test-secret")
+
+            with self.subTest(cancel=cancel), self.assertRaises(CollectionCancelled if cancel else CollectionTimeout):
+                complete(config(), candidates(), deadline, transport=httpx.MockTransport(handler))
+            self.assertEqual(len(calls), 1)
+
+    def test_wall_clock_timeout_can_recover(self):
+        calls = []
+
+        async def handler(request):
+            calls.append(request)
+            if len(calls) == 1:
+                await asyncio.sleep(1)
+            return httpx.Response(200, json={"choices": [{"message": {"content": "recovered"}}]})
+
+        with patch.object(Deadline, "pause"):
+            content, _ = complete(config(request_seconds=0.02), candidates(), Deadline.after(10),
+                                  transport=httpx.MockTransport(handler))
+        self.assertEqual(content, "recovered")
+        self.assertEqual(len(calls), 2)
+
     def test_protocol_message_and_no_secret_in_messages(self):
         calls = []
 

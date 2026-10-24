@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from backend.ai.config import LIMITS, get_config, load_config
+from backend.ai.config import LIMITS, _read_dotenv, get_config, load_config
 from backend.ai.models import (
     AiAnalysisResult, AiCoverage, CandidateCoverage, Citation, ModelOpinion,
     SubmitRequest, Usage, finding_fingerprint, stable_digest,
@@ -26,6 +28,14 @@ class AiConfigTests(unittest.TestCase):
             self.assertFalse(config.enabled)
             self.assertFalse(config.valid)
             self.assertEqual(config.public()["budgets"], LIMITS)
+
+    def test_dotenv_parser_reads_quotes_without_overriding_explicit_mapping(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".env"
+            path.write_text("# comment\nexport QUANTUM_AI_ENABLED='true'\nQUANTUM_AI_MODEL=fixture\nINVALID-NAME=x\n", encoding="utf-8")
+            values = _read_dotenv(path)
+        self.assertEqual(values, {"QUANTUM_AI_ENABLED": "true", "QUANTUM_AI_MODEL": "fixture"})
+        self.assertFalse(load_config({"QUANTUM_AI_ENABLED": "false"}).valid)
 
     def test_valid_urls(self):
         for url in ("https://model.example/private/path", "http://localhost:8888/v1",

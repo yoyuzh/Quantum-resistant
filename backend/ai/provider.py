@@ -9,7 +9,7 @@ import httpx
 
 from backend.ai.config import AiConfig
 from backend.ai.models import Candidate, PROMPT_VERSION, Usage
-from backend.collection_common import Deadline, http_slot
+from backend.collection_common import CollectionTimeout, Deadline, http_slot
 
 MODEL_SLOT = BoundedSemaphore(1)
 SYSTEM_PROMPT = """你是密码资产人工复核助手。版本 ai-review-1。
@@ -42,6 +42,23 @@ def request_body(config: AiConfig, candidates: list[Candidate]) -> bytes:
 
 
 def complete(config: AiConfig, candidates: list[Candidate], deadline: Deadline, *, transport=None, on_send=None) -> tuple[str, Usage]:
+    attempts = min(3, config.budgets["max_calls"])
+    for attempt in range(attempts):
+        deadline.remaining()
+        try:
+            return _complete_once(config, candidates, deadline, transport=transport, on_send=on_send)
+        except ProviderError as exc:
+            if exc.code != "provider_timeout":
+                raise
+            deadline.remaining()
+            if attempt + 1 == attempts:
+                raise ProviderError("provider_timeout", f"模型请求超时，已尝试 {attempts} 次，停止重试") from None
+            delay = 2 ** attempt
+            deadline.control.emit(stage=f"模型请求超时，{delay} 秒后重试（第 {attempt + 1} 次）")
+            deadline.pause(delay)
+
+
+def _complete_once(config: AiConfig, candidates: list[Candidate], deadline: Deadline, *, transport=None, on_send=None) -> tuple[str, Usage]:
     body = request_body(config, candidates)
     if len(body) > config.budgets["request_bytes"]:
         raise ProviderError("request_budget", "候选批次超过模型输入字节预算")
@@ -97,8 +114,9 @@ def complete(config: AiConfig, candidates: list[Candidate], deadline: Deadline, 
         except (ValueError, KeyError, IndexError, TypeError, RecursionError):
             raise ProviderError("provider_format", "模型响应协议无效，本次未自动纠错重发") from None
         return content, usage
-    except (httpx.TimeoutException, asyncio.TimeoutError):
-        raise ProviderError("provider_timeout", "模型请求超时，本次未重试") from None
+    except (httpx.TimeoutException, asyncio.TimeoutError, CollectionTimeout):
+        deadline.remaining()
+        raise ProviderError("provider_timeout", "模型请求超时") from None
     except httpx.HTTPError:
         raise ProviderError("provider_connection", "模型连接失败，本次未重试") from None
     finally:

@@ -8,17 +8,68 @@ from dataclasses import replace
 from threading import Event
 from unittest.mock import patch
 
+import httpx
 from fastapi.testclient import TestClient
 
 from backend import task_routes
 from backend.ai.models import Usage
-from backend.ai.provider import ProviderError
+from backend.ai.provider import ProviderError, complete
+from backend.collection_common import Deadline
 from backend.main import app
 from backend.task_store import TaskStore
 from tests.test_ai_provider import config, opinion
 
 
 class AiWorkflowTests(unittest.TestCase):
+    def test_timeout_retry_recovers_with_actual_call_count_and_unknown_usage(self):
+        requests = []
+
+        def recovering(cfg, batch, deadline, **kwargs):
+            def handler(request):
+                requests.append(request)
+                if len(requests) == 1:
+                    raise httpx.ReadTimeout("test-secret")
+                return httpx.Response(200, json={
+                    "choices": [{"message": {"content": json.dumps({"opinions": [opinion(item) for item in batch]})}}],
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+                })
+
+            return complete(cfg, batch, deadline, transport=httpx.MockTransport(handler), **kwargs)
+
+        preview = self.preview()
+        with patch.object(Deadline, "pause"), patch("backend.ai.runner.complete", side_effect=recovering):
+            identity = self.submit(preview).json()["id"]
+            self.assertEqual(self.wait(identity)["state"], "succeeded")
+        result = self.store.result(identity)
+        self.assertEqual(result["ai_coverage"]["calls"], 2)
+        self.assertEqual(result["ai_coverage"]["completed"], len(preview["candidates"]))
+        self.assertIsNone(result["usage"]["total_tokens"])
+
+    def test_timeout_retry_shares_task_call_budget_and_preserves_completed_batch(self):
+        requests = []
+
+        def limited(cfg, batch, deadline, **kwargs):
+            def handler(request):
+                requests.append(request)
+                if len(requests) > 1:
+                    raise httpx.ReadTimeout("test-secret")
+                return httpx.Response(200, json={"choices": [{"message": {
+                    "content": json.dumps({"opinions": [opinion(item) for item in batch]})}}]})
+
+            return complete(cfg, batch, deadline, transport=httpx.MockTransport(handler), **kwargs)
+
+        with patch("backend.ai.routes.get_config", return_value=config(batch_candidates=1, max_calls=2)):
+            preview = self.preview(self.source("encrypt(x)\nencrypt(y)"))
+            with patch.object(Deadline, "pause"), patch("backend.ai.runner.complete", side_effect=limited):
+                identity = self.submit(preview).json()["id"]
+                self.assertEqual(self.wait(identity)["state"], "partial")
+        result = self.store.result(identity)
+        self.assertEqual(len(requests), 2)
+        self.assertEqual(result["ai_coverage"]["calls"], 2)
+        self.assertEqual(len(result["opinions"]), 1)
+        self.assertIn("call_budget", [item["code"] for item in result["diagnostics"]])
+        self.assertIsNone(result["usage"]["total_tokens"])
+
     def setUp(self):
         self.store = TaskStore()
         self.swap = patch.object(task_routes, "store", self.store)

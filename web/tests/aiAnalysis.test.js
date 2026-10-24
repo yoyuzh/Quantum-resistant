@@ -66,7 +66,7 @@ test('过期预览拒绝发送，服务器404清理任务标识，刷新从ID恢
   storage.setItem('quantum-ai-task', 'expired-task');
   await actions.restore();
   assert.equal(calls, 1);
-  assert.match(state.error, /已过期/);
+  assert.match(state.error, /已过期，请重新生成分析预览/);
   assert.equal(storage.getItem('quantum-ai-task'), undefined);
   actions.dispose();
 });

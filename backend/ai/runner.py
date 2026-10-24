@@ -39,8 +39,11 @@ def analyze(preview: Preview, config: AiConfig, budget: Deadline) -> dict:
             budget.control.emit(stage="模型分析", ai_progress=result.ai_coverage.model_dump())
 
             def sent():
+                deadline.remaining()
+                if result.ai_coverage.calls >= config.budgets["max_calls"]:
+                    raise ProviderError("call_budget", "模型调用次数已达预算，停止重试及后续请求")
                 result.ai_coverage.calls += 1
-                budget.control.emit(ai_progress=result.ai_coverage.model_dump())
+                budget.control.emit(stage="模型分析", ai_progress=result.ai_coverage.model_dump())
 
             content, usage = complete(config, batch, deadline, on_send=sent)
             # 取消/截止后到达的整批响应也不接纳。

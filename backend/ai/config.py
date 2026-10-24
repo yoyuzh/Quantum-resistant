@@ -7,6 +7,8 @@ import os
 import secrets
 from dataclasses import dataclass, field
 from functools import lru_cache
+from pathlib import Path
+import re
 from typing import Mapping
 from urllib.parse import urlsplit, urlunsplit
 
@@ -21,6 +23,35 @@ LIMITS = {
     "response_bytes": 256 * 1024, "output_tokens": 2048, "model_concurrency": 1,
 }
 _VERSION_KEY = secrets.token_bytes(32)
+_ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _read_dotenv(path: Path) -> dict[str, str]:
+    values = {}
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return values
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("export "):
+            stripped = stripped[7:].lstrip()
+        name, separator, value = stripped.partition("=")
+        if not separator or not _ENV_NAME.fullmatch(name.strip()):
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        values[name.strip()] = value
+    return values
+
+
+def _runtime_environment() -> dict[str, str]:
+    values = _read_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    values.update(os.environ)
+    return values
 
 
 @dataclass(frozen=True, repr=False)
@@ -71,7 +102,7 @@ def trusted_base_url(value: str) -> tuple[str, str]:
 
 
 def load_config(environ: Mapping[str, str] | None = None) -> AiConfig:
-    env = os.environ if environ is None else environ
+    env = _runtime_environment() if environ is None else environ
     enabled = env.get("QUANTUM_AI_ENABLED", "").lower() in {"1", "true", "yes"}
     if not enabled:
         return AiConfig()

@@ -11,6 +11,7 @@
 | 只查看预览 | test_ai_workflow.AiWorkflowTests.test_preview_has_no_calls_and_task_independent_export | 本地页面预览后 /fixture/ai calls=0 |
 | 预览发生变化 | test_config_consent_boundary_and_capacity_no_calls、test_idempotency_consumption_expiration_and_conflict | 配置凭据变化、过期与摘要冲突均拒绝 |
 | 模型返回重定向 | test_ai_provider.AiProviderTests.test_statuses_redirect_format_size_and_no_retry | 302 只请求一次，不跟随 Location |
+| 模型请求超时 | test_ai_provider.AiProviderTests.test_timeout_retries_same_request_and_counts_each_send、test_timeout_retry_limit_and_call_limit、test_timeout_retry_shares_task_call_budget_and_preserves_completed_batch | 超时最多重试两次，退避受任务截止与调用预算约束 |
 | 上下文包含私钥 | test_ai_context.AiContextTests.test_redaction_and_original_line_mapping、test_multiline_secret_blocks_and_pem_public_body_are_masked | test_protocol_message_and_no_secret_in_messages 对比发送候选与预览对象 |
 | 响应或总预算超限 | test_statuses_redirect_format_size_and_no_retry、test_timeout_connection_and_wall_clock、test_ai_workflow.AiWorkflowTests.test_partial_static_scope_and_timeout_retain_diagnostics | 响应字节、墙钟超时、任务超时；test_calls_budget_and_cancel_first_late_response 验证调用预算 |
 
