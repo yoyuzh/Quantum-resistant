@@ -11,7 +11,7 @@ from deep_analysis.identity import operation_id, template_id, stable_id
 from deep_analysis.models import ArgumentFact, Budgets, CallContext, CoverageCount, Diagnostic, Unknown
 from deep_analysis.semantic_models import Candidate, SemanticResult
 from deep_analysis.snapshot import Snapshot
-from deep_analysis.symbol_index import Index, build_index
+from deep_analysis.symbol_index import Index, build_index, is_class_method
 import ast
 
 
@@ -99,13 +99,15 @@ def analyze(snapshot: Snapshot, *, index: Index | None = None, budgets: Budgets 
                                 break
                             frame = evaluator.bind(caller, function, frame)
                     else:
-                        frame = Frame(sink.module, sink.call.scope, blocked=reason)
+                        blocked = None if reason == 'uninstantiated_template' and is_class_method(sink.module, sink.call.scope) else reason
+                        frame = Frame(sink.module, sink.call.scope, blocked=blocked)
                     frame = at_site(evaluator, frame, sink)
                     function = evaluator.function(frame)
                     if function and (function.node.decorator_list or isinstance(function.node, ast.AsyncFunctionDef)):
                         frame = replace(frame, blocked='unsupported_function')
                     arguments, binding_reason = evaluator.sink_arguments(sink, frame)
-                    reason = frame.blocked or binding_reason or reason
+                    template_reason = None if reason == 'uninstantiated_template' and is_class_method(sink.module, sink.call.scope) else reason
+                    reason = frame.blocked or binding_reason or template_reason
                     if reason:
                         arguments = {name: evaluator.store.unknown(reason) for name in arguments}
                 except SliceLimit as exc:

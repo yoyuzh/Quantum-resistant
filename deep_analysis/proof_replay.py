@@ -13,7 +13,7 @@ from typing import Callable
 from deep_analysis.crypto_rules import RULES
 from deep_analysis.identity import stable_id
 from deep_analysis.models import Alternative, Ambiguous, Budgets, Known, Span, Unknown
-from deep_analysis.symbol_index import Index, Module, dotted, import_base, location, resolve
+from deep_analysis.symbol_index import Index, Module, dotted, has_dynamic_namespace, import_base, is_class_method, location, resolve
 
 Edge = tuple[str, Span, Span]
 
@@ -66,11 +66,6 @@ class Replay:
         self.active = 0
         self.visits = 0
 
-    def _is_class_method(self, module: Module, scope: str) -> bool:
-        prefix = scope.rsplit('.', 1)[0] if '.' in scope else ''
-        return any(symbol.kind == 'class' and symbol.scope == prefix.rsplit('.', 1)[0]
-                   for symbol in module.symbols if prefix)
-
     def expr(self, node: ast.AST, scope: Scope) -> Witness:
         self.checkpoint()
         self.visits += 1
@@ -88,7 +83,7 @@ class Replay:
     def _expr(self, node: ast.AST, scope: Scope) -> Witness:
         module = scope.module
         span = location(module.source_id, node)
-        if scope.blocked or any(s.kind == 'dynamic_namespace' for s in module.symbols):
+        if scope.blocked or has_dynamic_namespace(module, scope.name):
             return unknown('unsupported_scope')
         if isinstance(node, ast.Constant) and type(node.value) in (str, int, float, bool, type(None)):
             try:
@@ -364,7 +359,7 @@ class Replay:
                 scope = self.enter(self.nodes[call_span], scope, entry[1].target)
         if scope.module != indexed[0] or scope.name != indexed[1].scope:
             return None
-        if not chain and scope.name != '<module>' and not self._is_class_method(scope.module, scope.name):
+        if not chain and scope.name != '<module>' and not is_class_method(scope.module, scope.name):
             scope = replace(scope, blocked=True)
         return scope
 

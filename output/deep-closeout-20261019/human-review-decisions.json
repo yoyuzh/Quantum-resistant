@@ -1,0 +1,1436 @@
+{
+  "status": "completed_independent_human",
+  "reviewer": "游雨哲",
+  "manifest_sha256": "50749e5866589a645ecab59354cfad2d6e2d855817985373522ce434ba8a0cc9",
+  "locked_cases": [
+    {
+      "case_id": "two_contexts",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "crypto/wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "main.py",
+              "issue({}, key, \"RS256\")",
+              0
+            ]
+          ],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "CALLS",
+            "ARGUMENT_FLOW",
+            "IMPORT_BINDING"
+          ]
+        },
+        {
+          "sink": {
+            "path": "crypto/wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "main.py",
+              "issue({}, key, \"HS256\")",
+              0
+            ]
+          ],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "CALLS",
+            "ARGUMENT_FLOW",
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "crypto/wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        },
+        {
+          "path": "crypto/wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256",
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false,
+        false
+      ],
+      "required_evidence_edges": [
+        "CALLS",
+        "ARGUMENT_FLOW",
+        "IMPORT_BINDING",
+        "CALLS",
+        "ARGUMENT_FLOW",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "同sink两次实参分别RSA签名/HMAC；不能合并；key来源保持未知。"
+    },
+    {
+      "case_id": "relative_alias",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "pkg/use.py",
+            "expression": "token.encode({}, key, algorithm=CHOICE)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING",
+            "ARGUMENT_FLOW"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "pkg/use.py",
+          "expression": "token.encode({}, key, algorithm=CHOICE)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "ARGUMENT_FLOW"
+      ],
+      "rationale": "唯一包根下相对导入模块常量，两个别名按绑定解析。"
+    },
+    {
+      "case_id": "keyword_binding",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue(algorithm=\"HS256\", key=secret, payload={})",
+              0
+            ]
+          ],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING",
+            "ARGUMENT_FLOW"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "ARGUMENT_FLOW"
+      ],
+      "rationale": "关键字绑定按参数名不按位置。"
+    },
+    {
+      "case_id": "static_default",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue({}, key)",
+              0
+            ]
+          ],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "ARGUMENT_FLOW",
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "ARGUMENT_FLOW",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "缺省实参使用静态默认值，不猜库默认算法。"
+    },
+    {
+      "case_id": "positional_keyword_only",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue({}, key=key, algorithm=\"HS256\")",
+              0
+            ]
+          ],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING",
+            "ARGUMENT_FLOW"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "ARGUMENT_FLOW"
+      ],
+      "rationale": "仅位置和仅关键字签名必须分别绑定。"
+    },
+    {
+      "case_id": "literal_unpack",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue(*({}, key), **{\"algorithm\": \"RS256\"})",
+              0
+            ]
+          ],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING",
+            "ARGUMENT_FLOW"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "ARGUMENT_FLOW"
+      ],
+      "rationale": "只有可静态校验的字面量展开进入确定绑定。"
+    },
+    {
+      "case_id": "unknown_unpack",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue(*args, **kwargs)",
+              0
+            ]
+          ],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "动态展开无法校验，未知必须保留而非默认RS256。"
+    },
+    {
+      "case_id": "duplicate_argument",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue({}, key, \"RS256\", algorithm=\"HS256\")",
+              0
+            ]
+          ],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "重复传参不构造确定实参；操作只作有诊断的静态候选。"
+    },
+    {
+      "case_id": "missing_argument",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue({}, key)",
+              0
+            ]
+          ],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "无默认algorithm，缺参不是已知值。"
+    },
+    {
+      "case_id": "transparent_return",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "RETURN_FLOW",
+            "ASSIGN_FLOW",
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "RETURN_FLOW",
+        "ASSIGN_FLOW",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "返回常量被调用结果消费；只有CALLS不足以证明HS256。"
+    },
+    {
+      "case_id": "derived_return",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "标签接受：源码证据不足以收敛到单一算法，预期保留 Unknown；必要证据边与冻结标签一致。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=choose(\"RS256\"))",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=choose(\"RS256\"))",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "lower派生不是透明等值，不把RS256原值穿透。"
+    },
+    {
+      "case_id": "reassignment",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "ASSIGN_FLOW",
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "ASSIGN_FLOW",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "顺序赋值使用调用前最后绑定。"
+    },
+    {
+      "case_id": "branches_equal",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "全部支持分支同值才可合并已知，仍不表示必然执行。"
+    },
+    {
+      "case_id": "branches_multiple",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "标签接受：源码两分支分别为 RS256/HS256，预期算法保持 Unknown；当前预测以条件化 ambiguous 表示候选值，属于表示差异，不改金标准。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "两分支多值保留条件，不任选其中一种。"
+    },
+    {
+      "case_id": "branch_unknown",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "标签接受：源码证据不足以收敛到单一算法，预期保留 Unknown；必要证据边与冻结标签一致。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "未知分支不能丢弃，不能收敛为RS256。"
+    },
+    {
+      "case_id": "shadowing",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [],
+      "expected_operation_positions": [],
+      "expected_algorithms": [],
+      "expected_unknown_status": [],
+      "required_evidence_edges": [],
+      "rationale": "参数遮蔽jwt导入，未知对象encode不作为可信PyJWT操作。"
+    },
+    {
+      "case_id": "same_names",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "a/use.py",
+            "expression": "jwt.encode({}, key, algorithm=ALG)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        },
+        {
+          "sink": {
+            "path": "b/use.py",
+            "expression": "jwt.encode({}, key, algorithm=ALG)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "a/use.py",
+          "expression": "jwt.encode({}, key, algorithm=ALG)",
+          "index": 0
+        },
+        {
+          "path": "b/use.py",
+          "expression": "jwt.encode({}, key, algorithm=ALG)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256",
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false,
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "同名文件必须按source_id和包路径隔离，不能按settings猜同目标。"
+    },
+    {
+      "case_id": "missing_module",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=ALG)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=ALG)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "缺模块保留缺口且不联网/读宿主补齐。"
+    },
+    {
+      "case_id": "recursion",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "标签接受：源码证据不足以收敛到单一算法，预期保留 Unknown；必要证据边与冻结标签一致。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=choose())",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=choose())",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "递归边界停止，不捏造返回常量。"
+    },
+    {
+      "case_id": "getattr_dynamic",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [],
+      "expected_operation_positions": [],
+      "expected_algorithms": [],
+      "expected_unknown_status": [],
+      "required_evidence_edges": [],
+      "rationale": "动态目标不按encode名字猜可信API。"
+    },
+    {
+      "case_id": "decorated",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "标签接受：源码证据不足以收敛到单一算法，预期保留 Unknown；必要证据边与冻结标签一致。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": false,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode(payload, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "任意装饰器不能连接实参到原函数；保留未实例化模板候选，context空。"
+    },
+    {
+      "case_id": "global_write",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "wrap.py",
+            "expression": "jwt.encode({}, key, algorithm=algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [
+            [
+              "app.py",
+              "issue()",
+              0
+            ]
+          ],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "wrap.py",
+          "expression": "jwt.encode({}, key, algorithm=algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "global动态写入使算法未知，不沿用模块旧常量。"
+    },
+    {
+      "case_id": "generic_pem",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "keys.py",
+            "expression": "load_pem_private_key(blob, password=None)",
+            "index": 0
+          },
+          "operation_type": "key_import",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "keys.py",
+          "expression": "load_pem_private_key(blob, password=None)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "通用PEM加载不证明RSA；未知接收者sign不升级为RSA操作。"
+    },
+    {
+      "case_id": "two_receivers",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "keys.py",
+            "expression": "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+            "index": 0
+          },
+          "operation_type": "key_generation",
+          "context": [],
+          "algorithm": "RSA",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        },
+        {
+          "sink": {
+            "path": "keys.py",
+            "expression": "known.sign(data, padding, hash_algorithm)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "RSA",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "KEY_TYPE_FLOW",
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "keys.py",
+          "expression": "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+          "index": 0
+        },
+        {
+          "path": "keys.py",
+          "expression": "known.sign(data, padding, hash_algorithm)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RSA",
+        "RSA"
+      ],
+      "expected_unknown_status": [
+        false,
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "KEY_TYPE_FLOW",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "known密钥类型可证；other.sign不按同名方法归RSA。"
+    },
+    {
+      "case_id": "ecc_import_no_curve",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "keys.py",
+            "expression": "ECC.import_key(blob)",
+            "index": 0
+          },
+          "operation_type": "key_import",
+          "context": [],
+          "algorithm": "ECC",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "keys.py",
+          "expression": "ECC.import_key(blob)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "ECC"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "ECC导入只证家族，不声称某具体曲线。"
+    },
+    {
+      "case_id": "dsa_sign",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "keys.py",
+            "expression": "DSA.generate(2048)",
+            "index": 0
+          },
+          "operation_type": "key_generation",
+          "context": [],
+          "algorithm": "DSA",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        },
+        {
+          "sink": {
+            "path": "keys.py",
+            "expression": "signer.sign(digest)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "DSA",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "KEY_TYPE_FLOW",
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "keys.py",
+          "expression": "DSA.generate(2048)",
+          "index": 0
+        },
+        {
+          "path": "keys.py",
+          "expression": "signer.sign(digest)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "DSA",
+        "DSA"
+      ],
+      "expected_unknown_status": [
+        false,
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "KEY_TYPE_FLOW",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "DSS签名通过密钥类型及构造链证明DSA，不按sign方法名猜。"
+    },
+    {
+      "case_id": "jwt_decode",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.decode(token, key, algorithms=[\"RS256\"])",
+            "index": 0
+          },
+          "operation_type": "verify",
+          "context": [],
+          "algorithm": "RS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        },
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.decode(token, options={\"verify_signature\": False})",
+            "index": 0
+          },
+          "operation_type": "unknown",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.decode(token, key, algorithms=[\"RS256\"])",
+          "index": 0
+        },
+        {
+          "path": "app.py",
+          "expression": "jwt.decode(token, options={\"verify_signature\": False})",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "RS256",
+        null
+      ],
+      "expected_unknown_status": [
+        false,
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING",
+        "IMPORT_BINDING"
+      ],
+      "rationale": "允许算法列表不等于实际token头；verify只证静态验证角色；禁用签验不标verify。"
+    },
+    {
+      "case_id": "no_algorithm",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key)",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key)",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "未固定依赖版本时不假定库默认算法。"
+    },
+    {
+      "case_id": "unicode_positions",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工逐文件核对源码、操作位置、调用上下文和必要证据边；当前标签接受。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "中文/入口.py",
+            "expression": "jwt.encode({}, key, algorithm=\"HS256\")",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": "HS256",
+          "unknown": false,
+          "supported": true,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "中文/入口.py",
+          "expression": "jwt.encode({}, key, algorithm=\"HS256\")",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        "HS256"
+      ],
+      "expected_unknown_status": [
+        false
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "中文前缀的AST列为UTF-8字节，不能按字符列切片。"
+    },
+    {
+      "case_id": "unsupported_config",
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "标签接受：源码证据不足以收敛到单一算法，预期保留 Unknown；必要证据边与冻结标签一致。",
+      "accepted_current_label": true,
+      "expected_operations": [
+        {
+          "sink": {
+            "path": "app.py",
+            "expression": "jwt.encode({}, key, algorithm=config[\"algorithm\"])",
+            "index": 0
+          },
+          "operation_type": "sign",
+          "context": [],
+          "algorithm": null,
+          "unknown": true,
+          "supported": false,
+          "required_evidence_edges": [
+            "IMPORT_BINDING"
+          ]
+        }
+      ],
+      "expected_operation_positions": [
+        {
+          "path": "app.py",
+          "expression": "jwt.encode({}, key, algorithm=config[\"algorithm\"])",
+          "index": 0
+        }
+      ],
+      "expected_algorithms": [
+        null
+      ],
+      "expected_unknown_status": [
+        true
+      ],
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "首版不证明JSON读取路径、cwd及运行时键访问；文件存在仍未知。"
+    }
+  ],
+  "pilot_scope_sha256": "d6c7552e1429ccd0284b8443af1c3bc88833518b516d2c6676633c7e815c4c5d",
+  "pilot_operations": [
+    {
+      "line": 182,
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工核对固定 pilot-input/app/models.py 对应源码行；标签接受。",
+      "end_line": 184,
+      "column": 15,
+      "end_column": 64,
+      "accepted_current_label": true,
+      "expected_operation_position": {
+        "path": "app/models.py",
+        "start_line": 182,
+        "end_line": 184,
+        "start_column": 15,
+        "end_column": 64
+      },
+      "operation_type": "signature",
+      "expected_algorithm": "HS256",
+      "expected_unknown_status": false,
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "固定源码中 User.get_reset_password_token 调用 jwt.encode，algorithm=HS256；SECRET_KEY 来自 current_app.config，密钥来源保持 unknown_runtime_config。"
+    },
+    {
+      "line": 189,
+      "verdict": "accepted",
+      "reviewer": "游雨哲",
+      "notes": "人工核对固定 pilot-input/app/models.py 对应源码行；标签接受。",
+      "end_line": 190,
+      "column": 17,
+      "end_column": 49,
+      "accepted_current_label": true,
+      "expected_operation_position": {
+        "path": "app/models.py",
+        "start_line": 189,
+        "end_line": 190,
+        "start_column": 17,
+        "end_column": 49
+      },
+      "operation_type": "verification",
+      "expected_algorithm": "HS256",
+      "expected_unknown_status": false,
+      "required_evidence_edges": [
+        "IMPORT_BINDING"
+      ],
+      "rationale": "固定源码中 User.verify_reset_password_token 调用 jwt.decode，algorithms=[HS256]；verify 语义为验证，SECRET_KEY 来源保持 unknown_runtime_config。"
+    }
+  ],
+  "reviewed_at": "2026-10-23"
+}

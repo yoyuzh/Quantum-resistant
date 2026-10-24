@@ -43,7 +43,7 @@ def jwt_algorithm(candidate: Candidate) -> tuple[Fact, str]:
         header_alg = mapping_field(headers, 'alg')
         if header_alg is not None:
             fact = header_alg
-        elif headers is not None and not (isinstance(headers.value, Unknown) and headers.value.reason == 'unspecified_api_parameter') and not (isinstance(headers.value, Known) and headers.value.value is None):
+        elif headers is not None and not (isinstance(headers.value, Unknown) and headers.value.reason in {'unspecified_api_parameter', 'uninstantiated_template'}) and not (isinstance(headers.value, Known) and headers.value.value is None):
             if headers.items is None:
                 fact = absent('headers_algorithm_override')
     else:

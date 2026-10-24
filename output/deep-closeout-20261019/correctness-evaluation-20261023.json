@@ -1,0 +1,271 @@
+{
+  "schema": "deep-correctness-evaluation-20261023",
+  "review_status": "completed_independent_human",
+  "reviewer": "游雨哲",
+  "reviewed_at": "2026-10-23",
+  "manifest_sha256": "50749e5866589a645ecab59354cfad2d6e2d855817985373522ce434ba8a0cc9",
+  "locked_case_count": 30,
+  "locked_case_verdicts": {
+    "accepted": 30
+  },
+  "locked_metrics": {
+    "operations": {
+      "tp": 33,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "precision_interval_95": [
+        0.895730002457548,
+        1.0
+      ],
+      "recall_interval_95": [
+        0.895730002457548,
+        1.0
+      ]
+    },
+    "end_to_end": {
+      "tp": 31,
+      "fp": 2,
+      "fn": 2,
+      "precision": 0.9393939393939394,
+      "recall": 0.9393939393939394,
+      "precision_interval_95": [
+        0.8039375519135219,
+        0.9832191169128082
+      ],
+      "recall_interval_95": [
+        0.8039375519135219,
+        0.9832191169128082
+      ]
+    },
+    "supported_end_to_end": {
+      "tp": 30,
+      "fp": 1,
+      "fn": 1,
+      "precision": 0.967741935483871,
+      "recall": 0.967741935483871,
+      "precision_interval_95": [
+        0.838058948352751,
+        0.9942827784745831
+      ],
+      "recall_interval_95": [
+        0.838058948352751,
+        0.9942827784745831
+      ]
+    },
+    "outside_support_end_to_end": {
+      "tp": 1,
+      "fp": 1,
+      "fn": 1,
+      "precision": 0.5,
+      "recall": 0.5,
+      "precision_interval_95": [
+        0.09453120573423074,
+        0.9054687942657693
+      ],
+      "recall_interval_95": [
+        0.09453120573423074,
+        0.9054687942657693
+      ]
+    },
+    "algorithm_accuracy": 0.9393939393939394,
+    "unknown_predictions": 13,
+    "templates": {
+      "tp": 32,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "precision_interval_95": [
+        0.8928208017449293,
+        1.0
+      ],
+      "recall_interval_95": [
+        0.8928208017449293,
+        1.0
+      ]
+    },
+    "edges": {
+      "CALLS": {
+        "tp": 0,
+        "fp": 11,
+        "fn": 2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "precision_interval_95": [
+          0.0,
+          0.2588329669680317
+        ],
+        "recall_interval_95": [
+          0.0,
+          0.6576197724933469
+        ]
+      },
+      "IMPORT_BINDING": {
+        "tp": 31,
+        "fp": 4,
+        "fn": 3,
+        "precision": 0.8857142857142857,
+        "recall": 0.9117647058823529,
+        "precision_interval_95": [
+          0.7404853135378618,
+          0.9546482066690264
+        ],
+        "recall_interval_95": [
+          0.7703951343719113,
+          0.9695340563253514
+        ]
+      },
+      "ASSIGN_FLOW": {
+        "tp": 0,
+        "fp": 60,
+        "fn": 2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "precision_interval_95": [
+          0.0,
+          0.06017185214208986
+        ],
+        "recall_interval_95": [
+          0.0,
+          0.6576197724933469
+        ]
+      },
+      "ARGUMENT_FLOW": {
+        "tp": 2,
+        "fp": 51,
+        "fn": 8,
+        "precision": 0.03773584905660377,
+        "recall": 0.2,
+        "precision_interval_95": [
+          0.010410287275826845,
+          0.12754287197418354
+        ],
+        "recall_interval_95": [
+          0.05668215145437519,
+          0.5098375284633583
+        ]
+      },
+      "RETURN_FLOW": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "precision_interval_95": [
+          0.20654931437723745,
+          1.0
+        ],
+        "recall_interval_95": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "KEY_TYPE_FLOW": {
+        "tp": 1,
+        "fp": 6,
+        "fn": 2,
+        "precision": 0.14285714285714285,
+        "recall": 0.3333333333333333,
+        "precision_interval_95": [
+          0.02567962434474355,
+          0.5131278292743189
+        ],
+        "recall_interval_95": [
+          0.06149194472039621,
+          0.7923403991979522
+        ]
+      }
+    }
+  },
+  "supported_metrics": {
+    "tp": 30,
+    "fp": 1,
+    "fn": 1,
+    "precision": 0.967741935483871,
+    "recall": 0.967741935483871,
+    "precision_interval_95": [
+      0.838058948352751,
+      0.9942827784745831
+    ],
+    "recall_interval_95": [
+      0.838058948352751,
+      0.9942827784745831
+    ]
+  },
+  "algorithm_errors_e3_against_labels": 0,
+  "pilot": {
+    "source": "output/deep-closeout-20261019/pilot-input/app/models.py",
+    "source_sha256": "07534ea0df91817dc69aff5fb5c2ae5802a322b30cdc892517edf7955cd56bae",
+    "human_reviewed_operations": 2,
+    "expected_operations": [
+      [
+        182,
+        "sign",
+        "HS256"
+      ],
+      [
+        189,
+        "verify",
+        "HS256"
+      ]
+    ],
+    "actual_operations": [
+      [
+        182,
+        "sign",
+        "HS256"
+      ],
+      [
+        189,
+        "verify",
+        "HS256"
+      ]
+    ],
+    "operation_position_tp": 2,
+    "operation_position_fp": 0,
+    "operation_position_fn": 0,
+    "semantic_tp": 2,
+    "semantic_fp": 0,
+    "semantic_fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "coverage": {
+      "collected": {
+        "count": 1,
+        "total": null
+      },
+      "available": {
+        "count": 1,
+        "total": null
+      },
+      "selected": {
+        "count": 1,
+        "total": 1
+      },
+      "parsed": {
+        "count": 1,
+        "total": 1
+      },
+      "analyzed": {
+        "count": 1,
+        "total": 1
+      },
+      "partial": true,
+      "gaps": [
+        "package_root_not_unique",
+        "pilot_scope_only"
+      ]
+    },
+    "diagnostics": [
+      "library_version_assumption"
+    ],
+    "status": "partial"
+  },
+  "limitations": [
+    "lock labels were human accepted but edge completeness remains scoped to recorded required edges",
+    "pilot source is one fixed file, not a full repository recall estimate",
+    "key source remains unknown by design for runtime configuration"
+  ]
+}

@@ -52,6 +52,27 @@ class Index:
     structure_bytes: int = 0
 
 
+def has_dynamic_namespace(module: Module, scope: str) -> bool:
+    current = scope
+    while True:
+        if any(symbol.kind == 'dynamic_namespace' and symbol.scope == current for symbol in module.symbols):
+            return True
+        if current == '<module>':
+            return False
+        current = current.rsplit('.', 1)[0]
+
+
+def is_class_method(module: Module, scope: str) -> bool:
+    if '.' not in scope:
+        return False
+    class_scope, _ = scope.rsplit('.', 1)
+    if '.' not in class_scope:
+        return False
+    parent_scope, class_name = class_scope.rsplit('.', 1)
+    return any(symbol.kind == 'class' and symbol.scope == parent_scope and symbol.name == class_name
+               for symbol in module.symbols)
+
+
 def location(source_id: str, node: ast.AST) -> Span:
     return Span(source_id=source_id, start_line=getattr(node, 'lineno'), start_col=getattr(node, 'col_offset'),
                 end_line=getattr(node, 'end_lineno'), end_col=getattr(node, 'end_col_offset'))
@@ -155,7 +176,7 @@ def collect_symbols(source_id: str, tree: ast.Module, checkpoint: Callable[[], o
 
 def resolve(name: str | None, scope: str, module: Module, modules: list[Module], cross_module: bool,
             seen: tuple[tuple[str, str], ...] = ()) -> tuple[str | None, str | None]:
-    if any(s.kind == 'dynamic_namespace' for s in module.symbols):
+    if has_dynamic_namespace(module, scope):
         return None, 'dynamic_namespace'
     if not name:
         return None, 'dynamic_call'

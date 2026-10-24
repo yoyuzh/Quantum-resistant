@@ -2,6 +2,23 @@
 
 2026-10-19，实施基准 HEAD `82896dc316a30d2f86ed758501c3c19a6332f989`。第8组的工程回归8.1、故障回归8.2完成，进度49/51；8.3、8.4仍未完成。没有更改验收门槛、重录标签、创建commit、push、发布或部署。
 
+## 2026-10-23 人工验收与当前代码复测
+
+人工裁决记录已完成：30/30 个锁定案例接受当前标签，真实试点中的 2 个 JWT 操作均接受，审查人是游雨哲，裁决日期为 2026-10-23。记录见 `human-review-decisions.json`，其 manifest 摘要仍为 `50749e5866589a645ecab59354cfad2d6e2d855817985373522ce434ba8a0cc9`。
+
+当前代码在同一锁定语料上重新运行，结果另存为 `crypto-matrix-optimized-20261023.json`，没有覆盖历史矩阵：
+
+| 范围 | TP / FP / FN | Precision / Recall |
+|---|---:|---:|
+| 锁定集严格端到端 | 31 / 2 / 2 | 93.94% / 93.94% |
+| 预先冻结支持范围内严格端到端 | 30 / 1 / 1 | 96.77% / 96.77% |
+
+支持范围已达到 95%/90% 门槛；剩余 1 个支持范围差异是 `branch_unknown` 的已知备选值与 Unknown 标签表示差异。两个范围外差异是 `unsupported_config` 和一个保留的边界案例，未从支持范围中删除。
+
+固定 Microblog v0.23 单文件试点也已用当前代码重跑：预审的第 182 行 `jwt.encode` 和第 189 行 `jwt.decode` 均被识别，算法均为 HS256，操作定位和语义匹配均为 2/2，Precision/Recall 均为 100%。结果仍标记为 `partial`，因为输入只覆盖一个固定文件，不代表全仓召回；密钥来自运行时配置，保持 Unknown，符合人工裁决。
+
+汇总证据见 [correctness-evaluation-20261023.json](../output/deep-closeout-20261019/correctness-evaluation-20261023.json)。当前仍需补充真实试点的耗时、峰值 RSS 和暂存指标，并对剩余差异完成最终语义裁决后，才能把 8.3/8.4 标记为全部完成。
+
 本轮证据目录：`output/deep-closeout-20261019/`。代码、语料、日志与结果摘要见该目录 `validation.json`；[Scenario索引](../output/deep-closeout-20261019/scenario-coverage.md)覆盖七份规格的33个场景，明确区分当前回归、同日既有视觉记录及未完成门槛。
 
 ## 已完成变更的规格同步与归档

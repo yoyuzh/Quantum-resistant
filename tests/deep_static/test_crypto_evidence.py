@@ -122,7 +122,11 @@ class CryptoRulesTests(unittest.TestCase):
         result = run('import jwt\nclass Token:\n def issue(self):\n  return jwt.encode({}, key, algorithm="RS256")\n')
         self.assertEqual(len(result.operations), 1)
         self.assertEqual(result.operations[0].context.kind, 'uninstantiated_template')
-        self.assertEqual(result.operations[0].algorithm.reason, 'uninstantiated_template')
+        self.assertEqual(result.operations[0].algorithm, Known(value='RS256'))
+
+    def test_unrelated_dynamic_namespace_does_not_hide_class_method_sink(self):
+        result = run('import jwt\ndef dynamic():\n eval("x=1")\nclass Token:\n def issue(self):\n  return jwt.encode({}, key, algorithm="HS256")\n')
+        self.assertEqual(len(result.operations), 1)
 
     def test_use_before_import_and_lexical_conditions_cannot_be_E3_by_omission(self):
         result = run('x=jwt.encode({},key,algorithm=\"RS256\")\nimport jwt\n')
