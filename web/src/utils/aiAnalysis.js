@@ -67,7 +67,7 @@ export function createAiAnalysis(state, {
     generation += 1;
     submission = null;
     Object.assign(state, { sourceId, preview: null, error: '', connection: '', busy: false,
-      taskId: '', resultTaskId: '', progress: null, result: null, ...records.get(sourceId) });
+      taskId: '', resultTaskId: '', progress: null, phase: '', result: null, ...records.get(sourceId) });
   }
   async function loadConfig() {
     const version = generation;
@@ -80,6 +80,9 @@ export function createAiAnalysis(state, {
     if (!state.sourceId || state.busy) return;
     const version = generation;
     state.busy = true;
+    state.phase = 'preview';
+    state.progress = null;
+    state.connection = '';
     state.error = '';
     state.preview = null;
     submission = null;
@@ -103,6 +106,10 @@ export function createAiAnalysis(state, {
       submission = { previewId: selected.preview_id, requestId: makeId() };
     const version = generation;
     state.busy = true;
+    state.phase = 'analysis';
+    state.progress = null;
+    state.connection = '';
+    state.taskId = id;
     state.error = '';
     try {
       const { result, status } = await follow({ request, kind: 'ai', id, signal: controller.signal,

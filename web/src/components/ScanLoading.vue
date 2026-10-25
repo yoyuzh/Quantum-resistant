@@ -2,11 +2,11 @@
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
 import ProgressDetails from './ProgressDetails.vue';
-const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object });
+const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object, compact: Boolean });
 const title = computed(() => {
   if (['succeeded', 'partial', 'cancelled', 'failed'].includes(props.progress?.state))
-    return '分析已结束，正在呈现结果';
-  return props.progress?.stage || (props.mode === 'popular' ? '正在扫描仓库' : '正在分析代码');
+    return props.mode === 'ai' ? 'AI 分析已结束，正在呈现结果' : '分析已结束，正在呈现结果';
+  return props.progress?.stage || (props.mode === 'popular' ? '正在扫描仓库' : props.mode === 'ai' ? '正在进行 AI 分析' : '正在分析代码');
 });
 const description = computed(
   () =>
@@ -16,12 +16,13 @@ const description = computed(
       github: '正在采集仓库候选源码并进行静态分析。',
       pypi: '正在采集包内文本文件并进行静态分析。',
       popular: '正在检索与扫描热门仓库，汇总可用结果。',
+      ai: '正在逐批复核脱敏候选，模型只接收当前确认的源码上下文。',
     })[props.mode],
 );
 </script>
 <template>
-  <div class="scan-loading" :class="{ 'scan-loading--popular': mode === 'popular' }"
-       role="region" aria-label="扫描等待状态" tabindex="0" aria-busy="true">
+  <div class="scan-loading" :class="{ 'scan-loading--popular': mode === 'popular', 'scan-loading--compact': compact }"
+       role="region" :aria-label="mode === 'ai' ? 'AI 分析进度' : '扫描等待状态'" tabindex="0" aria-busy="true">
     <div class="loading-content">
       <div class="scan-art" aria-hidden="true">
         <div class="scan-emblem"><AppIcon name="scan" :size="26" /></div>
@@ -37,6 +38,10 @@ const description = computed(
       </div>
       <p v-if="!progress" class="description">{{ description }}</p>
       <ProgressDetails :progress="progress" />
+      <p v-if="mode === 'ai' && progress?.ai_progress" class="ai-progress-note small muted">
+        已完成 {{ progress.ai_progress.completed ?? 0 }} / {{ progress.ai_progress.planned ?? '未知' }} 个候选
+        <span v-if="progress.ai_progress.calls != null"> · 已请求 {{ progress.ai_progress.calls }} 次</span>
+      </p>
     </div>
   </div>
 </template>
@@ -52,6 +57,20 @@ const description = computed(
   background: radial-gradient(ellipse at 50% 38%, var(--accent-soft), transparent 65%);
   border-radius: inherit;
 }
+.scan-loading.scan-loading--compact {
+  min-height: 320px;
+  flex: none;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.scan-loading--compact .scan-art {
+  transform: scale(.8);
+  width: 240px;
+  height: 190px;
+  margin: -1rem 0 0;
+}
+.scan-loading--compact h2 { font-size: 1rem; }
+.ai-progress-note { margin: 0; }
 .loading-content {
   flex: 0 0 auto;
   width: 100%;

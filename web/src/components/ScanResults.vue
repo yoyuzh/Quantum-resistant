@@ -49,7 +49,7 @@ watch(tab, value => emit('deep-view', value === 'deep'), { immediate: true });
         :selected-key="selectedKey" :load-source="loadSource" @update:filters="updateFilters" />
       <MigrationChecklist v-if="visited.has('migration')" v-show="tab === 'migration'"
         class="result-view" :class="{ 'view-active': tab === 'migration' }" :analysis="result.analysis" @select="select" />
-      <AiAnalysisPanel v-show="tab === 'ai'" :source-task-id="props.result?.task_id" :mode="mode" :active="tab === 'ai'" />
+      <AiAnalysisPanel v-show="tab === 'ai'" class="result-view" :class="{ 'view-active': tab === 'ai' }" :source-task-id="props.result?.task_id" :mode="mode" :active="tab === 'ai'" />
       <ResultHelp v-if="props.result && tab !== 'ai'" :score="result.summary.migration_score" />
       <KnowledgePanel v-if="tab === 'migration'" />
       </template>

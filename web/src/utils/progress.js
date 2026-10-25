@@ -10,6 +10,11 @@ export function progressRows(progress = {}) {
     rows.push({ label, value, total: known ? total : null,
       percent: known && total > 0 ? Math.min(100, Math.floor(value / total * 100)) : null });
   };
+  const ai = progress.ai_progress;
+  if (progress.kind === 'ai' || ai) {
+    add(progress.ai_phase === 'preview' ? '本地脱敏预览' : 'AI 候选', ai?.completed ?? 0, ai?.planned, ai?.planned != null);
+    return rows;
+  }
   add('上传字节', progress.upload_bytes, progress.upload_total, progress.upload_total != null);
   add('下载字节', progress.download_bytes, progress.download_total, progress.download_total != null);
   add('已处理文件', progress.processed_files, progress.candidate_files, progress.candidate_files != null);

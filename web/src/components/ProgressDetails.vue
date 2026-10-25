@@ -12,12 +12,12 @@ function amount(value, label) {
   <div v-if="progress" class="progress-details stack">
     <div v-for="row in rows" :key="row.label" class="progress-row">
       <div class="progress-label">
-        <span>{{ row.label }} {{ amount(row.value, row.label) }}<template v-if="row.total != null"> / {{ amount(row.total, row.label) }}</template></span>
+        <span>{{ row.label }}<template v-if="progress.ai_phase !== 'preview'"> {{ amount(row.value, row.label) }}<template v-if="row.total != null"> / {{ amount(row.total, row.label) }}</template></template></span>
         <span v-if="row.percent != null">{{ row.percent }}%</span>
       </div>
-      <progress v-if="row.percent != null" :value="row.percent" max="100" :aria-label="row.label" />
+      <progress v-if="row.percent != null || progress.kind === 'ai'" :value="row.percent ?? undefined" max="100" :aria-label="row.label" />
     </div>
-    <p class="small muted">
+    <p v-if="progress.kind !== 'ai'" class="small muted">
       已采集 {{ progress.collected_files || 0 }} 个
       <span v-if="progress.skipped_files"> · 跳过 {{ progress.skipped_files }} 个</span>
       <span v-if="progress.kind === 'popular'"> · 仓库已结束 {{ progress.completed_repos || 0 }} / {{ progress.total_repos ?? '待确认' }}</span>

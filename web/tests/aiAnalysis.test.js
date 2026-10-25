@@ -118,3 +118,35 @@ test('刷新先恢复上次有效任务，最新失败任务保留相同来源�
   assert.ok([...storage.values.values()].every((value) => value.endsWith('-task')));
   actions.dispose();
 });
+test('新预览和重新提交清除旧进度；新任务标识到达前不能取消旧任务', async () => {
+  const oldProgress = { ai_progress: { completed: 4, planned: 4 } };
+  const state = { ...initial(), taskId: 'old-task', progress: oldProgress, connection: '旧连接状态' };
+  let releasePreview, releaseTask, taskArgs;
+  const requests = [];
+  const actions = createAiAnalysis(state, { storage: memory(),
+    request: (path) => { requests.push(path); return new Promise(resolve => { releasePreview = resolve; }); },
+    follow: args => { taskArgs = args; return new Promise(resolve => { releaseTask = resolve; }); },
+  });
+  const preparing = actions.preview();
+  assert.equal(state.phase, 'preview');
+  assert.equal(state.busy, true);
+  assert.equal(state.progress, null);
+  assert.equal(state.connection, '');
+  releasePreview(preview);
+  await preparing;
+  state.progress = oldProgress;
+  const analyzing = actions.submit();
+  assert.equal(state.phase, 'analysis');
+  assert.equal(state.progress, null);
+  assert.equal(state.taskId, '');
+  await actions.cancel();
+  assert.deepEqual(requests, ['/api/ai/previews']);
+  taskArgs.onId('new-task');
+  taskArgs.onProgress({ ai_progress: { completed: 1, planned: 4 } });
+  assert.equal(state.progress.ai_progress.completed, 1);
+  releaseTask({ result: { source_task_id: 'source-one' }, status: { id: 'new-task', state: 'succeeded' } });
+  await analyzing;
+  assert.equal(state.busy, false);
+  assert.equal(state.resultTaskId, 'new-task');
+  actions.dispose();
+});
