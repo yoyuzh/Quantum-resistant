@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
 import ProgressDetails from './ProgressDetails.vue';
-const props = defineProps({ mode: String, elapsed: Number, hasResult: Boolean, progress: Object });
+const props = defineProps({ mode: String, progress: Object });
 const title = computed(() => {
   if (['succeeded', 'partial', 'cancelled', 'failed'].includes(props.progress?.state))
     return '分析已结束，正在呈现结果';
@@ -187,7 +187,7 @@ const description = computed(
   color: var(--text-secondary);
   font-size: 0.85rem;
 }
-@media (min-width: 1024px) and (min-height: 800px) {
+@media (min-width: 1024px) and (min-height: 600px) {
   .scan-loading {
     min-height: 0;
     flex-basis: 0;

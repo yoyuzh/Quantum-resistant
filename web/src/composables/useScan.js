@@ -3,6 +3,7 @@ import { useRemoteTask } from './useRemoteTask.js';
 import { loadScanConfig } from './useScanConfig.js';
 import { validateDraft } from '../utils/files.js';
 import { useTaskRunner } from './useTaskRunner.js';
+import { describeInput } from '../utils/workspace.js';
 
 export function useScan() {
   const states = reactive(
@@ -33,6 +34,7 @@ export function useScan() {
     state.restored = false;
     state.error = validateDraft(mode, draft);
     if (state.error) return;
+    state.submittedSource = describeInput(mode, draft);
     let body;
     if (mode === 'files') {
       body = new FormData();

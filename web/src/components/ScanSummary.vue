@@ -55,7 +55,7 @@ small {
 .compact {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
+  gap: 2px 24px;
 }
 .compact div {
   display: flex;
@@ -65,9 +65,10 @@ small {
   background: transparent;
 }
 .compact strong {
-  font-size: 0.875rem;
+  font-size: 16px;
   margin: 0;
 }
+.compact span { font-size: 12px; }
 @media (max-width: 600px) {
   .metrics {
     grid-template-columns: repeat(2, 1fr);

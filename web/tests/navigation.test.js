@@ -61,9 +61,26 @@ test('manual filter changes and a new result clear stale evidence selection', as
   assert.equal(state.findings.value.length, 0);
   result.value = { findings: [], sources: [] };
   await nextTick();
-  assert.equal(state.tab.value, 'overview');
+  assert.equal(state.tab.value, 'findings');
   assert.equal(state.origin.value, null);
-  assert.deepEqual([...state.visited], ['overview']);
+  assert.deepEqual([...state.visited], ['findings']);
+});
+
+test('the standalone graph restores its origin and filters after evidence navigation', async t => {
+  const { state, result } = setup(t);
+  await state.switchTab('graph');
+  state.filters.query = 'same';
+  await state.select({ sourceId: 'second', algorithm: '', target: '', method: '' });
+  assert.equal(state.origin.value.tab, 'graph');
+  assert.equal(state.selectedKey.value, findingKey(items[55]));
+  await state.back();
+  assert.equal(state.tab.value, 'graph');
+  assert.equal(state.filters.query, 'same');
+  assert.ok(state.visited.has('graph'));
+  result.value = { findings: [], sources: [] };
+  await nextTick();
+  assert.equal(state.tab.value, 'findings');
+  assert.deepEqual([...state.visited], ['findings']);
 });
 
 test('scrolling uses the panel only when it actually scrolls, with sticky clearance and reduced motion', (t) => {

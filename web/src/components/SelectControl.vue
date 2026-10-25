@@ -211,7 +211,7 @@ onUnmounted(() => {
   color: var(--text-primary);
   cursor: pointer;
 }
-.select-trigger:hover,
+.select-trigger:hover:not(.disabled),
 .select-trigger.open {
   background: var(--control-hover);
 }
@@ -221,7 +221,7 @@ onUnmounted(() => {
 }
 .select-trigger:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 .select-value {
   flex: 1;
@@ -251,6 +251,7 @@ onUnmounted(() => {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0.3rem;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-surface);
   color: var(--text-primary);

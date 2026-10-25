@@ -142,15 +142,13 @@ watch(
           </details>
         </template>
         <div v-else-if="!state.loading && !state.busy" class="empty compact">
-          <p>尚无榜单结果，点击上方按钮开始扫描。</p>
+          <p>暂无热门仓库扫描结果。</p>
         </div>
       </div>
     </section>
-    <section v-if="state.busy" class="panel results" aria-label="热门扫描进度">
+    <section v-if="state.busy && !displayed" class="panel results" aria-label="热门扫描进度">
       <ScanLoading
         mode="popular"
-        :elapsed="state.elapsed"
-        :has-result="!!state.result"
         :progress="state.progress"
       />
     </section>
@@ -164,7 +162,7 @@ watch(
 <style scoped>
 .repo-list {
   display: grid;
-  gap: 0.5rem;
+  gap: 4px;
 }
 .repo-row {
   width: 100%;
@@ -172,7 +170,7 @@ watch(
   gap: 0.7rem;
   align-items: center;
   text-align: left;
-  padding: 0.85rem;
+  padding: 8px;
   background: var(--control-bg);
   color: var(--text-primary);
   border-radius: var(--radius);
@@ -200,7 +198,7 @@ strong {
 }
 small {
   display: block;
-  margin-top: 0.4rem;
+  margin-top: 2px;
   color: var(--text-secondary);
   font-size: 0.72rem;
 }

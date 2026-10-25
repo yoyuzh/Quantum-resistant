@@ -7,10 +7,10 @@ import { fileLabel } from '../utils/presentation.js';
 const emptyFilters = () => ({ sourceId: '', algorithm: '', query: '', target: '', method: '' });
 
 export function useResultSelection(result, { body, header } = {}) {
-  const tab = ref('overview');
+  const tab = ref('findings');
   const filters = reactive(emptyFilters());
   const assetFilters = reactive(emptyFilters());
-  const visited = reactive(new Set(['overview']));
+  const visited = reactive(new Set(['findings']));
   const origin = shallowRef(null);
   const announcement = ref('');
   const selectedKey = ref('');
@@ -106,8 +106,8 @@ export function useResultSelection(result, { body, header } = {}) {
     origin.value = null;
     Object.assign(assetFilters, emptyFilters());
     visited.clear();
-    visited.add('overview');
-    tab.value = 'overview';
+    visited.add('findings');
+    tab.value = 'findings';
   });
   onScopeDispose(cancelNavigation);
   return { tab, filters, findings, assetFindings, visited, origin, announcement,

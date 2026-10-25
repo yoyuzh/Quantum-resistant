@@ -30,14 +30,21 @@ const modes = [
 .mode-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0 auto 0.85rem;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  margin: 0 auto;
   width: fit-content;
   max-width: 100%;
 }
 .button {
   background: transparent;
   color: var(--text-secondary);
+  min-height: 36px;
+  padding: 5px 10px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 .button.active {
   color: var(--accent-dim);
@@ -46,15 +53,23 @@ const modes = [
 }
 .button:hover:not(.active) {
   color: var(--accent-dim);
+  background: var(--control-bg);
 }
+.button:active { background: var(--control-pressed); }
 @media (max-width: 600px) {
   .mode-tabs {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     width: 100%;
   }
   .button {
+    grid-column: span 2;
     padding-inline: 0.4rem;
   }
+  .button:nth-child(4) { grid-column: 2 / span 2; }
+  .button:nth-child(5) { grid-column: 4 / span 2; }
+}
+@media (max-width: 600px), (pointer: coarse) {
+  .button { min-height: 44px; }
 }
 </style>

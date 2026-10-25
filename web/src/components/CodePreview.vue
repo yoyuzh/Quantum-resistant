@@ -47,7 +47,7 @@ const lines = computed(() => loaded.value ?? codeLines(props.sources, props.find
 
 <style scoped>
 .code-view {
-  overflow: auto;
+  overflow-wrap: anywhere;
   background: var(--bg-input);
   border-radius: var(--radius);
   padding: 0.6rem 0;
@@ -55,9 +55,7 @@ const lines = computed(() => loaded.value ?? codeLines(props.sources, props.find
 }
 .code-view > div {
   display: flex;
-  width: max-content;
-  min-width: 100%;
-  white-space: pre;
+  min-width: 0;
 }
 .target {
   background: var(--accent-glow);
@@ -72,6 +70,9 @@ const lines = computed(() => loaded.value ?? codeLines(props.sources, props.find
   user-select: none;
 }
 code {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   padding-right: 1rem;
 }
 </style>

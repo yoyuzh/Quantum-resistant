@@ -8,6 +8,8 @@ defineEmits(['update:modelValue']);
     <label
       >{{ mode === 'github' ? 'GitHub 仓库地址' : 'PyPI 包名' }}
       <input
+        :name="mode === 'github' ? 'repository' : 'package'"
+        :aria-describedby="`${mode}-requirement`"
         :value="modelValue"
         :disabled="disabled"
         @input="$emit('update:modelValue', $event.target.value)"
@@ -16,5 +18,6 @@ defineEmits(['update:modelValue']);
         spellcheck="false"
       />
     </label>
+    <p :id="`${mode}-requirement`" class="small muted">{{ mode === 'github' ? '仅支持公开仓库，扫描默认分支。' : '输入包名，优先扫描源码发行包。' }}</p>
   </div>
 </template>

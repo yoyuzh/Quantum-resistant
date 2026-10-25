@@ -1,110 +1,23 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
-import { paginate } from '../utils/results.js';
-import { methodLabel } from '../utils/analysis.js';
-import AppIcon from './AppIcon.vue';
-import DisclosurePanel from './DisclosurePanel.vue';
-import { fileLabel } from '../utils/presentation.js';
-import { focusDestination } from '../utils/navigation.js';
+import { computed } from 'vue';
+import PagedCollection from './PagedCollection.vue';
+import AssetRecord from './AssetRecord.vue';
 const props = defineProps({ analysis: Object, findings: Array });
 defineEmits(['reveal']);
-const page = ref(1);
-const list = ref(null);
-async function changePage(delta) {
-  page.value += delta;
-  await nextTick();
-  focusDestination(list.value, list.value?.closest('.panel-body'),
-    list.value?.closest('.result-layout')?.querySelector('.result-sticky'));
-}
+const assetKey = asset => JSON.stringify([asset.source_id, asset.algorithm]);
 const assets = computed(() => {
-  const keys = new Set(
-    props.findings.map((item) => JSON.stringify([item.source_id, item.algorithm])),
-  );
-  return (props.analysis?.assets || []).filter((asset) =>
-    keys.has(JSON.stringify([asset.source_id, asset.algorithm])),
-  );
-});
-const pagination = computed(() => paginate(assets.value, page.value, 50));
-watch(assets, () => {
-  page.value = 1;
+  const keys = new Set(props.findings.map(assetKey));
+  return (props.analysis?.assets || []).filter(asset => keys.has(assetKey(asset)));
 });
 </script>
 <template>
-  <section ref="list" class="stack" tabindex="-1" aria-label="密码资产清单">
-    <h3>密码资产 <span class="small muted">{{ assets.length }} 项</span></h3>
-    <p v-if="!analysis" class="notice">此历史结果未记录资产分析，请在发现明细中查看证据。</p>
-    <p v-else-if="!assets.length" class="notice">当前范围内没有密码资产。</p>
-    <article
-      v-for="asset in pagination.items"
-      :key="`${asset.source_id}:${asset.algorithm}`"
-      class="analysis-card stack"
-    >
-      <div class="toolbar">
-        <AppIcon name="file" :size="18" /><strong class="asset-file">{{ fileLabel(asset, analysis.assets) }}</strong
-        ><span class="tag">{{ asset.algorithm }}</span>
-      </div>
-      <p>
-        <strong>{{ asset.finding_count }} 项命中</strong> · {{ asset.purpose }}
-      </p>
-      <DisclosurePanel title="资产详情">
-        <dl>
-          <dt>文件身份</dt><dd>{{ asset.source_id }}</dd>
-          <dt>识别方式</dt>
-          <dd>{{ asset.detection_methods.map(methodLabel).join(' / ') }}</dd>
-          <dt>密码库</dt>
-          <dd>{{ asset.libraries.join(' / ') || '未记录' }}</dd>
-          <dt>完整 API</dt>
-          <dd class="api">{{ asset.resolved_apis.join(' / ') || '未记录' }}</dd>
-          <dt>迁移参考</dt>
-          <dd>{{ asset.targets.join(' / ') }} · 按用途评估</dd>
-        </dl>
-      </DisclosurePanel>
-      <div class="toolbar" aria-label="证据位置">
-        <span v-if="asset.locations.length > 1" class="small muted">
-          第 {{ [...new Set(asset.locations.map(location => location.line))].slice(0, 8).join('、') }} 行{{ asset.locations.length > 8 ? '等' : '' }}
-        </span>
-        <button class="button text-action" @click="$emit('reveal', asset, asset.locations[0])">
-          <AppIcon name="code" :size="16" />
-          {{ asset.finding_count === 1 ? `查看证据 · 第 ${asset.locations[0]?.line} 行` : `查看 ${asset.finding_count} 项证据` }}
-          <AppIcon name="arrow" :size="16" />
-        </button>
-      </div>
-    </article>
-    <div v-if="pagination.pages > 1" class="toolbar">
-      <button class="button secondary" :disabled="pagination.current === 1" @click="changePage(-1)">
-        上一页
-      </button>
-      <span class="small">{{ pagination.current }} / {{ pagination.pages }}</span>
-      <button
-        class="button secondary"
-        :disabled="pagination.current === pagination.pages"
-        @click="changePage(1)"
-      >
-        下一页
-      </button>
-    </div>
-  </section>
+  <PagedCollection :items="assets" :item-key="assetKey" label="密码资产清单">
+    <template #heading><h3>密码资产 <span class="small muted">{{ assets.length }} 项</span></h3></template>
+    <template #empty>
+      <p class="notice">{{ !analysis ? '此历史结果未记录资产分析，请在发现明细中查看证据。' : '当前范围内没有密码资产。' }}</p>
+    </template>
+    <template #default="{ item }">
+      <AssetRecord :asset="item" :peers="analysis.assets" @reveal="(asset, location) => $emit('reveal', asset, location)" />
+    </template>
+  </PagedCollection>
 </template>
-<style scoped>
-.asset-file {
-  font-size: 1rem;
-  overflow-wrap: anywhere;
-}
-dl {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.5rem 1rem;
-  margin: 0;
-  font-size: 0.875rem;
-}
-dt {
-  color: var(--text-secondary);
-}
-dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.api {
-  font-family: var(--font-mono);
-}
-</style>

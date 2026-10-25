@@ -61,6 +61,7 @@ summary::before { display: none; }
   gap: 0.1rem;
   width: 220px;
   padding: 0.6rem;
+  border: 1px solid var(--border);
   background: var(--bg-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);

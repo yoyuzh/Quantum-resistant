@@ -1,13 +1,13 @@
 <script setup>
 import { computed } from 'vue';
 import { fileLabel } from '../utils/presentation.js';
-const props = defineProps({ title: String, rows: Array, peers: Array, total: Number, interactive: Boolean });
+const props = defineProps({ title: String, rows: Array, peers: Array, total: Number, interactive: Boolean, hideTitle: Boolean });
 defineEmits(['select']);
 const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)));
 </script>
 <template>
   <section class="evidence-bars stack" :aria-label="title">
-    <div>
+    <div v-if="!hideTitle">
       <h3>{{ title }}</h3>
     </div>
     <p v-if="!rows?.length" class="small muted">本次没有可统计的发现。</p>
@@ -32,10 +32,12 @@ const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)
 </template>
 <style scoped>
 .evidence-bars {
-  padding: 1rem;
+  padding: 10px;
   background: var(--bg-elevated);
   border-radius: var(--radius-lg);
 }
+.evidence-bars.stack { gap: 4px; }
+h3 { font-size: 14px; }
 .evidence-bar {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(50px, 1fr) 40px;
@@ -48,8 +50,10 @@ const max = computed(() => Math.max(1, ...(props.rows || []).map((r) => r.count)
   text-align: left;
 }
 .bar-name {
-  font-size: 0.9375rem;
-  overflow-wrap: anywhere;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .bar-track {
   height: 9px;
@@ -69,8 +73,8 @@ strong {
 }
 .actionable {
   cursor: pointer;
-  padding: 0.6rem 0.75rem;
-  min-height: var(--control-height);
+  padding: 2px 6px;
+  min-height: 28px;
   border-radius: var(--radius);
   background: transparent;
   transition: background-color 140ms ease;
@@ -87,4 +91,7 @@ strong {
   background: var(--control-hover);
 }
 .actionable:active { background: var(--control-pressed); }
+@media (max-width: 600px), (pointer: coarse) {
+  .actionable { min-height: 44px; }
+}
 </style>

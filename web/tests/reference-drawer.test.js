@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { effectScope, nextTick, ref } from 'vue';
+import { referenceTabs, useReferenceDrawer } from '../src/composables/useReferenceDrawer.js';
+import { useKnowledge } from '../src/composables/useKnowledge.js';
+
+test('reference tabs retain independent reading positions and closing restores the trigger', async t => {
+  const scope = effectScope();
+  t.after(() => scope.stop());
+  const content = ref({ scrollTop: 0 });
+  const result = ref({ id: 1 });
+  const active = ref(true);
+  const drawer = scope.run(() => useReferenceDrawer(result, active, content));
+  let focusCalls = 0;
+  const trigger = { isConnected: true, focus: () => focusCalls++ };
+  drawer.open('workflow', trigger);
+  await nextTick();
+  content.value.scrollTop = 250;
+  await drawer.select('knowledge');
+  assert.equal(content.value.scrollTop, 0);
+  content.value.scrollTop = 90;
+  await drawer.select('standards');
+  await drawer.select('workflow');
+  assert.equal(content.value.scrollTop, 250);
+  await drawer.select('knowledge');
+  assert.equal(content.value.scrollTop, 90);
+  await drawer.close();
+  assert.equal(drawer.opened.value, false);
+  assert.equal(focusCalls, 1);
+  drawer.open('knowledge', trigger);
+  await nextTick();
+  assert.equal(content.value.scrollTop, 90);
+  active.value = false;
+  await nextTick();
+  assert.equal(drawer.opened.value, false);
+  assert.equal(focusCalls, 1, 'leaving the page cannot focus a hidden trigger');
+  result.value = { id: 2 };
+  await nextTick();
+  assert.equal(drawer.visited.size, 0);
+  assert.equal(drawer.tab.value, 'workflow');
+  active.value = true;
+  drawer.open('knowledge', trigger);
+  await nextTick();
+  assert.equal(content.value.scrollTop, 0);
+  assert.equal(referenceTabs.at(-1)[0], 'standards');
+});
+
+test('knowledge loads only when requested, retries failures and caches successful responses', async t => {
+  const scope = effectScope();
+  t.after(() => scope.stop());
+  let requests = 0;
+  const knowledge = scope.run(() => useKnowledge(async () => {
+    if (++requests === 1) throw new Error('模拟知识加载失败');
+    return { nodes: [{ id: 'rsa', type: 'Algorithm' }, { id: 'other', type: 'Target' }] };
+  }));
+  assert.equal(requests, 0);
+  await knowledge.load();
+  assert.equal(knowledge.error.value, '模拟知识加载失败');
+  await knowledge.load();
+  assert.deepEqual(knowledge.algorithms.value, [{ id: 'rsa', type: 'Algorithm' }]);
+  assert.equal(knowledge.error.value, '');
+  await knowledge.load();
+  assert.equal(requests, 2);
+});

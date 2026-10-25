@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from './AppIcon.vue';
+import { version } from '../../../desktop/package.json';
 const overlay = ['win32', 'linux'].includes(window.quantumDesktop?.platform);
 defineProps({ theme: String });
 defineEmits(['toggle-theme']);
@@ -11,7 +12,9 @@ defineEmits(['toggle-theme']);
       <span class="brand-mark"><AppIcon name="shield" :size="overlay ? 18 : 26" /></span>
       <h1>抗量子密码风险检测与迁移辅助软件</h1>
     </div>
+    <div v-if="!overlay" class="header-navigation"><slot /></div>
     <div class="header-actions">
+    <span class="version">V{{ version }}</span>
     <button
       class="button secondary"
       @click="$emit('toggle-theme')"
@@ -22,29 +25,32 @@ defineEmits(['toggle-theme']);
     </button>
     </div>
   </header>
+  <div v-if="overlay" class="desktop-navigation"><slot /></div>
+  <div id="result-view-navigation" class="result-navigation"></div>
 </template>
 
 <style scoped>
 .app-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem max(1.5rem, calc((100vw - 1392px) / 2));
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 16px;
   background: var(--bg-surface);
-  box-shadow: var(--shadow-card);
 }
 .brand {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 8px;
 }
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   border-radius: 10px;
   background: var(--accent-soft);
@@ -52,12 +58,15 @@ defineEmits(['toggle-theme']);
   color: var(--accent);
 }
 .header-actions {
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-shrink: 0;
 }
 .desktop-overlay {
+  display: flex;
+  min-height: 0;
   height: env(titlebar-area-height, 36px);
   padding-block: 0;
   padding-left: calc(env(titlebar-area-x, 0px) + 16px);
@@ -87,18 +96,29 @@ defineEmits(['toggle-theme']);
   app-region: no-drag;
 }
 h1 {
-  font-size: 1.05rem;
+  font-size: 14px;
   margin: 0;
+}
+.header-navigation { min-width: 0; }
+.version { color: var(--text-secondary); font-size: 11px; white-space: nowrap; }
+.desktop-navigation { padding: 0 12px; background: var(--bg-surface); }
+.result-navigation { padding: 0 var(--workspace-gutter); background: var(--bg-surface); flex-shrink: 0; }
+.result-navigation:empty { display: none; }
+@media (max-width: 1199px) {
+  .app-header:not(.desktop-overlay) { grid-template-columns: minmax(0, 1fr) auto; }
+  .header-navigation { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .header-actions { grid-column: 2; grid-row: 1; }
 }
 @media (max-width: 600px) {
   .app-header {
-    padding: 0.85rem 1rem;
+    padding: 8px 12px;
   }
   .brand-mark {
     display: none;
   }
   h1 {
-    font-size: 0.95rem;
+    font-size: 13px;
   }
+  .version { display: none; }
 }
 </style>

@@ -39,7 +39,17 @@ textarea:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: -3px;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--bg-input);
+}
+label:has(input:focus, textarea:focus, select:focus) {
+  color: var(--accent-dim);
 }
 h2,
 h3,
@@ -72,7 +82,7 @@ textarea {
   font-size: var(--font-control);
   color: var(--text-primary);
   background: var(--bg-input);
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 input:hover:not(:disabled),
@@ -91,14 +101,10 @@ input {
   min-height: var(--control-height);
 }
 .app-main {
-  max-width: 1600px;
   margin: 0 auto;
-  padding: 0.9rem 1.25rem 0.6rem;
 }
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 3fr) minmax(0, 7fr);
-  gap: 1rem;
   align-items: stretch;
 }
 .panel {
@@ -207,6 +213,7 @@ input {
 .primary:hover:not(:disabled) {
   filter: brightness(1.08);
 }
+.primary:active:not(:disabled) { filter: brightness(0.94); }
 .secondary {
   color: var(--text-primary);
   background: var(--control-bg);
@@ -256,6 +263,7 @@ summary {
   padding: 0.4rem 0.15rem;
   font-size: var(--font-control);
   border-radius: 4px;
+  font-weight: 600;
   background: transparent;
   color: var(--accent-dim);
   cursor: pointer;
@@ -284,12 +292,6 @@ summary:active { opacity: 0.78; }
 }
 .small {
   font-size: 0.8125rem;
-}
-.eyebrow {
-  color: var(--accent-dim);
-  letter-spacing: 0.1em;
-  font-size: 0.68rem;
-  margin-bottom: 0.35rem;
 }
 .notice {
   padding: 0.85rem;
@@ -339,48 +341,6 @@ summary:active { opacity: 0.78; }
 .empty.compact {
   padding: 1rem;
 }
-footer {
-  text-align: center;
-  margin: 0.75rem 0 0;
-  color: var(--text-secondary);
-  font-size: 0.72rem;
-}
-@media (min-width: 1024px) and (min-height: 800px) {
-  #app {
-    height: 100dvh;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-  .app-main {
-    width: 100%;
-    min-height: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-  .workspace-grid {
-    min-height: 0;
-  }
-  .panel-body {
-    flex: 1;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-  }
-  .input-body > .snippet-input {
-    flex: 1;
-    min-height: 380px;
-  }
-  .snippet-input .editor-label {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-  }
-  .snippet-input .editor {
-    flex: 1;
-    min-height: 160px;
-    resize: none;
-  }
-}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -388,14 +348,6 @@ footer {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-@media (max-width: 1023px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
-  .app-main {
-    padding: 1rem;
-  }
 }
 .content-enter-active {
   transition:
@@ -406,26 +358,6 @@ footer {
   opacity: 0;
   transform: translateY(5px);
 }
-.result-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-  margin-top: 0.6rem;
-}
-.result-tabs .button {
-  background: transparent;
-  color: var(--text-secondary);
-  flex: 1;
-  padding-inline: 0.6rem;
-  min-height: var(--compact-control-height);
-}
-.result-tabs .active {
-  background: var(--control-selected);
-  color: var(--accent-dim);
-  font-weight: 600;
-}
-.result-tabs .button:hover:not(.active) { color: var(--accent-dim); }
-.result-tabs .button:active { background: var(--control-pressed); }
 .result-sticky {
   position: sticky;
   top: 0;
@@ -433,7 +365,6 @@ footer {
   flex-shrink: 0;
   background: var(--bg-surface);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: 0 1px var(--border-light);
 }
 .result-view.view-active { animation: view-arrive 180ms ease-out; }
 @keyframes view-arrive {
@@ -443,6 +374,7 @@ footer {
 @media (forced-colors: active) {
   .button, summary, .select-trigger { border: 1px solid ButtonText; }
   .button.active, .repo-row.selected { outline: 2px solid Highlight; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid Highlight; outline-offset: -3px; }
 }
 .analysis-card {
   padding: 1rem;
@@ -450,11 +382,6 @@ footer {
   border-radius: var(--radius-lg);
 }
 @media (max-width: 600px) {
-  .result-tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .result-tabs .button { white-space: nowrap; }
   .panel {
     border-radius: var(--radius);
   }

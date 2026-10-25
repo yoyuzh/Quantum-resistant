@@ -22,7 +22,7 @@ export function selectedFindings(result, filters) {
   return selected.filter((finding) => allowed.has(finding.algorithm));
 }
 
-export function graphData(assets, query = '', page = 1) {
+export function graphData(assets, query = '', page = 1, pageSize = 12) {
   const files = new Map();
   for (const asset of assets) {
     if (!files.has(asset.source_id))
@@ -37,7 +37,7 @@ export function graphData(assets, query = '', page = 1) {
   const matched = [...files.values()].filter((file) =>
     `${file.label} ${file.id}`.toLocaleLowerCase().includes(text),
   );
-  const pagination = paginate(matched, page, 12);
+  const pagination = paginate(matched, page, pageSize);
   const visible = new Set(pagination.items.map((file) => file.id));
   const subset = assets.filter((asset) => visible.has(asset.source_id));
   const algorithms = [...new Set(subset.map((asset) => asset.algorithm))].sort();
@@ -67,4 +67,34 @@ export function graphData(assets, query = '', page = 1) {
     totalFiles: files.size,
     matchedFiles: matched.length,
   };
+}
+
+// Use one capacity for every page so graph paging never jumps backwards when
+// the next group of files happens to have fewer algorithms or references.
+export function graphCapacity(assets, query, rows) {
+  const files = new Map();
+  for (const asset of assets) {
+    if (!files.has(asset.source_id)) files.set(asset.source_id, {
+      label: `${asset.file_name} ${asset.source_id}`,
+      algorithms: new Set(), targets: new Set(),
+    });
+    const file = files.get(asset.source_id);
+    file.algorithms.add(asset.algorithm);
+    asset.targets.forEach(target => file.targets.add(target));
+  }
+  const text = query.trim().toLocaleLowerCase();
+  const matched = [...files.values()].filter(file => file.label.toLocaleLowerCase().includes(text));
+  for (let size = Math.min(12, rows); size > 1; size--) {
+    let fits = true;
+    for (let start = 0; start < matched.length; start += size) {
+      const group = matched.slice(start, start + size);
+      if (new Set(group.flatMap(file => [...file.algorithms])).size > rows ||
+        new Set(group.flatMap(file => [...file.targets])).size > rows) {
+        fits = false;
+        break;
+      }
+    }
+    if (fits) return size;
+  }
+  return 1;
 }

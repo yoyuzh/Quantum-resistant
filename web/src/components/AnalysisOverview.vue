@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue';
-import EvidenceGraph from './EvidenceGraph.vue';
 import EvidenceBars from './EvidenceBars.vue';
 import DisclosurePanel from './DisclosurePanel.vue';
 import { conciseInsights } from '../utils/presentation.js';
@@ -20,10 +19,10 @@ function select(field, value) {
 }
 </script>
 <template>
-  <div class="stack">
+  <div class="overview-grid">
     <p v-if="!result.findings.length" class="notice">本次未命中已知传统公钥算法。</p>
-    <section v-if="conclusions.length" class="analysis-card interpretation stack" aria-label="关键结论">
-      <h3>关键结论</h3>
+    <section v-if="conclusions.length" class="analysis-card interpretation" aria-label="关键结论">
+      <h3 class="sr-only">关键结论</h3>
       <div v-for="item in conclusions" :key="item.title" class="conclusion">
         <span class="small muted">{{ item.title }}</span>
         <strong>{{ item.value }}</strong>
@@ -51,20 +50,13 @@ function select(field, value) {
           其余 {{ insights.other_files }} 个命中文件，共
           {{ insights.other_findings }} 项发现。
         </p>
-        <EvidenceBars
-          title="迁移用途分类"
-          :rows="insights.purposes"
-          :total="result.findings.length"
-        />
-        <DisclosurePanel title="识别依据">
-          <EvidenceBars title="识别方式分布" :rows="insights.methods" interactive @select="select('method', $event.key)" />
+        <DisclosurePanel title="迁移用途分类" default-open>
+          <EvidenceBars title="迁移用途分类" :rows="insights.purposes" :total="result.findings.length" hide-title />
+        </DisclosurePanel>
+        <DisclosurePanel title="识别依据" default-open>
+          <EvidenceBars title="识别方式分布" :rows="insights.methods" interactive hide-title @select="select('method', $event.key)" />
         </DisclosurePanel>
       </template>
-      <EvidenceGraph
-        v-if="result.analysis"
-        :assets="result.analysis.assets"
-        @select="$emit('select', { method: '', ...$event })"
-      />
     </template>
     <p v-if="!result.analysis" class="notice">
       此历史结果未记录资产分析，仍可查看原始发现；重新扫描可生成完整概览。
@@ -73,15 +65,29 @@ function select(field, value) {
 </template>
 <style scoped>
 .interpretation {
+  padding: 6px 12px;
   background: var(--accent-soft);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  grid-column: 1 / -1;
 }
+.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.overview-grid :deep(.evidence-bars) { padding: 6px 8px; }
+.overview-grid :deep(.evidence-bars.stack) { gap: 2px; }
+.overview-grid :deep(.evidence-bar:not(.actionable)) { padding: 2px 6px; min-height: 28px; }
+.overview-grid :deep(.disclosure-body) { margin-top: 4px; }
+.overview-grid > .notice { grid-column: 1 / -1; }
+.overview-grid > .small { grid-column: 1 / -1; }
 .conclusion {
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr);
-  gap: 0.1rem 0.75rem;
+  grid-template-columns: minmax(0, auto) minmax(70px, 1fr);
+  gap: 2px;
   overflow-wrap: anywhere;
 }
-.conclusion > :last-child {
-  grid-column: 2;
+.conclusion > :first-child { grid-column: 1 / -1; }
+.conclusion > :last-child { align-self: center; margin-left: 8px; }
+@container results (max-width: 700px) {
+  .overview-grid, .interpretation { grid-template-columns: minmax(0, 1fr); }
 }
 </style>
