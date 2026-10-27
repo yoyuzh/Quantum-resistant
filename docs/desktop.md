@@ -4,7 +4,7 @@
 
 ## 安装包与平台
 
-- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。当前版本 V1.3.1，正式版本标签 v1.3.1，同一 Release 包含全部平台安装包。
+- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。当前版本 V1.3.2，正式版本标签 v1.3.2，同一 Release 包含全部平台安装包。
 - Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
 - Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
 - macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
