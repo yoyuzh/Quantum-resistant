@@ -1,7 +1,19 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const {readAiProfiles,writeAiProfiles,updateBundle}=require('../src/ai-profiles.cjs');
-const secure={isEncryptionAvailable:()=>true,encryptString:v=>Buffer.from('encrypted:'+v),decryptString:v=>v.toString().slice(10)};
+const {createRequire}=require('node:module');
+const {runInNewContext}=require('node:vm');
+const secure={isEncryptionAvailable:()=>true,getSelectedStorageBackend:()=> 'gnome_libsecret',encryptString:v=>Buffer.from('encrypted:'+v),decryptString:v=>v.toString().slice(10)};
+
+test('Linux basic_text backend never persists credentials even when encryption reports available',async t=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'quantum-basic-text-'));
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const filename=path.resolve(__dirname,'../src/ai-profiles.cjs'),module={exports:{}};
+  runInNewContext(fs.readFileSync(filename,'utf8'),{module,require:createRequire(filename),process:{platform:'linux'},Buffer},{filename});
+  const bundle={active_profile_id:'a',profiles:[{id:'a',settings:{remember:true,api_key:'fixture-secret'}}]};
+  await assert.rejects(module.exports.writeAiProfiles(root,bundle,{...secure,getSelectedStorageBackend:()=> 'basic_text'}),/系统安全存储不可用/);
+  assert.equal(fs.existsSync(path.join(root,'ai-profiles.json')),false);
+});
 test('multiple desktop credentials are encrypted, all-off is durable and deletion is per-profile',async t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'quantum-profiles-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   const bundle={active_profile_id:'a',profiles:['a','b'].map(id=>({id,settings:{name:id,base_url:'https://model.invalid/v1',model:id,preset:'compatible',consent:true,remember:true,api_key:'fixture-secret-'+id}}))};
