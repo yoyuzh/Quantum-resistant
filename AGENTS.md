@@ -6,19 +6,21 @@
 
 ## 项目定位
 
-抗量子密码风险检测与迁移辅助软件，FastAPI + Vue 3 + Vite。四种输入：snippet、manual_upload、github_repository、pypi_package。算法迁移知识是静态参考；实际供应链图谱、传播分析、数据库、LLM 和完整多语言解析仍未实现。
+抗量子密码风险检测与迁移辅助软件，FastAPI + Vue 3 + Vite。四种输入：snippet、manual_upload、github_repository、pypi_package。提供有界Python跨文件分析和可选LLM辅助；算法迁移知识是静态参考，实际供应链图谱、生产依赖传播、数据库和完整多语言解析仍未实现。
 
 ## 模块边界
 
 - `scan_quantum_vuln.py`：公共兼容导出及 CLI；扫描实现位于 `scanner/rules.py`、`python_analysis.py`、`text_analysis.py`、`engine.py`、`results.py`。
+- `scanner/api_catalog.py`：基础扫描、跨文件及AI检索共用的API／算法标识与规则版本；新增规则须保留正例和不受信导入、遮蔽等负例。
 - `backend/main.py`：薄路由与 `app` 入口。模型在 `models.py`，上传解析在 `uploads.py`，扫描组装在 `scanning.py`。
 - `backend/collectors.py`：采集公共接口。`remote_sources.py` 负责 GitHub/PyPI，`archives.py` 负责归档，`collection_common.py` 负责截止时间、HTTP 与并发调度。
 - `backend/popular.py`：网页与 CLI 共用的热门检索、单仓库扫描和批量编排。`storage.py` 原子写入，`reporting.py` 生成报告，`knowledge.py` 从算法资料生成知识。
+- `deep_analysis/`：有界Python语义及独立证据核验，不执行输入。`backend/deep_scanning.py`与`source_facts.py`适配磁盘源码和分片摘要；AST缓存最多2文件。`backend/ai/`管理模型、脱敏、候选、异步请求和来源复用，AI意见不升级为静态确认。
 - `web/src/App.vue`：组合页面与顶层状态；保持 <=250 行。
 - `web/src/components/`：输入、结果、源码、知识、热门列表等，业务组件原则上 <=350 行（含样式），不得压缩代码凑行数。
 - `web/src/composables/`：扫描、热门、主题状态；`api/client.js` 统一请求/错误/超时；`utils/` 纯函数；`styles/theme.css` 主题变量，`style.css` 基础样式。
 - 网页唯一源码入口为 `web/src/`；`web/index.html` 与 `web/assets/` 由构建生成。
-- 正式软件全称为“抗量子密码风险检测与迁移辅助软件”，登记版本 V1.0.0，当前发布版本 V1.2.0；页面、API、桌面窗口与文档使用同一名称。运行版本以 desktop/package.json 为准，web 的 npm 元数据与之同步。
+- 正式软件全称为“抗量子密码风险检测与迁移辅助软件”，登记版本 V1.0.0，当前发布版本 V1.3.0；页面、API、桌面窗口与文档使用同一名称。运行版本以 desktop/package.json 为准，web 的 npm 元数据与之同步。
 
 ## 验证与构建
 
@@ -46,5 +48,7 @@ AST 成功时负责调用及配置识别，避免回退规则二次引入误报�
 单文件2MiB，上传5000个/源码100MiB/整个请求110MiB；归档200MiB，严格UTF-8。上传有界流式读取，CPU分析移到线程。源码/归档/结果使用本机临时存储，全局2GiB；终态15分钟/8份/512MiB序列化结果，定时及惰性清理；重启清理孤立目录。网页结果不附完整源码，按source_id读取，缓存10文件。远程异常使用 `CollectionError` / `CollectionTimeout` 转换中文502/504；重复热门扫描409；非法参数400/422，超限413。
 
 ## 约定
+
+后台扫描默认执行有界跨文件静态分析；网页AI开关默认开启但须先配置并确认发送，旧客户端省略ai_assisted时不调用模型。AI阶段共享2运行/4排队准入，单AI阶段内部HTTP并发2，网络等待不占CPU线程。基础阶段600秒、跨文件阶段180秒；自动AI独立900秒且任务总截止1500秒，补做AI从提交计900秒。网页等待终态展示，integrated_analysis版本3融合静态确认、ai_assessed与证据不足；评分仅按静态确认计算。1024组为自动接续的选取窗口；每组最多3次发送，包含检索、结构补救与网络恢复，仍共用原有调用、输入与截止预算；连续3次结构补救无有效输出停止。热门新客户端接入仓库隔离的跨文件与AI分析，基础1200秒、整批AI900秒、总截止2100秒；网页不自动加载旧榜单。完整预算、接口和凭据管理见docs/ai-analysis.md。扫描规则变更须保留误报/漏报正反例；模型网络必须mock，未经明确配置和授权不得发送本项目源码。
 
 Python 3.10+，使用 future annotations 与类型注解；网络统一 httpx。用户提示中文；时间为北京时间 ISO +08:00。前端只用 Vue props/emits 与 composable，不引入 UI 框架、Pinia 或路由。样式兼顾键盘焦点、窄屏、长路径及减少动画偏好。细节见 `docs/architecture.md`。

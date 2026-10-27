@@ -78,4 +78,3 @@ export function graphScene(graph, view, size) {
   }
   return { nodes, edges: [...edges.values()], visibleNodes: visible.nodes.length, visibleEdges: visible.links.length, aggregated: low };
 }
-

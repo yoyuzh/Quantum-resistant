@@ -4,7 +4,7 @@
 
 ## 安装包与平台
 
-- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。当前版本 V1.2.0，正式版本标签 v1.2.0，同一 Release 包含全部平台安装包。
+- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。当前版本 V1.3.0，正式版本标签 v1.3.0，同一 Release 包含全部平台安装包。
 - Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
 - Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
 - macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
@@ -17,7 +17,7 @@ SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在
 
 ## 数据与网络
 
-本地代码只作静态分析，扫描不会执行上传的代码，也不会安装被扫描的 PyPI 包。代码片段、文件上传、迁移知识和报告导出可离线使用。只有用户主动扫描 GitHub/PyPI 或刷新热门仓库时，后端才访问已有允许列表中的远程服务。
+本地代码只作静态分析，扫描不会执行上传的代码，也不会安装被扫描的 PyPI 包。代码片段、文件上传、迁移知识和报告导出可离线使用。用户主动扫描 GitHub/PyPI 或刷新热门仓库时，后端访问采集允许列表中的远程服务。配置模型并确认发送后，开启AI的扫描还会将必要脱敏片段发往所选模型端点；关闭AI可继续离线静态分析。模型设置默认记住配置，密钥由主进程使用系统安全存储加密；取消记住后仅用于当前会话。安全存储不可用或保存失败时界面提示“仅本次运行”，不写明文；详见[AI辅助分析](ai-analysis.md)。
 
 用户数据目录由 Electron 的 `userData` 确定：Windows 通常为 `%APPDATA%\Quantum Resistant Scanner`，macOS 为 `~/Library/Application Support/Quantum Resistant Scanner`，Linux 为 `~/.config/Quantum Resistant Scanner`（可能由 XDG 配置调整）。主题和热门快照位于该目录；日志最多每类4份、每份约1 MiB，不记录令牌、源码正文或请求体。源码、归档和任务结果在其 `cache/scans` 中短期保存，保留原有2 GiB容量、结果15分钟/8份/512 MiB限制。
 
@@ -71,3 +71,12 @@ npm --prefix desktop start
 内部进程协议使用逐行JSON：父进程通过stdin传递`token`、`data_root`和`cache_root`；后端绑定端口并完成ASGI启动后，通过stdout发送`ready`及`port`、`pid`。`status`命令按`id`返回运行与排队总数，`shutdown`或stdin EOF触发回收；stdout只承载协议，诊断单独写日志。启动最长等待30秒，退出最长等待10秒。不要将含令牌的初始配置放入命令行、网页或日志。
 
 验证方法和未验收边界见[验证说明](validation.md)。安装名称已统一为正式中文名，历史 Release 的旧安装包不会因此改变；用户数据继续使用原目录以兼容已有主题与热门快照。
+
+
+## 多模型与关系图
+
+模型设置可保存32份配置，最多启用一份，也可全部停用。启动恢复保存状态，不自动联网测试。旧单配置在新加密配置成功保存后迁移；迁移失败保留原文件。每份凭据独立加密，空密钥保留原值，删除互不影响。安全存储不可用时只在进程内使用，重启后需重新填写。
+
+新增配置操作通过白名单IPC交给主进程，单次输入最多32 KiB；父子私有stdio启动包及配置包最多512 KiB，不含命令行参数。主进程负责加密文件和保存状态，后端只接收运行配置。普通网页不能通过HTTP修改桌面密钥。
+
+关系图支持窗口全屏、平移缩放和当前视图SVG导出。SVG与报告沿用用户触发的本机blob下载边界，通过保存对话框选择位置，不开放任意下载来源。任务提交时绑定模型；仅切换启用项不会改变正在运行或排队的任务。
