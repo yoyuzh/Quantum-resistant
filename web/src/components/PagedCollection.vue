@@ -55,7 +55,7 @@ watch([() => props.rowHeight, () => props.items.length], () => { if (media) next
     <div ref="heading" class="collection-heading"><slot name="heading" /></div>
     <div ref="viewport" class="collection-viewport">
       <div v-if="items.length" class="collection-grid" :style="{ '--columns': columns, '--record-height': `${recordHeight}px` }">
-        <template v-for="item in pagination.items" :key="itemKey(item)"><slot :item="item" /></template>
+        <template v-for="item in pagination.items" :key="itemKey(item)"><slot :item="item" :visible-items="pagination.items" /></template>
       </div>
       <slot v-else name="empty" />
     </div>

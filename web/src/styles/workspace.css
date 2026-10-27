@@ -21,7 +21,7 @@
 .app-main.results-expanded { max-width: none; padding: 0; }
 .results-expanded .result-layout, .results-expanded .result-sticky { border-radius: 0; }
 .results { container: results / inline-size; }
-.result-layout { font-size: 14px; }
+.result-layout { font-size: 15px; }
 .panel { border-radius: 12px; box-shadow: 0 1px 3px rgb(0 0 0 / 4%); }
 .panel-heading { padding: 12px 16px; }
 .input-panel .panel-body { padding: 16px; }

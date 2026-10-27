@@ -91,6 +91,7 @@ class ScanPipeline:
                     acquired = ANALYSIS_SLOTS.acquire(timeout=.1)
                     self.budget.remaining()
                 origin, name, content = document if len(document) == 3 else (None, *document)
+                self.budget.control.emit(activity={'action':'检查密码 API、算法配置与导入绑定', 'files':[name], 'completed':len(self.records), 'total':None})
                 with analysis_control(self.budget.remaining):
                     findings, notes = self.analyzer(content, name, self.source_type, identity, include_metadata=True)
                 findings = [dict(item, source_id=identity, file_name=name, source_type=self.source_type,

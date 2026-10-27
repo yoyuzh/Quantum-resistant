@@ -52,12 +52,14 @@ class RequestBoundary:
                 return await self.reject(scope, receive, send, 403, '请求来源不受信任，请从本项目页面操作')
         async def secured_send(message):
             if message['type'] == 'http.response.start':
+                if scope['path'].startswith('/api/ai/'):
+                    message['headers']=[(k,v) for k,v in message.get('headers',[]) if k.lower()!=b'cache-control']+[(b'cache-control',b'no-store')]
                 message['headers'] = [*message.get('headers', []),
                                       (b'x-content-type-options', b'nosniff'),
                                       (b'x-frame-options', b'DENY')]
             await send(message)
         path = scope['path']
-        if scope['method'] in {'POST', 'PUT', 'PATCH'} and path.startswith('/api/') and not path.endswith('/files'):
+        if scope['method'] in {'POST', 'PUT', 'PATCH'} and path.startswith('/api/') and not path.endswith(('/files', '/files-with-paths')):
             limit = (6 * MAX_COLLECTED_FILE_BYTES + 65536 if path.endswith('/snippet') else
                      MAX_UPLOAD_BYTES if path.startswith('/api/report/') else 65536)
             body = bytearray()

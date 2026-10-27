@@ -5,7 +5,8 @@ import io
 import tokenize
 
 from scanner.control import AnalysisLimit, MAX_DEPTH, MAX_NODES, checkpoint
-from scanner.rules import Finding, MODULE_HINTS, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
+from scanner.rules import sensitive_context, Finding, MODULE_HINTS, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
+from scanner.api_catalog import API_ALGORITHMS as KNOWN_CALLS
 
 
 def get_dotted_name(node: ast.AST) -> str | None:
@@ -27,38 +28,6 @@ def match_module_hint(name: str) -> str | None:
 def resolve_direct_call(name: str) -> str | None:
     return KNOWN_CALLS.get(name)
 
-
-# Only exact, imported public targets establish an algorithm.
-_PREFIX = "cryptography.hazmat.primitives.asymmetric."
-KNOWN_CALLS = {
-    _PREFIX + "rsa.generate_private_key": "rsa",
-    _PREFIX + "dsa.generate_private_key": "dsa",
-    _PREFIX + "dh.generate_parameters": "dh",
-    _PREFIX + "ec.generate_private_key": "ecc",
-    _PREFIX + "ec.ECDH": "ecdh",
-    _PREFIX + "ec.ECDSA": "ecdsa",
-    _PREFIX + "ec.derive_private_key": "ecc",
-    _PREFIX + "ec.EllipticCurvePublicKey.from_encoded_point": "ecc",
-    "ecdsa.SigningKey.generate": "ecdsa",
-}
-# Explicit number/point/byte constructors have a known algorithm, unlike PEM/DER loaders.
-for _module, _algorithm in (("RSA", "rsa"), ("DSA", "dsa"), ("ECC", "ecc")):
-    for _method in ("generate", "import_key", "construct"):
-        KNOWN_CALLS[f"Crypto.PublicKey.{_module}.{_method}"] = _algorithm
-    if _module in {"RSA", "DSA"}:
-        KNOWN_CALLS[f"Crypto.PublicKey.{_module}.importKey"] = _algorithm
-for _curve, _cls in (("x25519", "X25519"), ("x448", "X448"), ("ed25519", "Ed25519"), ("ed448", "Ed448")):
-    KNOWN_CALLS[f"{_PREFIX}{_curve}.{_cls}PrivateKey.generate"] = _curve
-    KNOWN_CALLS[f"{_PREFIX}{_curve}.{_cls}PrivateKey.from_private_bytes"] = _curve
-    KNOWN_CALLS[f"{_PREFIX}{_curve}.{_cls}PublicKey.from_public_bytes"] = _curve
-for _algorithm, _module, _private, _public in (
-    ("rsa", "rsa", "RSAPrivateNumbers", "RSAPublicNumbers"),
-    ("dsa", "dsa", "DSAPrivateNumbers", "DSAPublicNumbers"),
-    ("dh", "dh", "DHPrivateNumbers", "DHPublicNumbers"),
-    ("ecc", "ec", "EllipticCurvePrivateNumbers", "EllipticCurvePublicNumbers"),
-):
-    KNOWN_CALLS[f"{_PREFIX}{_module}.{_private}"] = _algorithm
-    KNOWN_CALLS[f"{_PREFIX}{_module}.{_public}"] = _algorithm
 
 class LocalBindings(ast.NodeVisitor):
     """Collect lexical locals without entering nested scopes."""
@@ -239,12 +208,14 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
             self.diagnostics.append(dict(code="binding_unresolved", line=node.lineno,
                                          message="调用名称存在分支绑定冲突，未确认密码库目标。"))
         algorithm = self.resolve_algorithm_from_call(name) if name else None
+        if name and self.resolve_call_target(name) == 'ecdsa.SigningKey.generate' and (node.args or any(k.arg in (None, 'curve') for k in node.keywords)):
+            algorithm = None  # Explicit curves may select EdDSA; keep unsupported values unknown.
         if algorithm:
             self.add_finding(node.lineno, algorithm, name, resolved_api=self.resolve_call_target(name))
         self.generic_visit(node)
 
     def scan_string_value(self, node: ast.AST, context: str, line: int) -> None:
-        if not SENSITIVE_STRING_CONTEXT_RE.search(context):
+        if not sensitive_context(context):
             return
         if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
             for item in node.elts:
@@ -253,7 +224,9 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
             if node.value.lstrip().startswith('-----BEGIN '):
                 return  # PEM evidence is handled once, at its actual header line.
             for algorithm, pattern, evidence in STRING_IDENTIFIER_RULES:
-                match = pattern.search(node.value)
+                match = pattern.fullmatch(node.value.strip())
+                if not match and node.value.startswith(('ssh-', 'ecdsa-sha2-', 'rsa-sha2-')):
+                    match = pattern.match(node.value)
                 if match:
                     self.add_finding(line, algorithm, f"{evidence}: {match.group(0)}")
 

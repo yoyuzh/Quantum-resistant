@@ -5,6 +5,7 @@ from typing import Any
 from backend.insights import build_insights
 
 METHOD_LABELS = {
+    "cross_file": "跨文件核验", "ai_candidate": "代码线索待复核",
     "ast_call": "AST 调用", "ast_config": "AST 配置",
     "text_call": "文本调用", "text_config": "文本配置", "pem_header": "PEM 头",
 }

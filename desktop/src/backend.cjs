@@ -5,16 +5,19 @@ const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 
 class BackendProcess extends EventEmitter {
-  constructor(command, args, { dataRoot, cacheRoot, log = () => {}, timeout = 30000, spawnProcess = spawn } = {}) {
+  constructor(command, args, { dataRoot, cacheRoot, aiSettings = null, aiProfiles = null, log = () => {}, timeout = 30000, spawnProcess = spawn } = {}) {
     super();
     this.command = command;
     this.args = args;
     this.config = { data_root: dataRoot, cache_root: cacheRoot, token: randomBytes(32).toString('hex') };
     this.token = this.config.token;
+    if (aiSettings) this.config.ai_settings = aiSettings;
+    if (aiProfiles) this.config.ai_profiles = aiProfiles;
     this.log = log;
     this.timeout = timeout;
     this.spawnProcess = spawnProcess;
     this.pending = new Map();
+    this.aiPending = new Map();
     this.sequence = 0;
     this.stopping = false;
   }
@@ -52,6 +55,9 @@ class BackendProcess extends EventEmitter {
         } else if (message.event === 'status' && Number.isInteger(message.active) && message.active >= 0) {
           const complete = this.pending.get(message.id);
           if (complete) { this.pending.delete(message.id); complete(message.active); }
+        } else if (message.event === 'ai_config') {
+          const complete = this.aiPending.get(message.id);
+          if (complete) { this.aiPending.delete(message.id); complete(message); }
         }
       });
       this.child.once('error', () => fail(new Error('扫描服务文件缺失或无法运行')));
@@ -60,6 +66,8 @@ class BackendProcess extends EventEmitter {
         if (!ready) fail(new Error('扫描服务未能启动'));
         for (const complete of this.pending.values()) complete(null);
         this.pending.clear();
+        for (const complete of this.aiPending.values()) complete({ error: true });
+        this.aiPending.clear();
         this.emit('exit', this.stopping);
       });
       this.child.stdin.write(`${JSON.stringify(this.config)}\n`);
@@ -74,6 +82,25 @@ class BackendProcess extends EventEmitter {
       const timer = setTimeout(() => { this.pending.delete(id); resolve(null); }, 1500);
       this.pending.set(id, (count) => { clearTimeout(timer); resolve(count); });
       this.child.stdin.write(`${JSON.stringify({ command: 'status', id })}\n`);
+    });
+  }
+  async configureAi(settings, clear = false) {
+    const id = ++this.sequence;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { this.aiPending.delete(id); reject(new Error('模型配置通信超时')); }, 10000);
+      this.aiPending.set(id, message => {
+        clearTimeout(timer);
+        message.error ? reject(new Error('模型配置无效或服务不可用')) : resolve(message.config);
+      });
+      this.child.stdin.write(`${JSON.stringify({ command: clear ? 'clear_ai' : 'configure_ai', id, settings })}\n`);
+    });
+  }
+  async profileAction(value) {
+    const id=++this.sequence;
+    return new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>{this.aiPending.delete(id);reject(new Error('模型配置通信超时'));},15000);
+      this.aiPending.set(id,message=>{clearTimeout(timer);message.error?reject(new Error('模型配置操作未完成')):resolve(message.config);});
+      this.child.stdin.write(`${JSON.stringify({...value,command:'profile_action',target_id:value.id,id})}\n`);
     });
   }
   async stop() {

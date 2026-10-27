@@ -11,7 +11,7 @@ const props = defineProps({ findings: Array, sources: { type: Array, default: ()
   filters: Object, matching: Array, selectedKey: String, loadSource: Function, hideFilters: Boolean,
   identityPeers: Array, active: { type: Boolean, default: true } });
 const emit = defineEmits(['update:filters']);
-const local = reactive({ algorithm: '', sourceId: '', query: '', method: '', target: '' });
+const local = reactive({ algorithm: '', sourceId: '', query: '', method: '', target: '', status: '' });
 const currentFilters = computed(() => props.filters || local);
 const filtered = computed(() => props.matching || selectedFindings({ findings: props.findings }, currentFilters.value));
 const { size, pagination, activeKey, active, choose, changePage, measure } =
@@ -80,7 +80,7 @@ watch(wide, value => { if (value) opened.value = false; });
         </div>
         <div ref="viewport" class="findings-viewport" @keydown="moveSelection">
           <p v-if="!filtered.length" class="notice">
-            {{ findings.length ? '没有符合筛选条件的发现。' : '本次扫描未发现已知传统公钥算法用法。零发现不代表安全或完整覆盖。' }}
+            {{ findings.length ? '没有符合筛选条件的发现。' : '当前没有确认风险或待复核线索。请核对扫描范围；零发现不代表安全。' }}
           </p>
           <FindingRow v-for="finding in pagination.items" :key="findingKey(finding)" :finding="finding"
             :peers="identityPeers || sources" :selected="findingKey(finding) === activeKey" @select="select" />

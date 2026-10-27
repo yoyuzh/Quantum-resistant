@@ -1,0 +1,34 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const {readAiProfiles,writeAiProfiles,updateBundle}=require('../src/ai-profiles.cjs');
+const secure={isEncryptionAvailable:()=>true,encryptString:v=>Buffer.from('encrypted:'+v),decryptString:v=>v.toString().slice(10)};
+test('multiple desktop credentials are encrypted, all-off is durable and deletion is per-profile',async t=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'quantum-profiles-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const bundle={active_profile_id:'a',profiles:['a','b'].map(id=>({id,settings:{name:id,base_url:'https://model.invalid/v1',model:id,preset:'compatible',consent:true,remember:true,api_key:'fixture-secret-'+id}}))};
+  await writeAiProfiles(root,bundle,secure);
+  assert.ok(!fs.readFileSync(path.join(root,'ai-profiles.json'),'utf8').includes('fixture-secret'));
+  const value=await readAiProfiles(root,secure);assert.equal(value.profiles.length,2);assert.equal(value.profiles[0].settings.api_key,'fixture-secret-a');
+  updateBundle(value,'activate',null);await writeAiProfiles(root,value,secure);assert.equal((await readAiProfiles(root,secure)).active_profile_id,null);
+  updateBundle(value,'clear','a');await writeAiProfiles(root,value,secure);const cleared=await readAiProfiles(root,secure);
+  assert.equal(cleared.profiles[0].settings.api_key,'');assert.equal(cleared.profiles[1].settings.api_key,'fixture-secret-b');
+});
+test('unavailable secure storage cannot write plaintext and disables restored consent',async t=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'quantum-profiles-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const bundle={active_profile_id:'a',profiles:[{id:'a',settings:{name:'a',api_key:'fixture-secret',remember:true,consent:true}}]};
+  const storage={...secure,isEncryptionAvailable:()=>false};
+  await assert.rejects(writeAiProfiles(root,bundle,storage),/系统安全存储不可用/);
+  assert.equal(await readAiProfiles(root,storage),null);
+  await writeAiProfiles(root,bundle,secure);
+  const saved=fs.readFileSync(path.join(root,'ai-profiles.json'),'utf8');
+  bundle.active_profile_id=null;
+  await writeAiProfiles(root,bundle,storage);
+  assert.equal((await readAiProfiles(root,secure)).active_profile_id,null);
+  bundle.active_profile_id='a';
+  await writeAiProfiles(root,bundle,secure);
+  bundle.profiles[0].settings.api_key='replacement-secret';
+  await assert.rejects(writeAiProfiles(root,bundle,storage),/系统安全存储不可用/);
+  assert.equal(fs.readFileSync(path.join(root,'ai-profiles.json'),'utf8'),saved);
+  const restored=await readAiProfiles(root,storage);assert.equal(restored.profiles[0].settings.api_key,'');assert.equal(restored.profiles[0].settings.consent,false);
+  await writeAiProfiles(root,restored,storage);
+  assert.equal((await readAiProfiles(root,secure)).profiles[0].settings.api_key,'fixture-secret');
+});

@@ -1,10 +1,10 @@
 import { computed, nextTick, onScopeDispose, reactive, ref, shallowRef, watch } from 'vue';
-import { selectedFindings } from '../utils/analysis.js';
+import { selectedFindings, assetLocation } from '../utils/analysis.js';
 import { findingKey } from '../utils/results.js';
 import { capturePosition, ensureFocusVisible, focusDestination, restorePosition } from '../utils/navigation.js';
 import { fileLabel } from '../utils/presentation.js';
 
-const emptyFilters = () => ({ sourceId: '', algorithm: '', query: '', target: '', method: '' });
+const emptyFilters = () => ({ sourceId: '', algorithm: '', query: '', target: '', method: '', status: '', purpose:'' });
 
 export function useResultSelection(result, { body, header } = {}) {
   const tab = ref('findings');
@@ -72,8 +72,8 @@ export function useResultSelection(result, { body, header } = {}) {
   }
 
   function reveal(asset, location = asset.locations?.[0]) {
-    return select({ sourceId: asset.source_id, algorithm: asset.algorithm },
-      location ? { ...asset, ...location } : undefined);
+    const matched=assetLocation(result.value.findings,asset,location);
+    return select({ sourceId: asset.source_id, algorithm: asset.algorithm, status:asset.verification_status || '' }, matched);
   }
 
   async function back() {
@@ -101,7 +101,8 @@ export function useResultSelection(result, { body, header } = {}) {
   function keepFocusVisible(event) {
     ensureFocusVisible(event.target, body?.value, header?.value);
   }
-  watch(result, () => {
+  watch(() => [result.value?.scanned_at, result.value?.source_type], (next, previous) => {
+    if (previous && next[0] != null && next[0] === previous[0] && next[1] === previous[1]) return;
     reset();
     origin.value = null;
     Object.assign(assetFilters, emptyFilters());

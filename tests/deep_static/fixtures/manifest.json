@@ -1,0 +1,160 @@
+{
+  "schema_version": "deep-fixtures-1",
+  "authored_on": "2026-10-18",
+  "review_status": "agent_authored_labels_not_independent_human_gold",
+  "target_python": "3.10+",
+  "corpus_sha256": "f1b1b88e1d77fd6067ed69c6e717f0b7a77c1e543425363a4382839f93e2f5f9",
+  "sources": {
+    "rsa_generation": {
+      "keys.py": "6583a3e81e516db0fed5dace61e2dc44a16459f143a9838576b1a9122c53aeec",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "ed25519_generation": {
+      "keys.py": "19625fdea5e99495bae4c95a57e084a46c463857b73f9cc546a4b5198a3e8809",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "x25519_exchange": {
+      "keys.py": "d43b6682ba8039693859a7fbeb1b22f280af94529c12f4edc010fdc65c0d0788",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "pycrypto_rsa_import": {
+      "keys.py": "0cf568b1efffc68e3d7bcfd7b61f0bd3c969a5a7ecdf82439a6e5157ccdcf405",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "import_only": {
+      "keys.py": "9bebca672c242328429c2a54704189c5d09b607ff94e720409d060722e235b33",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "handwritten": {
+      "maths.py": "e39461695fc458906fa2c2e552172a1641f22e8e479d6192312193573884ebae",
+      "app.py": "085c02d501db0f8fc7d986befb1324ad5d9675bb738368cc1fb3253574fc2d2b"
+    },
+    "two_contexts": {
+      "crypto/wrap.py": "d1b6bf2660d095b4e2d291e36ef224eb2cb3e1b1f8a0834e9be78938e8e54dc0",
+      "crypto/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "main.py": "e04c2f95cbc519f59538bfaed4b8d5409806222d4dfff703c962dc862916914a"
+    },
+    "relative_alias": {
+      "pkg/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pkg/config.py": "181cf3dfc87940afb92c5da01427711f861c219562c1b18449e324e76a8cc64c",
+      "pkg/use.py": "637f3e5ed50e4dab6f3a9a7408192551ac19e5a699ef6091566ecdba5d863588"
+    },
+    "keyword_binding": {
+      "wrap.py": "d1b6bf2660d095b4e2d291e36ef224eb2cb3e1b1f8a0834e9be78938e8e54dc0",
+      "app.py": "af4be8871503312ee5cc9dbe3fa9518ef55ee07bc14cf1900e63f004b9a530ed"
+    },
+    "static_default": {
+      "wrap.py": "4598d083c12376fff4b1c8e600150347767fdb13803e021ee4b32ccdad9c81dc",
+      "app.py": "e44e8f16eb9c5eab7ad8beb7f9de8182d0d6030aca5e8aced2b1b5ed6e216759"
+    },
+    "positional_keyword_only": {
+      "wrap.py": "326d6df92af026232a50ff6b9550d76c25d373ba3c0d210d04528aded56c6673",
+      "app.py": "6758ad20dcfb841e452b07174c13d602f84e8d38ef73b22732137ba132e677b1"
+    },
+    "literal_unpack": {
+      "wrap.py": "d1b6bf2660d095b4e2d291e36ef224eb2cb3e1b1f8a0834e9be78938e8e54dc0",
+      "app.py": "155ce9b351c825046255aa73e325752d36db77d273cca8db55e1a2edec054f9f"
+    },
+    "unknown_unpack": {
+      "wrap.py": "d1b6bf2660d095b4e2d291e36ef224eb2cb3e1b1f8a0834e9be78938e8e54dc0",
+      "app.py": "8de1282af97e6e436c878db98e34bc0d6f259eff3ecdf3538f2ad381a5d1035a"
+    },
+    "duplicate_argument": {
+      "wrap.py": "d1b6bf2660d095b4e2d291e36ef224eb2cb3e1b1f8a0834e9be78938e8e54dc0",
+      "app.py": "3a71aa4c10ae603c3735584c54b672f7c26f8bc5906bbbbf7d45a91813908e12"
+    },
+    "missing_argument": {
+      "wrap.py": "d1b6bf2660d095b4e2d291e36ef224eb2cb3e1b1f8a0834e9be78938e8e54dc0",
+      "app.py": "e44e8f16eb9c5eab7ad8beb7f9de8182d0d6030aca5e8aced2b1b5ed6e216759"
+    },
+    "transparent_return": {
+      "config.py": "11a4a8b670f18f81b847a4b4b32a8572357eae5eee655d866d2ae8a4111736ab",
+      "app.py": "4f8454559e6ca1f4f103fa8cf587ce4fc92f9a22879676968f89704ff1c9c37b"
+    },
+    "derived_return": {
+      "config.py": "48401abb5e5cc108efe38f00d2463bf91e0c358d5f1b45a17b2e51b3005565de",
+      "app.py": "a06d7972654832b5e5ea39f0d53717aec3ce205cf89538b8485a75486ae19729"
+    },
+    "reassignment": {
+      "app.py": "4f3a3c0da6893b465bf1aa50be1167cca98583af8d2c937437a2076352443846",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "branches_equal": {
+      "app.py": "2c89d77d8e85b6bce4cf1e531d4a53a6f9a2842bd49127295019ffa804c96de4",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "branches_multiple": {
+      "app.py": "ef493c51161175d648032770dc94ffadeb9eace21c3802898f2ac20f14f11544",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "branch_unknown": {
+      "app.py": "f9503891b7808e77f91f345e136e75ab32bef7c0c7ca606f8e808cadf8a9c005",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "shadowing": {
+      "app.py": "1a395312f3da5eb83a481cd43daf2a5634657532790c72d7bef5e68e35e71530",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "same_names": {
+      "a/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "b/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "a/settings.py": "181cf3dfc87940afb92c5da01427711f861c219562c1b18449e324e76a8cc64c",
+      "b/settings.py": "e831f26f49b5ecdbc5c27847c2ce69a71431a4fe7ef368a55057b9d6a461bffd",
+      "a/use.py": "f1b1e1b3b3ac66664c69c8010001440c976022513ca482b9f458893873f691d3",
+      "b/use.py": "f1b1e1b3b3ac66664c69c8010001440c976022513ca482b9f458893873f691d3"
+    },
+    "missing_module": {
+      "app.py": "052d8ef324d5930ac0fc49cdca311faaa1ee17b19a197482368d175c35cfbd99",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "recursion": {
+      "config.py": "1ef5b578d5615480181b5647a07d1ccc2e749abfa3add2f4b972a51ec74f122e",
+      "app.py": "6853757a95d8cc1550e20c2a5958be8410215231cd564e8f7128a0e02f266947"
+    },
+    "getattr_dynamic": {
+      "app.py": "154724b35f73e1bc65872d0d704f5f19f75da5b5bba142b942156e8d318233c7",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "decorated": {
+      "wrap.py": "fb9e4d6ce9d9371df98ccc52d4e4280c2cfb67410575301d99d19538b53ae594",
+      "app.py": "9b31ae9cc84b9bbd3cfb2a5dfcbbd120c067582d4265f13310d19218795d89b9"
+    },
+    "global_write": {
+      "wrap.py": "f2b6391173da06e0cc6d8ada8531f862b0b5242435f2288756855b3aa4cbcdc3",
+      "app.py": "cb22613636abf265033cf77118cf696ea4538e02234cae03c15d18dfe8856497"
+    },
+    "generic_pem": {
+      "keys.py": "6b8446436e3ab775fc1b90f03bfb5efd5668ed48036c56079a122d65255edb2b",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "two_receivers": {
+      "keys.py": "c65f3e2d7359c5e23823f5e4854a706400c91df9fccfb63e083c986398f4afa7",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "ecc_import_no_curve": {
+      "keys.py": "8a6af3a25ae89265f1b7e076fa971f93c40021c8db063d33dc8f846e4766ce04",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "dsa_sign": {
+      "keys.py": "808f8d7ffc20fe8aa3980892bdac81ad1fae749546399946fb907295e3290d64",
+      "app.py": "bf35a5ed877b7ba7cbb1bf7bd14fd9306531024549878c0cd2ee899b3394bdb3"
+    },
+    "jwt_decode": {
+      "app.py": "386ec10377959a3f794f377f60ce8f126a3d42df17ddcd27e1f699a32a754103",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "no_algorithm": {
+      "app.py": "103cf2b341d33f3995fc44faa6b8de655a79b77c4fbbb341c899ba9dd4dc6cee",
+      "entry.py": "69c487f68215e95f1d6fa2301ac4d57f4454f46e6c0adcef24bb0a1781d1835c"
+    },
+    "unicode_positions": {
+      "中文/入口.py": "e155ee03e746d49cf2912a1555f9b56be5ddb8d93b1bf86b54b66a5473bd2892",
+      "app.py": "2a7cb0480d4df7ad9a50618faa1e9220c631e797296179f6db9e2a1bea470709"
+    },
+    "unsupported_config": {
+      "config.json": "9d3d19dff108eff527b38f731527bde2464935238bf800cf07dd36ac78250939",
+      "app.py": "fbc94f820d596782f2b7bf7c24245a3995e864061d799f0a6c161d0e315d411c"
+    }
+  },
+  "freeze_policy": "Never regenerate expected labels from engine predictions. Review changes before explicitly updating this manifest. Independent human review and real-repository gate remain pending."
+}

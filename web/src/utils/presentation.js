@@ -11,6 +11,24 @@ export function fileLabel(item, peers = []) {
 }
 
 export function conciseInsights(result) {
+  const integrated=result.integrated_analysis?.findings;
+  if (Array.isArray(integrated)) {
+    const rows=integrated.filter(r=>r.verification_status!=='pending');
+    const algorithms=new Map(),files=new Map();
+    for (const row of rows) {
+      algorithms.set(row.algorithm,(algorithms.get(row.algorithm) || 0)+1);
+      const item=files.get(row.source_id) || {file_name:row.file_name,source_id:row.source_id,count:0};
+      item.count++;files.set(row.source_id,item);
+    }
+    const topAlgorithm=[...algorithms].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]))[0];
+    const topFile=[...files.values()].sort((a,b)=>b.count-a.count || a.file_name.localeCompare(b.file_name))[0];
+    const items=[];
+    if (topAlgorithm) items.push({title:'主要算法',value:topAlgorithm[0],detail:topAlgorithm[1]+' 项发现'});
+    if (topFile) items.push({title:'命中最多',value:fileLabel(topFile,result.sources || rows),detail:topFile.count+' 项发现'});
+    const unknown=rows.filter(r=>(r.effective_purpose_code || r.purpose_code || 'unknown')==='unknown').length;
+    if (unknown) items.push({title:'用途待确认',value:unknown+' 项',detail:'查看用途证据',filter:{purpose:'unknown'}});
+    return items;
+  }
   const insights = result.analysis?.insights;
   const algorithms = insights?.algorithms ?? Object.entries(result.summary?.algorithm_counts || {})
     .map(([key, count]) => ({ label: key, count })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));

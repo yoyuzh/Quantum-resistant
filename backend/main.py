@@ -20,6 +20,7 @@ from contextlib import asynccontextmanager
 from backend.scan_routes import router as scan_router
 from backend.request_boundary import RequestBoundary
 from backend.report_routes import router as report_router
+from backend.integrated_reports import router as integrated_report_router
 from backend.storage import write_results
 from backend.uploads import MAX_TOTAL_UPLOAD_BYTES
 from backend.collection_config import (MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_ARCHIVE_BYTES,
@@ -37,8 +38,12 @@ POPULAR_SCAN_LOCK = Lock()
 async def lifespan(app):
     if task_routes.store.closed:
         task_routes.store = TaskStore()
-    yield
-    task_routes.store.close()
+    await task_routes.store.ai.start()
+    try:
+        yield
+    finally:
+        task_routes.store.close()
+        await task_routes.store.ai.close()
 
 
 app = FastAPI(title="抗量子密码风险检测与迁移辅助软件", version=__version__, lifespan=lifespan,
@@ -49,8 +54,13 @@ app.add_middleware(RequestBoundary)
 if runtime.desktop:
     from backend.desktop_boundary import DesktopBoundary
     app.add_middleware(DesktopBoundary, runtime=runtime.desktop)
+from backend.ai.routes import router as ai_router
+app.include_router(ai_router)
+from backend.ai.profile_routes import router as profile_router
+app.include_router(profile_router)
 app.include_router(task_router)
 app.include_router(report_router)
+app.include_router(integrated_report_router)
 app.include_router(scan_router)
 app.mount("/static/assets", StaticFiles(directory=WEB_DIR / "assets"), name="assets")
 

@@ -1,5 +1,7 @@
 'use strict';
-const { app, BrowserWindow, session, dialog, shell, Menu, ipcMain, protocol, nativeTheme } = require('electron');
+const { app, BrowserWindow, session, dialog, shell, Menu, ipcMain, protocol, nativeTheme, safeStorage } = require('electron');
+const {readAiProfiles,writeAiProfiles,updateBundle}=require('./ai-profiles.cjs');
+const { readAiSettings, saveAiSettings, clearAiSettings, forgetAiSettings } = require('./ai-preferences.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const { BackendProcess } = require('./backend.cjs');
@@ -98,8 +100,11 @@ async function start() {
     ? path.join(process.resourcesPath, 'backend', 'quantum-backend', process.platform === 'win32' ? 'quantum-backend.exe' : 'quantum-backend')
     : (process.env.QUANTUM_DESKTOP_BACKEND_ENTRY || path.join(__dirname, '..', 'backend_entry.py'));
   if (app.isPackaged && !fs.existsSync(entry)) throw new Error('扫描服务文件缺失');
+  const storedProfiles=await readAiProfiles(dataRoot,safeStorage);
+  const profileBundle=storedProfiles || {profiles:[],active_profile_id:null};
   backend = new BackendProcess(app.isPackaged ? entry : (process.env.QUANTUM_DESKTOP_PYTHON || 'python'),
-    app.isPackaged ? [] : ['-B', entry], { dataRoot, cacheRoot: path.join(dataRoot, 'cache'), log });
+    app.isPackaged ? [] : ['-B', entry], { dataRoot, cacheRoot: path.join(dataRoot, 'cache'), log,
+      aiSettings: await readAiSettings(dataRoot, safeStorage),aiProfiles:storedProfiles?{...storedProfiles,profiles:storedProfiles.profiles.map(({persisted_key,...profile})=>profile)}:null });
   backend.on('exit', async (expected) => {
     if (expected || quitting || !window || window.isDestroyed()) return;
     log('扫描后端意外退出');
@@ -125,9 +130,9 @@ async function start() {
     }
     const filename = path.basename(item.getFilename());
     const extension = path.extname(filename).slice(1).toLowerCase();
-    if (!['html', 'md', 'json', 'csv'].includes(extension)) { event.preventDefault(); return; }
+    if (!['html', 'md', 'json', 'csv', 'svg'].includes(extension)) { event.preventDefault(); return; }
     downloads++;
-    item.setSaveDialogOptions({ title: '保存扫描报告', defaultPath: path.join(app.getPath('downloads'), filename),
+    item.setSaveDialogOptions({ title: extension === 'svg' ? '保存关系图' : '保存扫描报告', defaultPath: path.join(app.getPath('downloads'), filename),
       filters: [{ name: '扫描报告', extensions: [extension] }] });
     item.once('done', async (_event, state) => {
       downloads--;
@@ -159,6 +164,35 @@ async function start() {
     if (!trustedFrame(event, window.webContents, origin) || !validTheme(value)) throw new Error('主题请求无效');
     applyAppearance(nativeTheme, [window], value, process.platform);
     saveTheme(dataRoot, value);
+  });
+  ipcMain.handle('quantum:ai-profile',async(event,value)=>{
+    if(!trustedFrame(event,window.webContents,origin) || !value || !['create','update','activate','delete','clear'].includes(value.action) || JSON.stringify(value).length>32768)throw new Error('模型配置操作无效');
+    const response=await backend.profileAction(value);
+    updateBundle(profileBundle,value.action,value.id,value.settings,response);
+    let persisted=[];
+    try{persisted=await writeAiProfiles(dataRoot,profileBundle,safeStorage);}
+    catch{if(['delete','clear'].includes(value.action)){await backend.profileAction({action:'persistence',persisted:[]});throw new Error('凭据删除未能保存，请检查用户目录权限');}}
+    await backend.profileAction({action:'persistence',persisted});
+    return {...response,credential_persisted:persisted.includes(response.id)};
+  });
+  ipcMain.handle('quantum:ai-settings', async (event, value) => {
+    if (!trustedFrame(event, window.webContents, origin) || !value || typeof value !== 'object' || JSON.stringify(value).length > 16384)
+      throw new Error('模型设置请求无效');
+    const config = await backend.configureAi(value);
+    updateBundle(profileBundle,'update',config.id,value,config);
+    profileBundle.active_profile_id=config.id;
+    let ids=[];try{ids=await writeAiProfiles(dataRoot,profileBundle,safeStorage);}catch{}
+    await backend.profileAction({action:'persistence',persisted:ids});
+    return {...config,credential_persisted:ids.includes(config.id)};
+  });
+  ipcMain.handle('quantum:ai-clear', async event => {
+    if (!trustedFrame(event, window.webContents, origin)) throw new Error('凭据请求无效');
+    const config = await backend.configureAi(null, true);
+    if(profileBundle.active_profile_id) updateBundle(profileBundle,'clear',profileBundle.active_profile_id);
+    const ids=await writeAiProfiles(dataRoot,profileBundle,safeStorage);
+    await backend.profileAction({action:'persistence',persisted:ids});
+    clearAiSettings(dataRoot);
+    return config;
   });
   ipcMain.on('quantum:read-theme', (event) => {
     event.returnValue = trustedFrame(event, window.webContents, origin) ? readTheme(dataRoot) : null;

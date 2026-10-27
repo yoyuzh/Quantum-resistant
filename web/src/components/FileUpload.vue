@@ -7,6 +7,7 @@ import { ACCEPT, fileKey, mergeFiles } from '../utils/files.js';
 const props = defineProps({ files: Array, disabled: Boolean });
 const emit = defineEmits(['update:files']);
 const picker = ref(null);
+const directoryPicker = ref(null);
 const errors = ref([]);
 const loading = ref(false);
 const page = ref(1);
@@ -15,7 +16,8 @@ watch(() => props.files, () => { page.value = 1; });
 function add(files) {
   if (props.disabled) return;
   const result = mergeFiles(props.files, Array.from(files));
-  errors.value = result.errors;
+  errors.value = result.errors.slice(0, 20);
+  if (result.errors.length > 20) errors.value.push(`另有 ${result.errors.length - 20} 个文件未加入。`);
   emit('update:files', result.files);
 }
 function select(event) {
@@ -51,6 +53,7 @@ async function samples() {
       :disabled="disabled"
       aria-label="选择代码文件"
     />
+    <input ref="directoryPicker" type="file" webkitdirectory multiple class="sr-only" tabindex="-1" :disabled="disabled" @change="select" aria-label="选择源码目录" />
     <button
       type="button"
       class="dropzone"
@@ -65,6 +68,7 @@ async function samples() {
       <span class="muted small">源码、配置及 PEM 文本 · UTF-8 编码</span>
     </button>
     <div class="toolbar">
+      <button type="button" class="button secondary compact" :disabled="disabled" @click="directoryPicker.click()"><AppIcon name="repository" :size="16" />选择目录</button>
       <button
         type="button"
         class="button text-action compact"
@@ -80,7 +84,7 @@ async function samples() {
     <ul class="file-list">
       <li v-for="file in pagination.items" :key="fileKey(file)">
         <span
-          >{{ file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
+          >{{ file.webkitRelativePath || file.relativePath || file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
         ><button
           type="button"
           class="button text-action subtle compact"

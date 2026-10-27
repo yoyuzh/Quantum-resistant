@@ -1,0 +1,2251 @@
+[
+  {
+    "id": "rsa_generation",
+    "family": "rsa-generation",
+    "split": "development",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "keys.py": "from cryptography.hazmat.primitives.asymmetric import rsa\nkey = rsa.generate_private_key(public_exponent=65537, key_size=2048)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+          0
+        ],
+        "type": "key_generation",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.asymmetric import rsa",
+              0
+            ],
+            [
+              "keys.py",
+              "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RSA",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_generation",
+          "ALGORITHM": "RSA",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "明确rsa生成器只标生成，不标签名。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "ed25519_generation",
+    "family": "ed-generation",
+    "split": "development",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "keys.py": "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey\nkey = Ed25519PrivateKey.generate()\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "Ed25519PrivateKey.generate()",
+          0
+        ],
+        "type": "key_generation",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey",
+              0
+            ],
+            [
+              "keys.py",
+              "Ed25519PrivateKey.generate()",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "Ed25519",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_generation",
+          "ALGORITHM": "Ed25519",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "明确Ed25519类型，不泛化为RSA。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "x25519_exchange",
+    "family": "x-exchange",
+    "split": "development",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "keys.py": "from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey\nkey = X25519PrivateKey.generate()\nshared = key.exchange(peer)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "X25519PrivateKey.generate()",
+          0
+        ],
+        "type": "key_generation",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey",
+              0
+            ],
+            [
+              "keys.py",
+              "X25519PrivateKey.generate()",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "X25519",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_generation",
+          "ALGORITHM": "X25519",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      },
+      {
+        "sink": [
+          "keys.py",
+          "key.exchange(peer)",
+          0
+        ],
+        "type": "key_exchange",
+        "context": [],
+        "edges": [
+          [
+            "KEY_TYPE_FLOW",
+            [
+              "keys.py",
+              "X25519PrivateKey.generate()",
+              0
+            ],
+            [
+              "keys.py",
+              "key.exchange(peer)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey",
+              0
+            ],
+            [
+              "keys.py",
+              "key.exchange(peer)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "X25519",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_exchange",
+          "ALGORITHM": "X25519",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "交换接收者由明确X25519构造得到；peer来源不证明。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "pycrypto_rsa_import",
+    "family": "rsa-import",
+    "split": "development",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "keys.py": "from Crypto.PublicKey import RSA\nkey = RSA.import_key(blob)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "RSA.import_key(blob)",
+          0
+        ],
+        "type": "key_import",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from Crypto.PublicKey import RSA",
+              0
+            ],
+            [
+              "keys.py",
+              "RSA.import_key(blob)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RSA",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_import",
+          "ALGORITHM": "RSA",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "RSA类型导入不等于签验。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "import_only",
+    "family": "imports-only",
+    "split": "development",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "F-02",
+      "F-03"
+    ],
+    "files": {
+      "keys.py": "from Crypto.PublicKey import RSA\nfrom cryptography.hazmat.primitives.asymmetric import ec\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [],
+    "review_basis": "只导入无调用，预期零操作。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "handwritten",
+    "family": "handwritten",
+    "split": "development",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "maths.py": "def transform(x, n):\n    return pow(x, 65537, n)\n",
+      "app.py": "from maths import transform\ny = transform(3, 17)\n"
+    },
+    "operations": [],
+    "review_basis": "无可信库API的手写算法不在首版识别范围，零操作不等于安全。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "two_contexts",
+    "family": "wrapper-dual-context",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02",
+      "F-01",
+      "F-04",
+      "V-01",
+      "E-02"
+    ],
+    "files": {
+      "crypto/wrap.py": "import jwt\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "crypto/__init__.py": "",
+      "main.py": "from crypto.wrap import issue\na = issue({}, key, \"RS256\")\nb = issue({}, key, \"HS256\")\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "crypto/wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "main.py",
+            "issue({}, key, \"RS256\")",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "CALLS",
+            [
+              "main.py",
+              "issue({}, key, \"RS256\")",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "issue",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "main.py",
+              "\"RS256\"",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "algorithm",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "crypto/wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "main.py",
+              "issue({}, key, \"RS256\")",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      },
+      {
+        "sink": [
+          "crypto/wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "main.py",
+            "issue({}, key, \"HS256\")",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "CALLS",
+            [
+              "main.py",
+              "issue({}, key, \"HS256\")",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "issue",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "main.py",
+              "\"HS256\"",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "algorithm",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "crypto/wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "main.py",
+              "issue({}, key, \"HS256\")",
+              0
+            ],
+            [
+              "crypto/wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "同sink两次实参分别RSA签名/HMAC；不能合并；key来源保持未知。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "relative_alias",
+    "family": "relative-alias",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-01"
+    ],
+    "files": {
+      "pkg/__init__.py": "",
+      "pkg/config.py": "ALG = \"RS256\"\n",
+      "pkg/use.py": "import jwt as token\nfrom .config import ALG as CHOICE\nresult = token.encode({}, key, algorithm=CHOICE)\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "pkg/use.py",
+          "token.encode({}, key, algorithm=CHOICE)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "pkg/config.py",
+              "ALG = \"RS256\"",
+              0
+            ],
+            [
+              "pkg/use.py",
+              "from .config import ALG as CHOICE",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "pkg/use.py",
+              "CHOICE",
+              0
+            ],
+            [
+              "pkg/use.py",
+              "token.encode({}, key, algorithm=CHOICE)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "pkg/use.py",
+              "import jwt as token",
+              0
+            ],
+            [
+              "pkg/use.py",
+              "token.encode({}, key, algorithm=CHOICE)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "唯一包根下相对导入模块常量，两个别名按绑定解析。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "keyword_binding",
+    "family": "keyword-binding",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "F-03"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue(algorithm=\"HS256\", key=secret, payload={})\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue(algorithm=\"HS256\", key=secret, payload={})",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "app.py",
+              "issue(algorithm=\"HS256\", key=secret, payload={})",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "关键字绑定按参数名不按位置。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "static_default",
+    "family": "static-default",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, key, algorithm=\"RS256\"):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue({}, key)\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue({}, key)",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "ARGUMENT_FLOW",
+            [
+              "wrap.py",
+              "\"RS256\"",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "app.py",
+              "issue({}, key)",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "缺省实参使用静态默认值，不猜库默认算法。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "positional_keyword_only",
+    "family": "pos-keyword-only",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "F-03"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, /, *, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue({}, key=key, algorithm=\"HS256\")\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue({}, key=key, algorithm=\"HS256\")",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "app.py",
+              "issue({}, key=key, algorithm=\"HS256\")",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "仅位置和仅关键字签名必须分别绑定。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "literal_unpack",
+    "family": "literal-unpack",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue(*({}, key), **{\"algorithm\": \"RS256\"})\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue(*({}, key), **{\"algorithm\": \"RS256\"})",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "ARGUMENT_FLOW",
+            [
+              "app.py",
+              "issue(*({}, key), **{\"algorithm\": \"RS256\"})",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "只有可静态校验的字面量展开进入确定绑定。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "unknown_unpack",
+    "family": "unknown-unpack",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue(*args, **kwargs)\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue(*args, **kwargs)",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "dynamic_unpack",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "dynamic_unpack",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "动态展开无法校验，未知必须保留而非默认RS256。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "duplicate_argument",
+    "family": "duplicate-argument",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue({}, key, \"RS256\", algorithm=\"HS256\")\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue({}, key, \"RS256\", algorithm=\"HS256\")",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "invalid_argument_binding",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "invalid_argument_binding",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "重复传参不构造确定实参；操作只作有诊断的静态候选。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "missing_argument",
+    "family": "missing-argument",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue({}, key)\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue({}, key)",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "missing_argument",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "missing_argument",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "无默认algorithm，缺参不是已知值。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "transparent_return",
+    "family": "transparent-return",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-03",
+      "E-02"
+    ],
+    "files": {
+      "config.py": "def choose():\n    return \"HS256\"\n",
+      "app.py": "import jwt\nfrom config import choose\nalgorithm = choose()\ntoken = jwt.encode({}, key, algorithm=algorithm)\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "RETURN_FLOW",
+            [
+              "config.py",
+              "\"HS256\"",
+              0
+            ],
+            [
+              "app.py",
+              "choose()",
+              0
+            ]
+          ],
+          [
+            "ASSIGN_FLOW",
+            [
+              "app.py",
+              "algorithm = choose()",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "返回常量被调用结果消费；只有CALLS不足以证明HS256。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "derived_return",
+    "family": "derived-return",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "config.py": "def choose(value):\n    return value.lower()\n",
+      "app.py": "import jwt\nfrom config import choose\ntoken = jwt.encode({}, key, algorithm=choose(\"RS256\"))\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=choose(\"RS256\"))",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=choose(\"RS256\"))",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "unsupported_transform",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "unsupported_transform",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "lower派生不是透明等值，不把RS256原值穿透。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "reassignment",
+    "family": "sequential-reassignment",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\nalgorithm = \"RS256\"\nalgorithm = \"HS256\"\ntoken = jwt.encode({}, key, algorithm=algorithm)\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "ASSIGN_FLOW",
+            [
+              "app.py",
+              "algorithm = \"HS256\"",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "顺序赋值使用调用前最后绑定。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "branches_equal",
+    "family": "branch-equal",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\nif condition:\n    algorithm = \"RS256\"\nelse:\n    algorithm = \"RS256\"\ntoken = jwt.encode({}, key, algorithm=algorithm)\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "全部支持分支同值才可合并已知，仍不表示必然执行。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "branches_multiple",
+    "family": "branch-multiple",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\nif condition:\n    algorithm = \"RS256\"\nelse:\n    algorithm = \"HS256\"\ntoken = jwt.encode({}, key, algorithm=algorithm)\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "ambiguous": [
+          [
+            "RS256",
+            "condition"
+          ],
+          [
+            "HS256",
+            "not condition"
+          ]
+        ],
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": [
+            [
+              "RS256",
+              "condition"
+            ],
+            [
+              "HS256",
+              "not condition"
+            ]
+          ],
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "两分支多值保留条件，不任选其中一种。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "branch_unknown",
+    "family": "branch-unknown",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-03"
+    ],
+    "files": {
+      "app.py": "import jwt\nif condition:\n    algorithm = \"RS256\"\nelse:\n    algorithm = external\ntoken = jwt.encode({}, key, algorithm=algorithm)\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "unknown_branch",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "unknown_branch",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "未知分支不能丢弃，不能收敛为RS256。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "shadowing",
+    "family": "local-shadowing",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\ndef run(jwt):\n    return jwt.encode({}, key, algorithm=\"RS256\")\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [],
+    "review_basis": "参数遮蔽jwt导入，未知对象encode不作为可信PyJWT操作。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "same_names",
+    "family": "same-name-packages",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-01",
+      "E-01"
+    ],
+    "files": {
+      "a/__init__.py": "",
+      "b/__init__.py": "",
+      "a/settings.py": "ALG = \"RS256\"\n",
+      "b/settings.py": "ALG = \"HS256\"\n",
+      "a/use.py": "import jwt\nfrom .settings import ALG\ntoken = jwt.encode({}, key, algorithm=ALG)\n",
+      "b/use.py": "import jwt\nfrom .settings import ALG\ntoken = jwt.encode({}, key, algorithm=ALG)\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "a/use.py",
+          "jwt.encode({}, key, algorithm=ALG)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "a/use.py",
+              "import jwt",
+              0
+            ],
+            [
+              "a/use.py",
+              "jwt.encode({}, key, algorithm=ALG)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      },
+      {
+        "sink": [
+          "b/use.py",
+          "jwt.encode({}, key, algorithm=ALG)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "b/use.py",
+              "import jwt",
+              0
+            ],
+            [
+              "b/use.py",
+              "jwt.encode({}, key, algorithm=ALG)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "同名文件必须按source_id和包路径隔离，不能按settings猜同目标。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "missing_module",
+    "family": "missing-module",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "I-01"
+    ],
+    "files": {
+      "app.py": "import jwt\nfrom unavailable_settings import ALG\ntoken = jwt.encode({}, key, algorithm=ALG)\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=ALG)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=ALG)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "missing_module",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "missing_module",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "缺模块保留缺口且不联网/读宿主补齐。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "recursion",
+    "family": "recursion",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-05"
+    ],
+    "files": {
+      "config.py": "def choose():\n    return choose()\n",
+      "app.py": "import jwt\nfrom config import choose\ntoken = jwt.encode({}, key, algorithm=choose())\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=choose())",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=choose())",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "recursion_limit",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "recursion_limit",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "递归边界停止，不捏造返回常量。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "getattr_dynamic",
+    "family": "getattr-dynamic",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\nencode = getattr(jwt, method)\ntoken = encode({}, key, algorithm=\"RS256\")\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [],
+    "review_basis": "动态目标不按encode名字猜可信API。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "decorated",
+    "family": "decorator",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\n@external\ndef issue(payload, key, algorithm):\n    return jwt.encode(payload, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue({}, key, \"RS256\")\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode(payload, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode(payload, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": false,
+        "unknown": "unsupported_decorator",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "unsupported_decorator",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "uninstantiated_template"
+      }
+    ],
+    "review_basis": "任意装饰器不能连接实参到原函数；保留未实例化模板候选，context空。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "global_write",
+    "family": "dynamic-global",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "wrap.py": "import jwt\nalgorithm = \"RS256\"\ndef issue():\n    global algorithm\n    algorithm = external\n    return jwt.encode({}, key, algorithm=algorithm)\n",
+      "app.py": "from wrap import issue\ntoken = issue()\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "wrap.py",
+          "jwt.encode({}, key, algorithm=algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [
+          [
+            "app.py",
+            "issue()",
+            0
+          ]
+        ],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "wrap.py",
+              "import jwt",
+              0
+            ],
+            [
+              "wrap.py",
+              "jwt.encode({}, key, algorithm=algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "dynamic_scope_write",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "dynamic_scope_write",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "global动态写入使算法未知，不沿用模块旧常量。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "generic_pem",
+    "family": "generic-loader",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "F-03"
+    ],
+    "files": {
+      "keys.py": "from cryptography.hazmat.primitives.serialization import load_pem_private_key\nkey = load_pem_private_key(blob, password=None)\nsignature = key.sign(data)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "load_pem_private_key(blob, password=None)",
+          0
+        ],
+        "type": "key_import",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.serialization import load_pem_private_key",
+              0
+            ],
+            [
+              "keys.py",
+              "load_pem_private_key(blob, password=None)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "generic_key_type",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_import",
+          "ALGORITHM": "generic_key_type",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "通用PEM加载不证明RSA；未知接收者sign不升级为RSA操作。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "two_receivers",
+    "family": "receiver-types",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-04"
+    ],
+    "files": {
+      "keys.py": "from cryptography.hazmat.primitives.asymmetric import rsa\nknown = rsa.generate_private_key(public_exponent=65537, key_size=2048)\na = known.sign(data, padding, hash_algorithm)\nb = other.sign(data, padding, hash_algorithm)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+          0
+        ],
+        "type": "key_generation",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.asymmetric import rsa",
+              0
+            ],
+            [
+              "keys.py",
+              "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RSA",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_generation",
+          "ALGORITHM": "RSA",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      },
+      {
+        "sink": [
+          "keys.py",
+          "known.sign(data, padding, hash_algorithm)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "KEY_TYPE_FLOW",
+            [
+              "keys.py",
+              "rsa.generate_private_key(public_exponent=65537, key_size=2048)",
+              0
+            ],
+            [
+              "keys.py",
+              "known.sign(data, padding, hash_algorithm)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from cryptography.hazmat.primitives.asymmetric import rsa",
+              0
+            ],
+            [
+              "keys.py",
+              "known.sign(data, padding, hash_algorithm)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RSA",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "RSA",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "known密钥类型可证；other.sign不按同名方法归RSA。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "ecc_import_no_curve",
+    "family": "ecc-family",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "keys.py": "from Crypto.PublicKey import ECC\nkey = ECC.import_key(blob)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "ECC.import_key(blob)",
+          0
+        ],
+        "type": "key_import",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from Crypto.PublicKey import ECC",
+              0
+            ],
+            [
+              "keys.py",
+              "ECC.import_key(blob)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "ECC",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_import",
+          "ALGORITHM": "ECC",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "ECC导入只证家族，不声称某具体曲线。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "dsa_sign",
+    "family": "dsa-dss",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "keys.py": "from Crypto.PublicKey import DSA\nfrom Crypto.Signature import DSS\nkey = DSA.generate(2048)\nsigner = DSS.new(key, \"fips-186-3\")\nsignature = signer.sign(digest)\n",
+      "app.py": "import keys\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "keys.py",
+          "DSA.generate(2048)",
+          0
+        ],
+        "type": "key_generation",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from Crypto.PublicKey import DSA",
+              0
+            ],
+            [
+              "keys.py",
+              "DSA.generate(2048)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "DSA",
+        "claim_expectations": {
+          "OPERATION_TYPE": "key_generation",
+          "ALGORITHM": "DSA",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      },
+      {
+        "sink": [
+          "keys.py",
+          "signer.sign(digest)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "KEY_TYPE_FLOW",
+            [
+              "keys.py",
+              "DSA.generate(2048)",
+              0
+            ],
+            [
+              "keys.py",
+              "DSS.new(key, \"fips-186-3\")",
+              0
+            ]
+          ],
+          [
+            "KEY_TYPE_FLOW",
+            [
+              "keys.py",
+              "DSS.new(key, \"fips-186-3\")",
+              0
+            ],
+            [
+              "keys.py",
+              "signer.sign(digest)",
+              0
+            ]
+          ],
+          [
+            "IMPORT_BINDING",
+            [
+              "keys.py",
+              "from Crypto.PublicKey import DSA",
+              0
+            ],
+            [
+              "keys.py",
+              "signer.sign(digest)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "DSA",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "DSA",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "DSS签名通过密钥类型及构造链证明DSA，不按sign方法名猜。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "jwt_decode",
+    "family": "jwt-decode",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\nclaims = jwt.decode(token, key, algorithms=[\"RS256\"])\nunchecked = jwt.decode(token, options={\"verify_signature\": False})\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.decode(token, key, algorithms=[\"RS256\"])",
+          0
+        ],
+        "type": "verify",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.decode(token, key, algorithms=[\"RS256\"])",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "RS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "verify",
+          "ALGORITHM": "RS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      },
+      {
+        "sink": [
+          "app.py",
+          "jwt.decode(token, options={\"verify_signature\": False})",
+          0
+        ],
+        "type": "unknown",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.decode(token, options={\"verify_signature\": False})",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "verification_disabled",
+        "claim_expectations": {
+          "OPERATION_TYPE": "unknown",
+          "ALGORITHM": "verification_disabled",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "允许算法列表不等于实际token头；verify只证静态验证角色；禁用签验不标verify。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "no_algorithm",
+    "family": "jwt-no-algorithm",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "app.py": "import jwt\ntoken = jwt.encode({}, key)\n",
+      "entry.py": "import app\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key)",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key)",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "unknown": "unspecified_algorithm",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "unspecified_algorithm",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "未固定依赖版本时不假定库默认算法。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "unicode_positions",
+    "family": "unicode-positions",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "E-01"
+    ],
+    "files": {
+      "中文/入口.py": "import jwt\n说明 = \"测试\"; token = jwt.encode({}, key, algorithm=\"HS256\")\n",
+      "app.py": "import 中文.入口\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "中文/入口.py",
+          "jwt.encode({}, key, algorithm=\"HS256\")",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "中文/入口.py",
+              "import jwt",
+              0
+            ],
+            [
+              "中文/入口.py",
+              "jwt.encode({}, key, algorithm=\"HS256\")",
+              0
+            ]
+          ]
+        ],
+        "supported": true,
+        "algorithm": "HS256",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "HS256",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "中文前缀的AST列为UTF-8字节，不能按字符列切片。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  },
+  {
+    "id": "unsupported_config",
+    "family": "runtime-config",
+    "split": "locked",
+    "target_python": "3.10+",
+    "review_status": "authored_review_pending_independent_human",
+    "scenarios": [
+      "S-02"
+    ],
+    "files": {
+      "config.json": "{\"algorithm\":\"RS256\"}\n",
+      "app.py": "import json, jwt\nwith open(\"config.json\") as f:\n    config = json.load(f)\ntoken = jwt.encode({}, key, algorithm=config[\"algorithm\"])\n"
+    },
+    "operations": [
+      {
+        "sink": [
+          "app.py",
+          "jwt.encode({}, key, algorithm=config[\"algorithm\"])",
+          0
+        ],
+        "type": "sign",
+        "context": [],
+        "edges": [
+          [
+            "IMPORT_BINDING",
+            [
+              "app.py",
+              "import json, jwt",
+              0
+            ],
+            [
+              "app.py",
+              "jwt.encode({}, key, algorithm=config[\"algorithm\"])",
+              0
+            ]
+          ]
+        ],
+        "supported": false,
+        "unknown": "unsupported_runtime_config",
+        "claim_expectations": {
+          "OPERATION_TYPE": "sign",
+          "ALGORITHM": "unsupported_runtime_config",
+          "KEY_SOURCE": "not_implied_by_algorithm",
+          "QUANTUM_CLASS": "requires_verified_algorithm_and_rule"
+        },
+        "context_kind": "invocation"
+      }
+    ],
+    "review_basis": "首版不证明JSON读取路径、cwd及运行时键访问；文件存在仍未知。",
+    "source_review": "逐文件审阅字面源码与调用签名；必要边是独立手写标签，不从引擎输出生成。尚未经独立人工审查，不作为发布成绩。"
+  }
+]

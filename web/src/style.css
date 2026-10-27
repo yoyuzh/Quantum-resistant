@@ -11,7 +11,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   line-height: 1.6;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
 }
 button,
 input,
@@ -44,10 +44,12 @@ summary:focus-visible,
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: none;
   background: var(--bg-input);
 }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; box-shadow: none; }
+:root[data-keyboard] input:focus-visible, :root[data-keyboard] textarea:focus-visible,
+:root[data-keyboard] select:focus-visible { box-shadow: inset 0 -2px var(--accent); }
 label:has(input:focus, textarea:focus, select:focus) {
   color: var(--accent-dim);
 }
@@ -374,7 +376,7 @@ summary:active { opacity: 0.78; }
 @media (forced-colors: active) {
   .button, summary, .select-trigger { border: 1px solid ButtonText; }
   .button.active, .repo-row.selected { outline: 2px solid Highlight; }
-  input:focus, textarea:focus, select:focus { outline: 2px solid Highlight; outline-offset: -3px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: Highlight; }
 }
 .analysis-card {
   padding: 1rem;
@@ -413,3 +415,8 @@ summary:active { opacity: 0.78; }
     scroll-behavior: auto !important;
   }
 }
+
+.segmented-group { display:flex;align-items:center;gap:6px;flex-wrap:wrap; }
+.segmented-group .button[aria-pressed='true'] { background:var(--control-selected);color:var(--accent-dim);font-weight:650; }
+:root[data-keyboard] button:focus-visible,:root[data-keyboard] [role='button']:focus-visible,
+:root[data-keyboard] [role='combobox']:focus-visible { outline:none;box-shadow:inset 0 -2px var(--accent); }

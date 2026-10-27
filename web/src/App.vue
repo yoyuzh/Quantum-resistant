@@ -1,5 +1,9 @@
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue';
+import AiControls from './components/AiControls.vue';
+import AiSettings from './components/AiSettings.vue';
+import CenteredNotice from './components/CenteredNotice.vue';
+import AiSetupPrompt from './components/AiSetupPrompt.vue';
 import AppHeader from './components/AppHeader.vue';
 import ModeTabs from './components/ModeTabs.vue';
 import SnippetInput from './components/SnippetInput.vue';
@@ -18,7 +22,13 @@ import { useInputLayout } from './composables/useInputLayout.js';
 import { DEFAULT_RSA_CODE } from './utils/defaults.js';
 import { focusDestination } from './utils/navigation.js';
 
-const mode = ref('snippet');
+function initialMode() {
+  try {
+    const saved = sessionStorage.getItem('quantum-active-source');
+    return ['snippet', 'files', 'github', 'pypi'].includes(saved) ? saved : 'snippet';
+  } catch { return 'snippet'; }
+}
+const mode = ref(initialMode());
 const drafts = reactive({
   snippet: { filename: 'snippet.py', content: DEFAULT_RSA_CODE },
   files: { files: [] },
@@ -54,6 +64,7 @@ const titles = {
   pypi: '扫描 PyPI 包',
 };
 watch(mode, (value) => {
+  try { if (value !== 'popular') sessionStorage.setItem('quantum-active-source', value); } catch { /* Optional preference. */ }
   if (value === 'popular' && !popular.loaded) runPopular();
 });
 function submit() {
@@ -99,7 +110,6 @@ async function prepareRepository(value) {
       @scan-repository="prepareRepository"
     />
     <div v-else class="scan-workspace">
-      <ScanActivity :state="current" @cancel="cancel(mode)" />
       <div class="workspace-grid" :class="{ 'input-collapsed': inputLayout.collapsed }">
         <section id="scan-input" v-show="!inputLayout.collapsed" class="panel input-panel" aria-label="扫描输入区域">
           <div class="panel-heading">
@@ -146,6 +156,7 @@ async function prepareRepository(value) {
               <ScanHelp :mode="mode" />
             </div>
             <div class="panel-actions stack">
+              <AiControls :disabled="current.busy" />
               <button type="submit" class="button primary" :disabled="current.busy">
                 <AppIcon name="scan" :size="18" />
                 {{ current.busy ? '正在扫描…' : current.result ? '重新扫描' : '开始扫描' }}
@@ -154,8 +165,9 @@ async function prepareRepository(value) {
           </form>
         </section>
         <ResultsWorkspace :key="mode" ref="resultsWorkspace" :state="current" :mode="mode"
-          :input="inputLayout" @toggle-input="toggleInput" @rescan="submit" />
+          :input="inputLayout" @toggle-input="toggleInput" @rescan="submit" @cancel="current.aiBusy ? current.stopAi() : cancel(mode)" />
       </div>
     </div>
   </main>
+  <AiSettings /><AiSetupPrompt /><CenteredNotice />
 </template>

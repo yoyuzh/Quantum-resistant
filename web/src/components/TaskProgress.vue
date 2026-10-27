@@ -9,15 +9,15 @@ defineEmits(['cancel']);
     <button
       type="button"
       class="button secondary"
-      :disabled="state.cancelling || state.progress?.cancel_requested || ['succeeded', 'partial', 'failed', 'cancelled'].includes(state.progress?.state)"
+      :disabled="state.cancelling || state.progress?.cancel_requested || state.progress?.ai_stop_requested || ['succeeded', 'partial', 'failed', 'cancelled'].includes(state.progress?.state)"
       @click="$emit('cancel')"
     >
       {{
-        state.progress?.cancel_requested
+        state.progress?.cancel_requested || state.progress?.ai_stop_requested
           ? '正在整理已完成部分…'
           : state.cancelling
             ? '正在请求取消…'
-            : '取消任务'
+            : state.progress?.ai_running ? '停止 AI' : '取消任务'
       }}
     </button>
   </div>

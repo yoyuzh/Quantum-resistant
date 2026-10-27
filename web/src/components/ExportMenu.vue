@@ -4,7 +4,7 @@ import { useExport } from '../composables/useExport.js';
 import AppIcon from './AppIcon.vue';
 const props = defineProps({ result: Object });
 const menu = ref(null);
-const { exporting, error, download, exportReport } = useExport(computed(() => props.result));
+const { exporting, exportReport } = useExport(computed(() => props.result));
 function close() {
   menu.value.open = false;
   menu.value.querySelector('summary')?.focus({ preventScroll: true });
@@ -35,10 +35,6 @@ function save(format) {
         </button>
       </div>
     </details>
-    <p v-if="error" class="notice error" role="alert">{{ error }}</p>
-    <p v-if="download" class="small muted" role="status">
-      已生成，<a class="button text-action compact" :href="download.url" :download="download.filename">再次下载</a>
-    </p>
   </div>
 </template>
 <style scoped>

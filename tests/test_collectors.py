@@ -155,7 +155,7 @@ class HttpCollectionTests(unittest.TestCase):
             calls.append((request.url.host, request.url.path))
             if request.url.host == "api.github.com":
                 return httpx.Response(403, headers={'X-RateLimit-Remaining': '0', 'Retry-After': '120'})
-            if request.url.path.endswith("/main.zip"):
+            if request.url.path.endswith("/zip/main"):
                 return httpx.Response(200, content=archive)
             return httpx.Response(404)
         with patch.dict(os.environ, {"GITHUB_TOKEN": "unused-old-token"}), \
@@ -175,13 +175,35 @@ class HttpCollectionTests(unittest.TestCase):
             calls.append(request.url.path)
             if request.url.host == "api.github.com":
                 return httpx.Response(429, headers={"Retry-After": "120"})
-            if request.url.path.endswith("/master.zip"):
+            if request.url.path.endswith("/zip/master"):
                 return httpx.Response(200, content=archive)
             return httpx.Response(404)
         with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
             result = github_sources("https://github.com/a/b", 2, Deadline.after(3))
         self.assertEqual(result[0][1], "crypto.py")
-        self.assertEqual(calls[-2:], ["/a/b/archive/refs/heads/main.zip", "/a/b/archive/refs/heads/master.zip"])
+        self.assertEqual(calls[-2:], ["/a/b/zip/main", "/a/b/zip/master"])
+
+    def test_large_archive_uses_commit_instead_of_tree_object(self):
+        commit='a'*40
+        tree='b'*40
+        archive=zip_bytes([('b-commit/crypto.py','algorithm="RS256"')])
+        calls=[]
+        def handle(request):
+            calls.append(str(request.url))
+            if request.url.path=='/repos/a/b':
+                return httpx.Response(200,json={'default_branch':'main'})
+            if '/git/trees/' in request.url.path:
+                return httpx.Response(200,json={'sha':tree,'tree':[{'path':f'{i}.py','type':'blob'} for i in range(40)]})
+            if '/commits/' in request.url.path:
+                return httpx.Response(200,json={'sha':commit})
+            if request.url.host=='codeload.github.com' and request.url.path.endswith('/zip/'+commit):
+                return httpx.Response(200,content=archive)
+            self.fail('unexpected archive or individual file request: '+str(request.url))
+        real_client=httpx.Client
+        with patch('backend.remote_sources.httpx.Client',side_effect=lambda **kw:real_client(transport=httpx.MockTransport(handle))):
+            result=github_sources('https://github.com/a/b',50,Deadline.after(5))
+        self.assertEqual(len(result),1)
+        self.assertFalse(any('/zip/'+tree in url for url in calls))
 
     def test_github_expired_deadline_never_connects(self):
         real_client = httpx.Client

@@ -47,6 +47,8 @@ class RepoScanResult:
     diagnostics: list[dict] = field(default_factory=list)
     details_truncated: bool = False
     error_code: str | None = None
+    repository_id: str | None = None
+    analysis_summary: dict | None = None
 
 
 @dataclass
@@ -91,6 +93,10 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
         if not sources:
             raise CollectionError("没有采集到可扫描文件")
         response = build_scan_response(sources, 'github_repository', deadline=budget)
+        details = None
+        if getattr(budget.control.parent, 'assisted_popular', False):
+            from backend.popular_analysis import keep_snapshot
+            details = keep_snapshot(repo, response.model_dump(), budget)
         records = [s.model_dump() for s in response.sources]
         findings = [f.model_dump() for f in response.findings]
         diagnostics = [d.model_dump() for d in response.diagnostics]
@@ -100,7 +106,8 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
         return RepoScanResult(repo.full_name, repo.star_count, repo.html_url, int(score["score"]), len(findings),
             algorithms=sorted({f["algorithm"] for f in findings}), findings=ordered[:20],
             coverage=coverage,
-            diagnostics=diagnostics, details_truncated=len(findings) > 20)
+            diagnostics=diagnostics, details_truncated=len(findings) > 20,
+            repository_id=details[0] if details else None, analysis_summary=details[1] if details else None)
     except (CollectionError, OSError, ValueError) as exc:
         return RepoScanResult(repo.full_name, repo.star_count, repo.html_url, 0, 0, success=False, error=str(exc),
                               error_code='timeout' if isinstance(exc, CollectionTimeout) else 'collection_error')

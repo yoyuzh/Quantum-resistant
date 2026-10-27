@@ -1,63 +1,27 @@
 <script setup>
-import { computed } from 'vue';
-import EvidenceBars from './EvidenceBars.vue';
-import DisclosurePanel from './DisclosurePanel.vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
+import AnalysisVisualization from './AnalysisVisualization.vue';
 import { conciseInsights } from '../utils/presentation.js';
+import AnalysisPriorities from './AnalysisPriorities.vue';
+const FileTreemap=defineAsyncComponent(()=>import('./FileTreemap.vue'));
+const view=ref('algorithms');
 const props = defineProps({ result: Object });
-const emit = defineEmits(['select']);
-const insights = computed(() => props.result.analysis?.insights);
+defineEmits(['select']);
 const conclusions = computed(() => conciseInsights(props.result));
-const algorithms = computed(
-  () =>
-    insights.value?.algorithms ||
-    Object.entries(props.result.summary.algorithm_counts)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([key, count]) => ({ key, label: key, count })),
-);
-function select(field, value) {
-  emit('select', { sourceId: '', algorithm: '', target: '', method: '', [field]: value });
-}
 </script>
 <template>
   <div class="overview-grid">
-    <p v-if="!result.findings.length" class="notice">本次未命中已知传统公钥算法。</p>
     <section v-if="conclusions.length" class="analysis-card interpretation" aria-label="关键结论">
       <h3 class="sr-only">关键结论</h3>
       <div v-for="item in conclusions" :key="item.title" class="conclusion">
         <span class="small muted">{{ item.title }}</span>
-        <strong>{{ item.value }}</strong>
-        <span class="small">{{ item.detail }}</span>
+        <strong :title="item.value">{{ item.value }}</strong>
+        <button v-if="item.filter" class="button text-action compact" @click="$emit('select',item.filter)">{{ item.detail }}</button><span v-else>{{ item.detail }}</span>
       </div>
     </section>
-    <template v-if="result.findings.length">
-      <EvidenceBars
-        title="算法命中分布"
-        :rows="algorithms"
-        :total="result.findings.length"
-        interactive
-        @select="select('algorithm', $event.key)"
-      />
-      <template v-if="insights">
-        <EvidenceBars
-          title="受影响文件 Top 8"
-          :rows="insights.files"
-          :peers="result.sources"
-          :total="result.findings.length"
-          interactive
-          @select="select('sourceId', $event.key)"
-        />
-        <p v-if="insights.other_files > 0" class="small muted">
-          其余 {{ insights.other_files }} 个命中文件，共
-          {{ insights.other_findings }} 项发现。
-        </p>
-        <DisclosurePanel title="迁移用途分类" default-open>
-          <EvidenceBars title="迁移用途分类" :rows="insights.purposes" :total="result.findings.length" hide-title />
-        </DisclosurePanel>
-        <DisclosurePanel title="识别依据" default-open>
-          <EvidenceBars title="识别方式分布" :rows="insights.methods" interactive hide-title @select="select('method', $event.key)" />
-        </DisclosurePanel>
-      </template>
-    </template>
+    <div class="overview-switch segmented-group"><button class="button secondary compact" :aria-pressed="view==='algorithms'" @click="view='algorithms'">算法与用途</button><button class="button secondary compact" :aria-pressed="view==='files'" @click="view='files'">文件与处置</button></div>
+    <AnalysisVisualization :class="{'short-hidden':view!=='algorithms'}" :result="result" @select="$emit('select',$event)" />
+    <div class="overview-secondary" :class="{'short-hidden':view!=='files'}"><FileTreemap :result="result" @select="$emit('select',$event)" /><AnalysisPriorities :result="result" @select="$emit('select',$event)" /></div>
     <p v-if="!result.analysis" class="notice">
       此历史结果未记录资产分析，仍可查看原始发现；重新扫描可生成完整概览。
     </p>
@@ -65,14 +29,15 @@ function select(field, value) {
 </template>
 <style scoped>
 .interpretation {
-  padding: 6px 12px;
+  padding: 4px 12px;
   background: var(--accent-soft);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   grid-column: 1 / -1;
 }
-.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.overview-grid { display: flex;flex-direction:column;min-height:0;gap:12px;flex:1 !important; }
+.overview-grid > .analysis-visuals,.overview-secondary { flex:1;min-height:0; }.overview-secondary { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px; }.overview-switch { display:none; }
 .overview-grid :deep(.evidence-bars) { padding: 6px 8px; }
 .overview-grid :deep(.evidence-bars.stack) { gap: 2px; }
 .overview-grid :deep(.evidence-bar:not(.actionable)) { padding: 2px 6px; min-height: 28px; }
@@ -80,14 +45,13 @@ function select(field, value) {
 .overview-grid > .notice { grid-column: 1 / -1; }
 .overview-grid > .small { grid-column: 1 / -1; }
 .conclusion {
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(70px, 1fr);
-  gap: 2px;
+  display: flex;flex-direction:column;text-align:center;align-items:center;justify-content:center;
+  gap: 2px;min-width:0;padding:4px;
   overflow-wrap: anywhere;
 }
-.conclusion > :first-child { grid-column: 1 / -1; }
-.conclusion > :last-child { align-self: center; margin-left: 8px; }
+.conclusion strong { font-size:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }.conclusion > span { font-size:14px; }.conclusion > :last-child { font-size:14px;min-height:24px; }
+@media(min-width:1024px) and (max-height:850px) { .overview-switch { display:flex;gap:8px; }.short-hidden { display:none !important; } }
 @container results (max-width: 700px) {
-  .overview-grid, .interpretation { grid-template-columns: minmax(0, 1fr); }
+  .overview-secondary, .interpretation { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

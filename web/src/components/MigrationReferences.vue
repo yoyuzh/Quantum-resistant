@@ -48,7 +48,7 @@ onBeforeUnmount(() => dialog.value?.close());
         <div :id="`${id}-content`" ref="content" class="reference-content" role="tabpanel" tabindex="0" :aria-labelledby="`${id}-${tab}`">
           <div v-show="tab === 'workflow'">
             <MigrationSteps v-if="presentation.shared.length" :actions="presentation.shared" />
-            <p v-else class="notice">当前结果没有通用迁移流程，请展开对应算法记录中的专项说明或迁移流程。</p>
+            <p v-else class="notice">当前结果没有通用迁移流程，请通过对应记录的“查看方案”打开迁移步骤。</p>
           </div>
           <KnowledgeContent v-if="visited.has('knowledge')" v-show="tab === 'knowledge'" />
           <div v-show="tab === 'standards'" class="reference-links">

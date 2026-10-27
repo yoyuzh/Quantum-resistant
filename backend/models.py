@@ -7,12 +7,18 @@ from backend.collectors import validate_github_repository_url, validate_pypi_pac
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
 SourceType = Literal["snippet", "manual_upload", "github_repository", "pypi_package"]
 
-class SnippetScanRequest(BaseModel):
+class AssistedRequest(BaseModel):
+    ai_assisted: bool = Field(default=False, strict=True)
+    ai_profile_id: str | None = Field(default=None,max_length=64)
+    ai_profile_version: str | None = Field(default=None,max_length=64)
+
+
+class SnippetScanRequest(AssistedRequest):
     filename: str = Field(default="snippet.py", min_length=1, max_length=240)
     content: str = Field(default="", max_length=MAX_SOURCE_BYTES)
 
 
-class GitHubScanRequest(BaseModel):
+class GitHubScanRequest(AssistedRequest):
     repository_url: str = Field(min_length=1, max_length=500)
 
     def __init__(self, **data: Any) -> None:
@@ -20,7 +26,7 @@ class GitHubScanRequest(BaseModel):
         self.repository_url = validate_github_repository_url(self.repository_url)
 
 
-class PyPIScanRequest(BaseModel):
+class PyPIScanRequest(AssistedRequest):
     package_name: str = Field(min_length=1, max_length=214)
 
     def __init__(self, **data: Any) -> None:
@@ -52,6 +58,8 @@ class FindingRecord(BaseModel):
     detection_method: Literal["ast_call", "ast_config", "text_call", "text_config", "pem_header"] | None = None
     library: str | None = None
     resolved_api: str | None = None
+    rule_id: str | None = None
+    rule_version: str | None = None
 
 
 class AssetLocation(BaseModel):
@@ -146,5 +154,5 @@ class SampleSourceRecord(BaseModel):
 
 
 
-class PopularScanRequest(BaseModel):
+class PopularScanRequest(AssistedRequest):
     top: int = Field(default=8, ge=1, le=30)

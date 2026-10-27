@@ -1,4 +1,5 @@
 import { onUnmounted, ref, watch } from 'vue';
+import { notify, dismissNotice } from './useNotice.js';
 import { request } from '../api/client.js';
 
 export function useExport(result) {
@@ -6,9 +7,10 @@ export function useExport(result) {
   const error = ref('');
   const download = ref(null);
   let sequence = 0;
-  let controller;
+  let controller,noticeId;
   function clear() {
     sequence++;
+    if (noticeId != null) dismissNotice(noticeId);
     controller?.abort();
     if (download.value) URL.revokeObjectURL(download.value.url);
     download.value = null;
@@ -25,9 +27,9 @@ export function useExport(result) {
     exporting.value = true;
     const extension = format === 'markdown' ? 'md' : format;
     try {
-      const content = await request(`/api/report/${format}`, {
-        method: 'POST',
-        body: { ...result.value, sources: result.value.sources.map((source) => ({ ...source, content: '' })) },
+      const content = await request(result.value.task_id ? `/api/tasks/${result.value.task_id}/report/${format}${result.value.repository_id ? '?repository_id='+encodeURIComponent(result.value.repository_id) : ''}` : `/api/report/${format}`, {
+        method: result.value.task_id ? 'GET' : 'POST',
+        ...(!result.value.task_id ? { body: { ...result.value, sources: result.value.sources.map((source) => ({ ...source, content: '' })) } } : {}),
         text: true,
         signal: controller.signal,
       });
@@ -60,8 +62,9 @@ export function useExport(result) {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+      noticeId=notify('报告已生成','success',{action:download.value});
     } catch (err) {
-      if (id === sequence) error.value = err.message;
+      if (id === sequence) { error.value = err.message; noticeId=notify(err.message,'error'); }
     } finally {
       if (id === sequence) exporting.value = false;
     }

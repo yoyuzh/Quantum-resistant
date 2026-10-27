@@ -4,20 +4,20 @@ import ScanLoading from './ScanLoading.vue';
 import ScanResults from './ScanResults.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
 defineProps({ state: Object, mode: String, input: Object });
-defineEmits(['toggle-input', 'rescan']);
+defineEmits(['toggle-input', 'rescan', 'cancel']);
 </script>
 <template>
-  <section class="panel results" :class="{ 'has-result': state.result }" aria-label="扫描结果区域" :aria-busy="state.busy">
+  <section class="panel results" :class="{ 'has-result': state.result && !state.busy && !state.aiBusy }" aria-label="扫描结果区域" :aria-busy="state.busy || state.aiBusy">
     <ScanLoading
-      v-if="state.busy && !state.result"
+      v-if="state.busy || state.aiBusy"
       :mode="mode"
-      :progress="state.progress"
+      :progress="state.aiBusy ? state.aiProgress : state.progress" :state="state" @cancel="$emit('cancel')"
     />
-    <Transition v-else name="content" appear>
-      <ScanResults v-if="state.result" :result="state.result" :state="state" :input="input"
+    <Transition name="content">
+      <ScanResults v-if="state.result" v-show="!state.busy && !state.aiBusy" :presented="!state.busy && !state.aiBusy" :result="state.result" :state="state" :input="input"
         @toggle-input="$emit('toggle-input')" @rescan="$emit('rescan')" />
       <div
-        v-else
+        v-else-if="!state.busy && !state.aiBusy"
         class="panel-body stack welcome-body workspace-surface"
         role="region"
         tabindex="0"
@@ -35,6 +35,8 @@ defineEmits(['toggle-input', 'rescan']);
 </template>
 <style scoped>
 .results { background: var(--bg-surface); }
+.results[aria-busy='true'] :deep(.result-layout),
+.results[aria-busy='true'] .welcome-body { display:none !important; }
 .results.has-result { background: transparent; box-shadow: none; }
 .welcome-body > .empty { padding-block: 2rem; }
 .empty-mark { width: 60px; height: 60px; border-radius: 16px; margin-bottom: 1rem; }

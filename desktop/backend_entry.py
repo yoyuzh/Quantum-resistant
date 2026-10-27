@@ -30,8 +30,8 @@ def main(*, bind_socket: socket.socket | None = None, application_setup: Callabl
             sys.stdout.flush()
 
     # A bounded initial line; do not report its contents on errors (contains a secret).
-    line = sys.stdin.buffer.readline(16385)
-    if len(line) > 16384 or not line.endswith(b'\n'):
+    line = sys.stdin.buffer.readline(524289)
+    if len(line) > 524288 or not line.endswith(b'\n'):
         raise ValueError('桌面启动配置无效')
     config = json.loads(line)
     from backend import runtime
@@ -53,6 +53,28 @@ def main(*, bind_socket: socket.socket | None = None, application_setup: Callabl
         logging.getLogger('httpx').setLevel(logging.WARNING)
         import uvicorn
         from backend import main as backend
+        if config.get('ai_settings'):
+            from backend.ai.config import Settings
+            from backend.ai.routes import configure
+            configure(Settings.model_validate(config.pop('ai_settings')))
+        if config.get('ai_profiles') is not None:
+            from backend.ai.profiles import ProfileInput
+            profiles=backend.task_routes.store.ai.profiles
+            profiles.values.clear()
+            bundle=config.pop('ai_profiles')
+            if len(bundle.get('profiles',[]))>32: raise ValueError('模型配置数量超限')
+            for item in bundle.get('profiles',[]):
+                profiles._put(item['id'],ProfileInput.model_validate(item['settings']))
+                if item.get('credential_persisted'): profiles.persisted.add(item['id'])
+                if item.get('credential_unavailable'): profiles.unavailable.add(item['id'])
+            if os.environ.get('QUANTUM_AI_ENABLED','').lower() in ('true','1'):
+                from dataclasses import replace
+                environment=backend.task_routes.store.ai.config.get()
+                if environment.base_url:
+                    profiles.values['environment']=replace(environment,profile_id='environment',profile_name='环境变量')
+                    profiles.readonly.add('environment')
+            profiles.active=bundle.get('active_profile_id')
+            profiles._sync()
         if application_setup:
             application_setup()
 
@@ -81,12 +103,39 @@ def main(*, bind_socket: socket.socket | None = None, application_setup: Callabl
         def control() -> None:
             try:
                 while True:
-                    raw = sys.stdin.buffer.readline(4097)
+                    raw = sys.stdin.buffer.readline(524289)
                     if not raw:
                         break
-                    if len(raw) > 4096 or not raw.endswith(b'\n'):
+                    if len(raw) > 524288 or not raw.endswith(b'\n'):
                         break
                     command = json.loads(raw)
+                    if command.get('command')=='profile_action':
+                        try:
+                            from backend.ai.profile_routes import action
+                            if command.get('action')=='persistence':
+                                backend.task_routes.store.ai.profiles.persisted=set(command.get('persisted',[]))
+                                value={}
+                            else:
+                                value=action(command.get('action'),command.get('id_profile',command.get('profile_id',command.get('target_id'))),command.get('settings'))
+                            emit({'event':'ai_config','id':command.get('id'),'config':value})
+                        except Exception:
+                            emit({'event':'ai_config','id':command.get('id'),'error':True})
+                        continue
+                    if command.get('command') in ('configure_ai', 'clear_ai'):
+                        try:
+                            from backend.ai.config import Settings
+                            from backend.ai.routes import configure
+                            if command['command'] == 'clear_ai':
+                                profiles=backend.task_routes.store.ai.profiles
+                                if profiles.active: profiles.remove(profiles.active,credential_only=True)
+                                else: backend.task_routes.store.ai.config.clear_key()
+                                value = backend.task_routes.store.ai.config.get().public()
+                            else:
+                                value = configure(Settings.model_validate(command.get('settings')))
+                            emit({'event': 'ai_config', 'id': command.get('id'), 'config': value})
+                        except Exception:
+                            emit({'event': 'ai_config', 'id': command.get('id'), 'error': True})
+                        continue
                     if command.get('command') == 'shutdown':
                         break
                     if command.get('command') == 'status':

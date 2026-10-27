@@ -48,7 +48,7 @@ test('preload exposes a restricted desktop bridge and rereads persisted theme af
     vm.runInNewContext(source, { require: () => electron, window, process: { platform: 'win32', argv: [`--quantum-origin=${origin}`] } });
   }
   load(origin);
-  assert.deepEqual(Object.keys(bridge).sort(), ['platform', 'readTheme', 'saveTheme']);
+  assert.deepEqual(Object.keys(bridge).sort(), ['clearAiCredential', 'manageAiProfile', 'platform', 'readTheme', 'saveAiSettings', 'saveTheme']);
   assert.equal(bridge.platform, 'win32');
   assert.equal(Object.isFrozen(bridge), true);
   assert.equal(bridge.readTheme(), 'light');

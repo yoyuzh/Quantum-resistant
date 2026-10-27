@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import re
 import tarfile
 import zipfile
 from collections import Counter
@@ -123,11 +124,23 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     raise CollectionError("GitHub 文件列表响应格式无效")
                 candidates = [i for i in payload.get("tree", []) if i.get("type") == "blob" and is_supported_source_path(str(i.get("path", "")))]
                 candidates.sort(key=lambda i: source_priority(i["path"]))
-                version = str(payload.get('sha') or branch)
+                # A tree SHA identifies a tree object, not a downloadable commit/ref.
+                version = branch
+                if payload.get('sha') and not re.fullmatch(r'[0-9a-fA-F]{40}', branch):
+                    try:
+                        commit_data = github_get(client, f'{api}/commits/{quote(branch, safe="")}', headers=headers,
+                                            attempts=1, deadline=deadline).json()
+                        commit = commit_data.get('sha') if isinstance(commit_data,dict) else None
+                        if isinstance(commit,str) and re.fullmatch(r'[0-9a-fA-F]{40}',commit):
+                            version = commit
+                    except (CollectionTimeout, GitHubAccessError):
+                        raise
+                    except (httpx.HTTPError, ValueError, CollectionError, OSError):
+                        pass
                 if len(candidates) > 32 or payload.get('truncated'):
                     try:
                         deadline.control.emit(stage='下载仓库归档')
-                        archive = github_get(client, f'{url}/archive/{quote(version, safe="")}.zip', headers=headers,
+                        archive = github_get(client, f'https://codeload.github.com/{owner}/{repo}/zip/{quote(version, safe="")}', headers=headers,
                                              max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
                         archive_path = archive.extensions.get('archive_path')
                         try:
@@ -207,7 +220,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
         for branch in branches:
             try:
                 deadline.control.emit(stage="下载仓库归档")
-                archive = github_get(client, f"{url}/archive/refs/heads/{quote(branch, safe='')}.zip", headers=headers,
+                archive = github_get(client, f"https://codeload.github.com/{owner}/{repo}/zip/{quote(branch, safe='')}", headers=headers,
                                      max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
                 archive_path = archive.extensions.get('archive_path')
                 try:

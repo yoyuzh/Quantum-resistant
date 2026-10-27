@@ -3,12 +3,14 @@ import CoverageNotice from './CoverageNotice.vue';
 import FindingsList from './FindingsList.vue';
 import ResultHelp from './ResultHelp.vue';
 import AppIcon from './AppIcon.vue';
-defineProps({ repo: Object });
+import PopularRepository from './PopularRepository.vue';
+defineProps({ repo: Object, taskId:String });
 defineEmits(['scan-repository', 'back']);
 </script>
 
 <template>
-  <section v-if="repo" id="popular-detail" class="panel popular-detail">
+  <PopularRepository v-if="repo?.repository_id && taskId" :repo="repo" :task-id="taskId" @back="$emit('back')" @scan-repository="$emit('scan-repository',$event)" />
+  <section v-else-if="repo" id="popular-detail" class="panel popular-detail">
     <div class="panel-heading">
       <button class="button text-action compact back-list" @click="$emit('back')">
         <AppIcon name="back" :size="16" />返回榜单

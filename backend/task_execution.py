@@ -60,6 +60,9 @@ def popular_work(payload, budget, *, search, batch_scan, save, output_path):
     incomplete = batch_incomplete(result) or budget.control.cancelled.is_set()
     result.meta['incomplete'] = incomplete
     result.meta['saved_snapshot'] = False
+    if getattr(budget.control,'assisted_popular',False):
+        budget.control.popular_commit=(save,output_path)
+        return asdict(result)
     if not incomplete:
         if not budget.control.begin_commit():
             result.meta['incomplete'] = True

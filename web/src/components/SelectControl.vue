@@ -6,6 +6,7 @@ const props = defineProps({
   modelValue: { type: [String, Number], required: true },
   options: { type: Array, required: true },
   disabled: Boolean,
+  popupTarget: { default: 'body' },
 });
 const emit = defineEmits(['update:modelValue']);
 const id = useId();
@@ -162,7 +163,7 @@ onUnmounted(() => {
       <span :id="valueId" class="select-value">{{ selectedLabel }}</span>
       <span class="chevron" aria-hidden="true"></span>
     </div>
-    <Teleport to="body">
+    <Teleport :to="popupTarget || 'body'">
       <div
         v-if="open"
         :id="listId"
@@ -220,8 +221,8 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 .select-trigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -3px;
+  outline: none;
+  box-shadow: inset 0 -2px var(--accent);
 }
 .select-value {
   flex: 1;

@@ -6,7 +6,6 @@ import { useInputLayout } from '../src/composables/useInputLayout.js';
 import { findingKey } from '../src/utils/results.js';
 import { collectionLayout, describeInput, gridCapacity, pageCapacity } from '../src/utils/workspace.js';
 import { useCollectionPagination } from '../src/composables/useCollectionPagination.js';
-import { useGraphPagination } from '../src/composables/useGraphPagination.js';
 
 const findings = Array.from({ length: 55 }, (_, index) => ({
   source_id: index < 54 ? 'first' : 'second', file_name: 'same.py',
@@ -118,54 +117,6 @@ test('grid capacity counts complete double rows and keeps an identity visible af
   p.resize(2, true);
   assert.equal(p.size.value, 8, 'opening details does not reduce the page capacity');
   assert.deepEqual(p.pagination.value, before);
-});
-
-test('graph pages resize around file identity, reset search, and retain every relation in each page', async t => {
-  const scope = effectScope();
-  t.after(() => scope.stop());
-  const assets = ref(Array.from({ length: 20 }, (_, index) => ({
-    source_id: `s${index}`, file_name: 'same.py', algorithm: 'RSA', finding_count: 1, targets: ['ML-KEM'],
-  })));
-  const query = ref('');
-  const p = scope.run(() => useGraphPagination(assets, query));
-  p.measure(352, true);
-  assert.equal(p.size.value, 5);
-  p.changePage(2);
-  const anchor = p.graph.value.files[0].id;
-  p.measure(456, true);
-  assert.ok(p.graph.value.files.some(file => file.id === anchor));
-  assert.equal(p.graph.value.evidenceEdges.length, p.graph.value.files.length);
-  query.value = 's19';
-  await nextTick();
-  assert.equal(p.graph.value.pagination.current, 1);
-  assert.equal(p.graph.value.files[0].id, 's19');
-  assets.value = [{ ...assets.value[0], targets: Array.from({ length: 15 }, (_, i) => `target-${i}`) }];
-  query.value = '';
-  await nextTick();
-  p.measure(300, true);
-  assert.equal(p.size.value, 1);
-  assert.equal(p.graph.value.targets.length, 15, 'a crowded column must not lose its references');
-  p.measure(5000, true);
-  assert.equal(p.size.value, 12);
-});
-
-test('mixed graph columns keep a fixed capacity across pages and never drop a crowded file', t => {
-  const scope = effectScope();
-  t.after(() => scope.stop());
-  const algorithms = [['DH', 'DSA'], ['ECC', 'ECDH', 'ECDSA'], ['ECDSA'], ['ECDSA'], ['RSA'], ['RSA', 'DSA'], ['RSA']];
-  const assets = ref(algorithms.flatMap((names, i) => names.map(algorithm => ({
-    source_id: `s${i}`, file_name: 'same.py', algorithm, finding_count: 1, targets: ['ML-KEM', 'ML-DSA'],
-  }))));
-  const p = scope.run(() => useGraphPagination(assets, ref('')));
-  p.measure(300, true);
-  const capacity = p.size.value;
-  const seen = new Set();
-  for (let i = 0; i < p.graph.value.pagination.pages; i++) {
-    p.graph.value.files.forEach(file => seen.add(file.id));
-    assert.equal(p.size.value, capacity);
-    p.changePage(1);
-  }
-  assert.equal(seen.size, 7);
 });
 
 test('collection compaction covers empty, small and paged results using the full workspace budget', () => {

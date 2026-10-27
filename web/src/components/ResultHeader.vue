@@ -26,7 +26,8 @@ const context = computed(() => {
       <h2>扫描结果</h2>
       <span>{{ formatTime(result.scanned_at) }}</span>
     </div>
-    <SourceBar class="result-source" :source="input.source" :collapsed="input.collapsed"
+    <div v-if="state.readOnly" class="result-source small">{{ input.source }}</div>
+    <SourceBar v-else class="result-source" :source="input.source" :collapsed="input.collapsed"
       :busy="state.busy" :restored="state.restored" :note="state.taskNote"
       @toggle="$emit('toggle-input')" @rescan="$emit('rescan')" />
     <ExportMenu class="result-export" :result="result" />

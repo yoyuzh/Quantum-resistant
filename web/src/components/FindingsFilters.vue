@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import SelectControl from './SelectControl.vue';
 import { methodLabel } from '../utils/analysis.js';
 import { fileLabel } from '../utils/presentation.js';
+import { statusOptions } from '../utils/verification.js';
+import { purposeLabels } from '../utils/assistance.js';
 const props = defineProps({ findings: Array, sources: Array, filters: Object });
 defineEmits(['update']);
 const algorithms = computed(() => [{ value: '', label: '全部算法' },
@@ -15,6 +17,8 @@ const files = computed(() => [{ value: '', label: '全部文件' },
 </script>
 <template>
   <div class="findings-filters">
+    <SelectControl v-if="findings.some(f => f.verification_status)" :model-value="filters.status || ''" label="确认状态" :options="statusOptions" @update:model-value="$emit('update', {status:$event})" />
+    <SelectControl v-if="findings.some(f => f.purpose_code)" :model-value="filters.purpose || ''" label="用途" :options="[{value:'',label:'全部用途'},...Object.entries(purposeLabels).map(([value,label])=>({value,label}))]" @update:model-value="$emit('update',{purpose:$event})" />
     <SelectControl :model-value="filters.algorithm" label="算法" :options="algorithms"
       @update:model-value="$emit('update', { algorithm: $event })" />
     <SelectControl :model-value="filters.method" label="识别方式" :options="methods"
@@ -26,7 +30,7 @@ const files = computed(() => [{ value: '', label: '全部文件' },
   </div>
 </template>
 <style scoped>
-.findings-filters { display: grid; grid-template-columns: minmax(90px, .7fr) minmax(130px, 1fr) minmax(160px, 1.4fr) minmax(200px, 1.7fr);
+.findings-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 8px; padding: 8px var(--workspace-gutter); }
 .findings-filters :deep(.select-label), label { font-size: 12px; line-height: 16px; gap: 2px; }
 .findings-filters :deep(.select-field) { gap: 2px; }
