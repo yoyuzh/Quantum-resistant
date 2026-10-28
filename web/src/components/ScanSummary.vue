@@ -1,5 +1,5 @@
 <script setup>
-defineProps({ summary: Object, compact: Boolean });
+defineProps({ summary: Object, compact: Boolean, integrated: Boolean });
 </script>
 
 <template>
@@ -8,7 +8,7 @@ defineProps({ summary: Object, compact: Boolean });
       <span>扫描文件</span><strong>{{ summary.source_count }}</strong>
     </div>
     <div>
-      <span>风险发现</span><strong>{{ summary.finding_count }}</strong>
+      <span>{{ integrated ? '静态确认' : '规则发现' }}</span><strong>{{ summary.finding_count }}</strong>
     </div>
     <div>
       <span>算法种类</span><strong>{{ Object.keys(summary.algorithm_counts).length }}</strong>
@@ -55,19 +55,21 @@ small {
 .compact {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
+  gap: 2px 24px;
 }
 .compact div {
   display: flex;
   gap: 0.4rem;
-  align-items: baseline;
+  align-items: center;
+  min-height:28px;
   padding: 0;
   background: transparent;
 }
 .compact strong {
-  font-size: 0.875rem;
+  font-size: 16px;
   margin: 0;
 }
+.compact span { font-size: 12px; }
 @media (max-width: 600px) {
   .metrics {
     grid-template-columns: repeat(2, 1fr);

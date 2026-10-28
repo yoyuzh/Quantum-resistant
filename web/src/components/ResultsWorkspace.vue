@@ -3,38 +3,30 @@ import AppIcon from './AppIcon.vue';
 import ScanLoading from './ScanLoading.vue';
 import ScanResults from './ScanResults.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
-defineProps({ state: Object, mode: String });
-defineEmits(['deep-view']);
+defineProps({ state: Object, mode: String, input: Object });
+defineEmits(['toggle-input', 'rescan', 'cancel']);
 </script>
 <template>
-  <section class="panel results" aria-label="扫描结果区域" :aria-busy="state.busy">
+  <section class="panel results" :class="{ 'has-result': state.result && !state.busy && !state.aiBusy }" aria-label="扫描结果区域" :aria-busy="state.busy || state.aiBusy">
     <ScanLoading
-      v-if="state.busy"
+      v-if="state.busy || state.aiBusy"
       :mode="mode"
-      :elapsed="state.elapsed"
-      :has-result="!!state.result"
-      :progress="state.progress"
+      :progress="state.aiBusy ? state.aiProgress : state.progress" :state="state" @cancel="$emit('cancel')"
     />
-    <Transition v-else name="content" appear>
-      <ScanResults v-if="state.result" :result="state.result" :mode="mode" @deep-view="$emit('deep-view', $event)" />
+    <Transition name="content">
+      <ScanResults v-if="state.result" v-show="!state.busy && !state.aiBusy" :presented="!state.busy && !state.aiBusy" :result="state.result" :state="state" :input="input"
+        @toggle-input="$emit('toggle-input')" @rescan="$emit('rescan')" />
       <div
-        v-else
-        class="panel-body stack welcome-body"
+        v-else-if="!state.busy && !state.aiBusy"
+        class="panel-body stack welcome-body workspace-surface"
         role="region"
         tabindex="0"
-        aria-label="扫描指引与迁移知识"
+        aria-label="扫描等待与迁移参考"
       >
         <div class="empty">
-          <span class="empty-mark"><AppIcon name="graph" :size="38" /></span>
-          <h2>让密码资产清晰可见</h2>
-          <p>选择来源并开始扫描，查看算法、证据与迁移待办。</p>
-          <div class="welcome-flow" aria-hidden="true">
-            <span><AppIcon name="file" :size="17" />文件</span>
-            <AppIcon name="arrow" :size="16" />
-            <span><AppIcon name="scan" :size="17" />算法</span>
-            <AppIcon name="arrow" :size="16" />
-            <span><AppIcon name="list" :size="17" />迁移方向</span>
-          </div>
+          <span class="empty-mark"><AppIcon name="scan" :size="28" /></span>
+          <h2>等待扫描</h2>
+          <p>扫描后显示算法、命中位置与迁移建议。</p>
         </div>
         <KnowledgePanel />
       </div>
@@ -42,19 +34,12 @@ defineEmits(['deep-view']);
   </section>
 </template>
 <style scoped>
-.welcome-flow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-  margin-top: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-}
-.welcome-flow span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
+.results { background: var(--bg-surface); }
+.results[aria-busy='true'] :deep(.result-layout),
+.results[aria-busy='true'] .welcome-body { display:none !important; }
+.results.has-result { background: transparent; box-shadow: none; }
+.welcome-body > .empty { padding-block: 2rem; }
+.empty-mark { width: 60px; height: 60px; border-radius: 16px; margin-bottom: 1rem; }
+.empty h2 { font-size: 18px; }
+.welcome-body > :last-child { padding-top: 8px; }
 </style>

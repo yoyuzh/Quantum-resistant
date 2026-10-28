@@ -28,9 +28,11 @@ export async function followTask({
   requestId,
   onId = () => {},
   onProgress = () => {},
+  readCheckpoints = true,
   onConnection = () => {},
   delay = abortableDelay,
   includeContent = true,
+  onCheckpoint = () => {},
 }) {
   let retries = 0;
   while (!id) {
@@ -53,6 +55,7 @@ export async function followTask({
     }
   }
   retries = 0;
+  let checkpointVersion = 0;
   while (!signal.aborted) {
     let status;
     let result;
@@ -61,6 +64,11 @@ export async function followTask({
       if (!status || !['queued', 'running', ...TERMINAL].includes(status.state))
         throw new Error('任务状态格式不完整');
       onProgress(status);
+      if (readCheckpoints && !TERMINAL.has(status.state) && status.checkpoint_version > checkpointVersion) {
+        const checkpoint = await request(`/api/tasks/${id}/checkpoint`, { signal, timeout: 60000 });
+        checkpointVersion = status.checkpoint_version;
+        onCheckpoint({ ...checkpoint, task_id: id });
+      }
       if (TERMINAL.has(status.state) && status.has_result)
         result = await request(`/api/tasks/${id}/result${includeContent ? '' : '?include_content=false'}`, { signal, timeout: 60000 });
       onConnection('');

@@ -33,7 +33,13 @@ const caption = computed(() => {
   gap: 0.5rem;
 }
 .coverage.compact { padding: 0; background: transparent; font-size: var(--font-control); }
+.coverage.compact :deep(summary) { min-height: 28px; padding: 2px 0; font-size: 13px; line-height: 20px; }
 ul {
+  margin: 0;
   padding-left: 1.2rem;
+}
+li + li { margin-top: 4px; }
+@media (max-width: 600px), (pointer: coarse) {
+  .coverage.compact :deep(summary) { min-height: 44px; }
 }
 </style>

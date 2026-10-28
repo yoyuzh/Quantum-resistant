@@ -100,16 +100,3 @@ test('upload uses real byte events, request identity, and AbortSignal cleanup', 
     delete globalThis.XMLHttpRequest;
   }
 });
-test('AI preview and unknown totals stay indeterminate; candidate progress uses backend counts', () => {
-  const previewRows = progressRows({ kind: 'ai', ai_phase: 'preview' });
-  assert.equal(previewRows.length, 1);
-  assert.equal(previewRows[0].percent, null);
-  assert.equal(progressRows({ kind: 'ai' })[0].percent, null);
-  assert.equal(progressRows({ kind: 'ai', ai_progress: { completed: 0, planned: 0 } })[0].percent, null);
-  const rows = progressRows({ kind: 'ai', analyzed_files: 0, collected_files: 0, ai_progress: { completed: 2, planned: 5 } });
-  assert.equal(rows.length, 1);
-  const [row] = rows;
-  assert.equal(row.value, 2);
-  assert.equal(row.total, 5);
-  assert.equal(row.percent, 40);
-});

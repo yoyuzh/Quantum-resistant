@@ -12,7 +12,7 @@ export const ACCEPT =
   '.py,.pyw,.cs,.csproj,.xaml,.xml,.md,.java,.js,.jsx,.ts,.tsx,.go,.rs,.txt,.pem,.yml,.yaml,.json,.cfg,.ini,.toml';
 const suffixes = new Set(ACCEPT.split(','));
 
-export const fileKey = (file) => JSON.stringify([file.webkitRelativePath || file.name, file.size, file.lastModified]);
+export const fileKey = (file) => JSON.stringify([file.webkitRelativePath || file.relativePath || file.name, file.size, file.lastModified]);
 export const uploadBytes = (files) =>
   files.reduce(
     (sum, file) => sum + file.size + 512 + new TextEncoder().encode(file.name).length,

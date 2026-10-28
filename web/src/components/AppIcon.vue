@@ -4,6 +4,10 @@ defineProps({
   size: { type: [Number, String], default: 20 },
 });
 const paths = {
+  expand: ['M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5'],
+  info: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20', 'M12 11v6', 'M12 7h.01'],
+  settings: ['M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8', 'M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2'],
+  assist: ['M4 4h16v16H4Z', 'M8 9h8M8 13h5M8 17h3', 'M8 1v3m8-3v3m-8 16v3m8-3v3'],
   shield: ['M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z', 'm8 12 3 3 5-6'],
   code: ['m8 6-6 6 6 6', 'm16 6 6 6-6 6', 'm14 4-4 16'],
   upload: ['M12 16V3', 'm7 8 5-5 5 5', 'M4 15v5h16v-5'],

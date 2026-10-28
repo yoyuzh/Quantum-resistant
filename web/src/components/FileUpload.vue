@@ -8,7 +8,6 @@ const props = defineProps({ files: Array, disabled: Boolean });
 const emit = defineEmits(['update:files']);
 const picker = ref(null);
 const directoryPicker = ref(null);
-const directorySupported = typeof document !== 'undefined' && 'webkitdirectory' in document.createElement('input');
 const errors = ref([]);
 const loading = ref(false);
 const page = ref(1);
@@ -17,7 +16,8 @@ watch(() => props.files, () => { page.value = 1; });
 function add(files) {
   if (props.disabled) return;
   const result = mergeFiles(props.files, Array.from(files));
-  errors.value = result.errors;
+  errors.value = result.errors.slice(0, 20);
+  if (result.errors.length > 20) errors.value.push(`另有 ${result.errors.length - 20} 个文件未加入。`);
   emit('update:files', result.files);
 }
 function select(event) {
@@ -42,9 +42,6 @@ async function samples() {
 
 <template>
   <div class="stack">
-    <input ref="directoryPicker" class="sr-only" tabindex="-1" type="file" webkitdirectory multiple :disabled="disabled" aria-label="选择源码目录" @change="select" />
-    <button v-if="directorySupported" type="button" class="button secondary" :disabled="disabled" @click="directoryPicker.click()">选择目录 · 保留相对路径</button>
-    <p class="small muted">{{ directorySupported ? "目录与普通文件请分开上传。目录保留完整相对路径。" : "此浏览器不支持目录选择，请使用普通文件上传。" }} 普通文件上传为平铺路径，不进行跨模块证明。</p>
     <input
       ref="picker"
       class="sr-only"
@@ -56,6 +53,7 @@ async function samples() {
       :disabled="disabled"
       aria-label="选择代码文件"
     />
+    <input ref="directoryPicker" type="file" webkitdirectory multiple class="sr-only" tabindex="-1" :disabled="disabled" @change="select" aria-label="选择源码目录" />
     <button
       type="button"
       class="dropzone"
@@ -70,6 +68,7 @@ async function samples() {
       <span class="muted small">源码、配置及 PEM 文本 · UTF-8 编码</span>
     </button>
     <div class="toolbar">
+      <button type="button" class="button secondary compact" :disabled="disabled" @click="directoryPicker.click()"><AppIcon name="repository" :size="16" />选择目录</button>
       <button
         type="button"
         class="button text-action compact"
@@ -77,7 +76,7 @@ async function samples() {
         :disabled="disabled || loading"
       >
         {{ loading ? '正在读取示例…' : '导入示例代码' }}</button
-      ><strong>已选 {{ files.length }} 个文件</strong><button type="button" class="button text-action compact" :disabled="disabled || !files.length" @click="$emit('update:files', [])">清空文件</button>
+      ><strong>已选 {{ files.length }} 个文件</strong>
     </div>
     <div v-if="errors.length" class="notice error" role="alert">
       <p v-for="error in errors" :key="error">{{ error }}</p>
@@ -85,7 +84,7 @@ async function samples() {
     <ul class="file-list">
       <li v-for="file in pagination.items" :key="fileKey(file)">
         <span
-          >{{ file.webkitRelativePath || file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
+          >{{ file.webkitRelativePath || file.relativePath || file.name }}<small>{{ (file.size / 1024).toFixed(1) }} KiB</small></span
         ><button
           type="button"
           class="button text-action subtle compact"

@@ -24,7 +24,7 @@ export function useRemoteTask(kind, state) {
       /* Session storage may be disabled. */
     }
   }
-  async function execute(body, signal, resumeId = '') {
+  async function execute(body, signal, resumeId = '', endpointKind = kind) {
     const signature = body instanceof FormData
       ? JSON.stringify([...body.entries()].map(([name, file]) => [name, typeof file === 'string' ? file : file.name, file.size, file.lastModified]))
       : JSON.stringify(body);
@@ -43,12 +43,14 @@ export function useRemoteTask(kind, state) {
           ? uploadRequest(path, { ...args, signal: submissionController.signal, timeout: 600000,
               onProgress: (progress) => { if (!signal.aborted) state.progress = progress; } })
           : request(path, args),
-        kind: kind === 'files' && body instanceof FormData && body.has('manifest') ? 'files-with-paths' : kind,
+        kind: endpointKind,
         body,
         signal: submissionController.signal,
         id: resumeId,
         requestId: pendingSubmission?.requestId,
         includeContent: false,
+        readCheckpoints: false,
+        onCheckpoint: value => { if (!signal.aborted) state.checkpoint = value; },
         onId: (id) => {
           pendingSubmission = null;
           state.taskId = id;
@@ -69,7 +71,7 @@ export function useRemoteTask(kind, state) {
         throw new Error('任务结果格式不完整，请重新扫描');
       state.taskNote =
         status.state === 'partial'
-          ? status.cancel_requested ? '任务已取消，已保留完成部分。' : '部分结果：仅包含完整分析的文件。'
+          ? status.error || (status.cancel_requested ? '任务已取消，已保留完成部分。' : '部分结果：仅包含完整分析的文件。')
           : '';
       if (
         kind === 'popular' &&
@@ -78,11 +80,11 @@ export function useRemoteTask(kind, state) {
         !state.result.meta?.incomplete
       )
         state.previous = state.result;
-      save(status.id || state.taskId);
+      if (kind === 'popular') save('');
       result.task_id = status.id || state.taskId;
       return result;
     } catch (error) {
-      if (!signal.aborted) save(state.result?.task_id || '');
+      if (!signal.aborted) save('');
       throw error;
     } finally {
       signal.removeEventListener('abort', stop);
@@ -101,7 +103,7 @@ export function useRemoteTask(kind, state) {
     state.cancelling = true;
     cancelController = new AbortController();
     try {
-      const progress = await request(`/api/tasks/${state.taskId}/cancel`, {
+      const progress = await request(`/api/tasks/${state.taskId}/${state.progress?.ai_running ? 'stop-ai' : 'cancel'}`, {
         method: 'POST',
         signal: cancelController.signal,
         timeout: 10000,

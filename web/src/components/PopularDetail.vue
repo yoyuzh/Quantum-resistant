@@ -1,15 +1,16 @@
 <script setup>
 import CoverageNotice from './CoverageNotice.vue';
-import FindingCard from './FindingCard.vue';
-import { findingKey } from '../utils/results.js';
+import FindingsList from './FindingsList.vue';
 import ResultHelp from './ResultHelp.vue';
 import AppIcon from './AppIcon.vue';
-defineProps({ repo: Object });
+import PopularRepository from './PopularRepository.vue';
+defineProps({ repo: Object, taskId:String });
 defineEmits(['scan-repository', 'back']);
 </script>
 
 <template>
-  <section v-if="repo" id="popular-detail" class="panel popular-detail">
+  <PopularRepository v-if="repo?.repository_id && taskId" :repo="repo" :task-id="taskId" @back="$emit('back')" @scan-repository="$emit('scan-repository',$event)" />
+  <section v-else-if="repo" id="popular-detail" class="panel popular-detail">
     <div class="panel-heading">
       <button class="button text-action compact back-list" @click="$emit('back')">
         <AppIcon name="back" :size="16" />返回榜单
@@ -19,8 +20,9 @@ defineEmits(['scan-repository', 'back']);
         <strong>{{ repo.finding_count }} 项发现</strong> · 迁移评分 {{ repo.migration_score }}/100
       </p>
     </div>
-    <div class="panel-body stack" role="region" tabindex="0" aria-label="仓库扫描详情">
-      <CoverageNotice :coverage="repo.coverage" :diagnostics="repo.diagnostics" />
+    <div class="popular-coverage">
+      <CoverageNotice :coverage="repo.coverage" :diagnostics="repo.diagnostics" compact />
+    </div>
       <div
         v-if="repo.details_truncated || repo.finding_count > (repo.findings || []).length"
         class="notice"
@@ -28,24 +30,23 @@ defineEmits(['scan-repository', 'back']);
         显示 {{ (repo.findings || []).length }} / {{ repo.finding_count }} 项详情。
         <button class="button text-action" @click="$emit('scan-repository', `https://github.com/${repo.full_name}`)">完整扫描此仓库</button>
       </div>
-      <p v-if="!repo.findings?.length" class="notice">已扫描文件中未发现已知传统公钥算法用法。</p>
-      <FindingCard
-        v-for="finding in repo.findings || []"
-        :key="findingKey(finding)"
-        :finding="finding"
-        :identity-peers="repo.findings"
-      />
-      <ResultHelp />
-    </div>
+      <FindingsList class="popular-findings" :findings="repo.findings || []" :identity-peers="repo.findings" hide-filters />
+      <div class="popular-boundary"><ResultHelp /></div>
   </section>
   <section v-else class="panel empty">
     <h2>仓库详情</h2>
-    <p>选择左侧仓库，查看发现及扫描范围。</p>
+    <p>选择仓库后显示发现明细与扫描范围。</p>
   </section>
 </template>
 <style scoped>
 .back-list { display: none; margin-bottom: 0.7rem; }
-@media (max-width: 1023px), (max-height: 799px) {
+.popular-coverage { padding: 0 12px; max-height: 25dvh; overflow-y: auto; }
+.popular-findings { flex: 1; min-height: 0; }
+.popular-boundary { display: flex; justify-content: end; padding: 0 12px; }
+.popular-boundary :deep(.help-popup) { top: auto; bottom: 100%; }
+.notice { margin: 4px 12px; padding: 8px; font-size: 12px; }
+.notice .button { margin: 0; min-height: 28px; }
+@media (max-width: 1023px), (max-height: 599px) {
   .back-list { display: inline-flex; }
 }
 </style>
