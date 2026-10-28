@@ -1,0 +1,2 @@
+# Frozen corpus hashes must survive Windows Git checkouts unchanged.
+tests/deep_static/fixtures/*.json text eol=lf
