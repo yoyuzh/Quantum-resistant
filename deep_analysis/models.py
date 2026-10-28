@@ -201,7 +201,7 @@ class EvidencePath(Contract):
 
 
 class CryptoOperation(Contract):
-    evidence_scope: Literal['static_call', 'algorithm_policy'] = 'static_call'
+    evidence_scope: Literal['static_call', 'algorithm_policy', 'definition_template'] = 'static_call'
     operation_id: Text
     template_id: Text
     api: Text

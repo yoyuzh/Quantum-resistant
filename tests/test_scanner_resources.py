@@ -77,7 +77,7 @@ def work(budget):
 store=TaskStore()
 root=store.storage.root
 try:
-    with patch('scanner.text_analysis.checkpoint',checkpoint):
+    with patch('original_a.scanner.text_analysis.checkpoint',checkpoint):
         job=store.submit('files',{},'repair-cancel',work)
         if not entered.wait(3): raise RuntimeError('analyzer did not enter')
         pipeline=store.jobs[job['id']].control.pipeline

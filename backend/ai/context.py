@@ -5,7 +5,7 @@ import ast
 import json
 import hashlib
 import re
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, Counter
 from bisect import bisect_left, bisect_right
 
 from backend.ai.config import BUDGETS, digest
@@ -14,6 +14,7 @@ from scanner.parsing import parse_python
 from scanner.api_catalog import RULES_VERSION, API_ALGORITHMS
 from scanner.lexing import c_style_channels
 from scanner.control import analysis_control, AnalysisLimit
+from backend.original_a import ENGINE_IDENTITY, ADAPTER_VERSION
 
 CRYPTO = re.compile(r'crypt|cipher|encrypt|decrypt|rsa|ecd[hs]a|ed25519|x25519|key_exchange|jwt|(?:^|[_.])(?:dsa|dh|sign|signing|signer|signature|verify|verifying|verification|kem)(?:$|[_.])', re.I)
 CATALOG_NAMES = {part.lower() for api in API_ALGORITHMS for part in api.split('.')[2:-1] if len(part)>2}
@@ -29,8 +30,12 @@ def catalog(base, control, check):
     dependencies, ambiguous_symbols = {}, set()
     scopes = {}
     sources = {s['source_id']: {k: v for k, v in s.items() if k != 'content'} for s in base.get('sources', [])}
+    name_counts = Counter(s['file_name'] for s in sources.values())
+    duplicate_ids = sorted((s['file_name'], identity) for identity, s in sources.items() if name_counts[s['file_name']] > 1)
     paths = getattr(control, 'source_paths', {})
     identities = {}
+    expected_sources = {s['source_id']: s['sha256'] for s in base.get('deep_analysis', {}).get('snapshot', {}).get('sources', [])}
+    changed_sources = set()
     def define(symbol, position):
         if symbol in symbols:
             symbols.pop(symbol)
@@ -110,6 +115,10 @@ def catalog(base, control, check):
             notes.append('source_unavailable')
             continue
         read += len(text.encode('utf-8'))
+        if identity in expected_sources and hashlib.sha256(text.encode('utf-8')).hexdigest() != expected_sources[identity]:
+            notes.append('source_digest_mismatch')
+            changed_sources.add(identity)
+            continue
         identities[identity] = digest([source['file_name'], text])
         if source['file_name'].endswith(('.py', '.pyw')):
             try:
@@ -215,10 +224,12 @@ def catalog(base, control, check):
                 descriptors.pop(k,None)
     snapshot = digest([sorted((sources[k]['file_name'], v) for k, v in identities.items()),
                        base.get('deep_analysis', {}).get('snapshot', {}).get('path_fidelity'),
-                       base.get('deep_analysis', {}).get('snapshot', {}).get('package_roots'), RULES_VERSION])
+                       base.get('deep_analysis', {}).get('snapshot', {}).get('package_roots'), RULES_VERSION,
+                       ENGINE_IDENTITY, ADAPTER_VERSION, base.get('deep_analysis', {}).get('versions'), duplicate_ids])
     namespace = digest([sorted(source['file_name'] for source in sources.values()),
                         base.get('deep_analysis', {}).get('snapshot', {}).get('path_fidelity'),
-                        base.get('deep_analysis', {}).get('snapshot', {}).get('package_roots'), RULES_VERSION])
+                        base.get('deep_analysis', {}).get('snapshot', {}).get('package_roots'), RULES_VERSION,
+                        ENGINE_IDENTITY, ADAPTER_VERSION, base.get('deep_analysis', {}).get('versions'), duplicate_ids])
     symbol_sources = {name: value['source_id'] for name, value in symbols.items()}
     module_sources = defaultdict(set)
     for name, value in symbols.items():
@@ -238,13 +249,18 @@ def catalog(base, control, check):
         identity = item['source_id']
         if identity not in identities:
             continue
+        if any(p['source_id'] in changed_sources for p in item['related']):
+            continue  # No stale static proof may be rebound to a changed dependency.
         # Stable content identity is separate from task-scoped source IDs.
         related = sorted([(sources[p['source_id']]['file_name'], identities.get(p['source_id']), p['start_line'], p.get('start_col'), p.get('end_line'), p.get('end_col')) for p in item['related'] if p['source_id'] in sources], key=str)
-        item['candidate_id'] = digest([namespace, sources[identity]['file_name'], identities[identity], item['line'], item.get('context'), related,
+        item['candidate_id'] = digest([namespace, snapshot, sources[identity]['file_name'], identity if name_counts[sources[identity]['file_name']] > 1 else None,
+                                       identities[identity], item['line'], item.get('context'), related,
                                        dependency_digests.get(identity, []), bool(item['refs'])])[:32]
         item['related'] = list({digest(p): p for p in item['related']}.values())[:64]
         items.append(item)
-    return {'snapshot': snapshot, 'candidates': items, 'sources': sources, 'identities': identities,
+    return {'snapshot': snapshot, 'engine_identity': ENGINE_IDENTITY, 'adapter_version': ADAPTER_VERSION,
+            'static_versions': base.get('deep_analysis', {}).get('versions'),
+            'candidates': items, 'sources': sources, 'identities': identities,
             'imports': imports, 'symbols': symbols, 'dependencies': dependencies, 'searched_files': len(identities), 'searched_bytes': read,
             'diagnostics': sorted(set(notes)), 'partial': bool(notes or len(descriptors) >= 20000 or (base.get('coverage') or {}).get('partial'))}
 

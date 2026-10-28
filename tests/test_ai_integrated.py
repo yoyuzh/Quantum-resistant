@@ -275,7 +275,9 @@ class IntegratedAiTests(unittest.TestCase):
             context_groups = [c for c in catalogue['candidates'] if c['context']]
             self.assertEqual(context_groups, [])
             self.assertEqual(catalogue['locally_resolved'], 2)
-        self.assertLessEqual(result['deep_analysis']['cache']['peak_ast_files'], 2)
+        # A has bounded eager indexes (200 files/8MiB); retrieval holds one AST.
+        self.assertEqual(result['deep_analysis']['retrieval_index']['max_ast_files'], 1)
+        self.assertLessEqual(result['deep_analysis']['coverage']['selected']['count'], 200)
         bad = self.client.post('/api/tasks/files-with-paths', files=[('files', ('main.py', b'x=1'))],
             data={'manifest': json.dumps({'schema_version': 'upload-paths-1', 'entries': [{'index': 0, 'relative_path': '../main.py', 'sha256': hashlib.sha256(b'x=1').hexdigest()}]})}, headers={'X-Request-ID': request_id()})
         self.assertEqual(bad.status_code, 422)
@@ -580,13 +582,17 @@ class AiContractTests(unittest.TestCase):
         self.assertIn('algorithm="RS256"',masked)
 
     def test_rule_boundaries_and_imported_node_api(self):
-        for text in ('monkey="RS256"', 'algorithm="documentation mentions RS256"', '# algorithm="RS256"'):
-            self.assertEqual(analyze_source(text)[0], [])
+        # Explicit A compatibility contract: the first two are known false
+        # positives relative to main. They are retained, not fixed by main rules.
+        for text in ('monkey="RS256"', 'algorithm="documentation mentions RS256"'):
+            self.assertEqual([r['algorithm'] for r in analyze_source(text)[0]], ['RSA'])
+        self.assertEqual(analyze_source('# algorithm="RS256"')[0], [])
         self.assertEqual(analyze_source('signatureAlgorithm="RS256"')[0][0]['algorithm'], 'RSA')
         text = 'import { generateKeyPairSync as make } from "node:crypto";\nmake("rsa", {modulusLength: 2048});'
-        self.assertEqual(analyze_source(text, 'a.ts')[0][0]['algorithm'], 'RSA')
+        # Original A has no imported Node API recognizer (known false negative).
+        self.assertEqual(analyze_source(text, 'a.ts')[0], [])
         self.assertEqual(analyze_source(text.replace('node:crypto', 'business'), 'a.ts')[0], [])
-        self.assertEqual(analyze_source('RSA.generate(2048)', 'a.js')[0], [])
+        self.assertEqual([r['algorithm'] for r in analyze_source('RSA.generate(2048)', 'a.js')[0]], ['RSA'])
 
     def test_multiline_secrets_and_pem_body_are_masked(self):
         text = 'secret="""first\nsecond\n"""\n-----BEGIN PRIVATE KEY-----\nKEYBODY\n-----END PRIVATE KEY-----'

@@ -1,0 +1,53 @@
+$ python -B -m unittest discover -s tests -v
+test_task_failure_and_repeated_cancel (test_tasks_and_reports.TaskTests.test_task_failure_and_repeated_cancel) ... WARNING:backend.task_store:scan_job kind=github error=CollectionTimeout
+ok
+test_two_lifespans_can_accept_new_jobs (test_tasks_and_reports.TaskTests.test_two_lifespans_can_accept_new_jobs) ... INFO:httpx:HTTP Request: POST http://testserver/api/tasks/pypi "HTTP/1.1 202 Accepted"
+INFO:httpx:HTTP Request: POST http://testserver/api/tasks/pypi "HTTP/1.1 202 Accepted"
+ok
+
+----------------------------------------------------------------------
+Ran 375 tests in 45.784s
+
+OK
+
+$ npm --prefix web test
+  ...
+1..98
+# tests 98
+# suites 0
+# pass 98
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 748.904
+
+$ npm --prefix desktop test
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57.394625
+
+$ npm --prefix web run build
+✓ 349 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                         0.45 kB │ gzip:  0.34 kB
+../dist/assets/graphLayout-gOMA-1wB.js    15.66 kB
+../dist/assets/FileTreemap-MX43i6jG.css    1.92 kB │ gzip:  0.69 kB
+../dist/assets/index-CwOKHePU.css         75.08 kB │ gzip: 14.55 kB
+../dist/assets/FileTreemap-Bjt6SrTw.js    13.03 kB │ gzip:  5.70 kB
+../dist/assets/index--RKdCWJb.js         267.35 kB │ gzip: 96.47 kB
+✓ built in 813ms
+
+$ python -B desktop/scripts/smoke_backend.py python "$PWD/desktop/backend_entry.py"
+PASS: authenticated pages/API, static isolation, synthetic snippet/upload, four reports, shutdown cleanup
+
+$ python -B scripts/ci_smoke.py
+冒烟检查通过：首页、JS/CSS、健康检查、配置和静态片段扫描。

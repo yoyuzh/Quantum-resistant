@@ -1,0 +1,117 @@
+{
+  "fixture_sha256": "a4cbb8889e85b79e9bf96937c842ca11cd342ab671a780b426573267ae24cb9f",
+  "scope": "15 authored development cases; missing layer gold is not measured; EC/ECC lexical label difference is retained, not relabelled",
+  "versions": {
+    "A": {
+      "basic": {
+        "tp": 0,
+        "fp": 6,
+        "fn": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "false_positives": [
+          "[\"unimported_js\",\"main.js\",1,\"RSA\"]",
+          "[\"javascript_interpolation\",\"main.js\",2,\"RSA\"]",
+          "[\"javascript_interpolation\",\"main.js\",3,\"DSA\"]",
+          "[\"config_near_name\",\"main.py\",1,\"RSA\"]",
+          "[\"config_prose\",\"main.py\",1,\"RSA\"]",
+          "[\"custom_ecdsa_curve\",\"main.py\",2,\"ECDSA\"]"
+        ],
+        "false_negatives": [
+          "[\"node_import\",\"main.ts\",2,\"RSA\"]"
+        ]
+      },
+      "deep": {
+        "tp": 5,
+        "fp": 3,
+        "fn": 8,
+        "precision": 0.625,
+        "recall": 0.38461538461538464,
+        "false_positives": [
+          "[\"ec_exchange\",\"main.py\",2,\"key_generation\",\"EC\",\"invocation\"]",
+          "[\"class_namespace_capture\",\"main.py\",3,\"sign\",\"RS256\",\"uninstantiated_template\"]",
+          "[\"explicit_namespace_write\",\"main.py\",4,\"sign\",\"RS256\",\"invocation\"]"
+        ],
+        "false_negatives": [
+          "[\"rsa_encrypt_decrypt\",\"main.py\",3,\"encrypt\",\"RSA\",\"invocation\"]",
+          "[\"rsa_encrypt_decrypt\",\"main.py\",4,\"decrypt\",\"RSA\",\"invocation\"]",
+          "[\"ecdsa_generate_sign\",\"main.py\",2,\"key_generation\",\"ECDSA\",\"invocation\"]",
+          "[\"ecdsa_generate_sign\",\"main.py\",3,\"sign\",\"ECDSA\",\"invocation\"]",
+          "[\"rsa_encrypt_bound\",\"main.py\",4,\"encrypt\",\"RSA\",\"invocation\"]",
+          "[\"rsa_encrypt_bound\",\"main.py\",5,\"decrypt\",\"RSA\",\"invocation\"]",
+          "[\"ec_exchange\",\"main.py\",2,\"key_generation\",\"ECC\",\"invocation\"]",
+          "[\"ec_exchange\",\"main.py\",3,\"key_exchange\",\"EC\",\"invocation\"]"
+        ]
+      }
+    },
+    "main": {
+      "basic": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positives": [],
+        "false_negatives": []
+      },
+      "deep": {
+        "tp": 9,
+        "fp": 1,
+        "fn": 4,
+        "precision": 0.9,
+        "recall": 0.6923076923076923,
+        "false_positives": [
+          "[\"ec_exchange\",\"main.py\",2,\"key_generation\",\"EC\",\"invocation\"]"
+        ],
+        "false_negatives": [
+          "[\"class_template\",\"main.py\",3,\"sign\",\"RS256\",\"uninstantiated_template\"]",
+          "[\"unrelated_eval\",\"main.py\",3,\"sign\",\"RS256\",\"invocation\"]",
+          "[\"rsa_encrypt_decrypt\",\"main.py\",3,\"encrypt\",\"RSA\",\"invocation\"]",
+          "[\"ec_exchange\",\"main.py\",2,\"key_generation\",\"ECC\",\"invocation\"]"
+        ]
+      }
+    },
+    "adapted": {
+      "basic": {
+        "tp": 0,
+        "fp": 6,
+        "fn": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "false_positives": [
+          "[\"unimported_js\",\"main.js\",1,\"RSA\"]",
+          "[\"javascript_interpolation\",\"main.js\",2,\"RSA\"]",
+          "[\"javascript_interpolation\",\"main.js\",3,\"DSA\"]",
+          "[\"config_near_name\",\"main.py\",1,\"RSA\"]",
+          "[\"config_prose\",\"main.py\",1,\"RSA\"]",
+          "[\"custom_ecdsa_curve\",\"main.py\",2,\"ECDSA\"]"
+        ],
+        "false_negatives": [
+          "[\"node_import\",\"main.ts\",2,\"RSA\"]"
+        ]
+      },
+      "deep": {
+        "tp": 5,
+        "fp": 3,
+        "fn": 8,
+        "precision": 0.625,
+        "recall": 0.38461538461538464,
+        "false_positives": [
+          "[\"ec_exchange\",\"main.py\",2,\"key_generation\",\"EC\",\"invocation\"]",
+          "[\"class_namespace_capture\",\"main.py\",3,\"sign\",\"RS256\",\"uninstantiated_template\"]",
+          "[\"explicit_namespace_write\",\"main.py\",4,\"sign\",\"RS256\",\"invocation\"]"
+        ],
+        "false_negatives": [
+          "[\"rsa_encrypt_decrypt\",\"main.py\",3,\"encrypt\",\"RSA\",\"invocation\"]",
+          "[\"rsa_encrypt_decrypt\",\"main.py\",4,\"decrypt\",\"RSA\",\"invocation\"]",
+          "[\"ecdsa_generate_sign\",\"main.py\",2,\"key_generation\",\"ECDSA\",\"invocation\"]",
+          "[\"ecdsa_generate_sign\",\"main.py\",3,\"sign\",\"ECDSA\",\"invocation\"]",
+          "[\"rsa_encrypt_bound\",\"main.py\",4,\"encrypt\",\"RSA\",\"invocation\"]",
+          "[\"rsa_encrypt_bound\",\"main.py\",5,\"decrypt\",\"RSA\",\"invocation\"]",
+          "[\"ec_exchange\",\"main.py\",2,\"key_generation\",\"ECC\",\"invocation\"]",
+          "[\"ec_exchange\",\"main.py\",3,\"key_exchange\",\"EC\",\"invocation\"]"
+        ]
+      }
+    }
+  }
+}
