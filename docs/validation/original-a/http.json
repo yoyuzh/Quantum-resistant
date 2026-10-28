@@ -1,0 +1,49 @@
+{
+  "page": 200,
+  "origin_allowed": 202,
+  "origin_denied": 403,
+  "engine": "original-a:d8e07c903d5cd15e19142613491bb7dbae69699d",
+  "deep_status": "completed",
+  "versions": {
+    "rules": "crypto-subset-1",
+    "semantics": "bounded-backward-1+keys-1",
+    "engine": "deep-ast-1",
+    "verifier": "ast-witness-1",
+    "host_python": "3.14.7",
+    "target_python": "3.10",
+    "library_profiles": [
+      "PyJWT 2.10.1",
+      "cryptography 45 API subset",
+      "PyCryptodome 3.23.0"
+    ]
+  },
+  "source_roundtrip": true,
+  "context_counts": {
+    "invocation": 0,
+    "uninstantiated_template": 2
+  },
+  "reports": {
+    "html": {
+      "status": 200,
+      "bytes": 3639
+    },
+    "markdown": {
+      "status": 200,
+      "bytes": 2538
+    },
+    "json": {
+      "status": 200,
+      "bytes": 67614
+    },
+    "csv": {
+      "status": 200,
+      "bytes": 679
+    }
+  },
+  "legacy_observed": {
+    "/api/tasks/deep-analysis": 405,
+    "/api/ai/previews": 404
+  },
+  "model_calls": 0,
+  "remote_collection_calls": 0
+}

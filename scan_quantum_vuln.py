@@ -7,9 +7,9 @@ import json
 import sys
 from pathlib import Path
 
-from scanner.rules import *  # Existing public rule names remain importable.
-from scanner.python_analysis import QuantumCryptoVisitor, analyze_with_ast, scan_with_ast
-from scanner.text_analysis import scan_with_regex, strip_strings_and_comments, extract_aliases_from_source
+from original_a.scanner.rules import *  # Existing public rule names remain importable.
+from original_a.scanner.python_analysis import QuantumCryptoVisitor, analyze_with_ast, scan_with_ast
+from original_a.scanner.text_analysis import scan_with_regex, strip_strings_and_comments, extract_aliases_from_source
 from scanner.results import merge_findings, make_source_id, build_migration_score
 from scanner.engine import analyze_source, scan_source_for_crypto
 

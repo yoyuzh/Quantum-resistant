@@ -34,14 +34,19 @@ def export(identity: str, format: str, repository_id: str | None = None):
     value = project(base)
     sources = [{k: v for k, v in source.items() if k != 'content'} for source in value.get('sources', [])]
     rows = value.get('findings', [])
-    headers = ['文件', '行号', '算法', '确认状态', '用途', '证据', '说明', '复核意见', '研判模型']
+    deep = base.get('deep_analysis', {})
+    selected = deep.get('coverage', {}).get('selected', {})
+    headers = ['文件', '行号', '算法', '确认状态', '上下文', '用途', '证据', '说明', '复核意见', '研判模型', '静态引擎', '深度范围', '深度状态', '深度缺口']
     def status(row):
         return {'confirmed':'静态确认','ai_assessed':'AI研判','pending':'证据不足'}.get(row.get('verification_status'),'静态确认')
     def cells(row):
         return [row['file_name'], row['line'], row['algorithm'], status(row),
+                '未实例化定义' if row.get('context_kind') == 'uninstantiated_template' else '允许算法策略' if row.get('purpose_code') == 'configuration' else '静态调用位置' if row.get('operation_ids') else '规则线索',
                 PURPOSES.get(effective_purpose(row),'用途待确认') + ('（AI用途研判）' if row.get('purpose_origin')=='ai' else ''), row['evidence'], row['reason'],
                 '；'.join(o['rationale'] for o in row.get('opinions', [])),
-                '；'.join(dict.fromkeys(str(o.get('model_origin', {}).get('model') or '未记录') for o in row.get('opinions', [])))]
+                '；'.join(dict.fromkeys(str(o.get('model_origin', {}).get('model') or '未记录') for o in row.get('opinions', []))),
+                deep.get('engine_identity', '未记录'), f"{selected.get('count', 0)}/{selected.get('total', '未知')}",
+                deep.get('status', '未记录'), '、'.join(deep.get('coverage', {}).get('gaps', []))]
     if format == 'json':
         content = json.dumps({**base, 'sources': sources}, ensure_ascii=False, indent=2)
         mime = 'application/json'
@@ -56,14 +61,18 @@ def export(identity: str, format: str, repository_id: str | None = None):
         changes = value.get('integrated_analysis', {}).get('changes', {})
         intro = f"静态确认 {summary.get('finding_count', 0)} 项；AI研判 {changes.get('ai_assessed',0)} 项；证据不足 {changes.get('pending', 0)} 项。迁移评分仅按静态确认计算。"
         boundary = '本报告只覆盖本次输入和完整完成的分析。静态关联不证明实际运行，模型引用有效不代表语义正确。'
+        deep = base.get('deep_analysis', {})
+        if deep.get('engine_identity'):
+            selected = deep.get('coverage', {}).get('selected', {})
+            boundary += f" 原版 A 深度范围上限200文件/8MiB；已选{selected.get('count', 0)}/{selected.get('total', '未知')}；状态{deep.get('status')}；缺口：{'、'.join(deep.get('coverage', {}).get('gaps', [])) or '无'}。基础扫描范围另见基础coverage，AI摘要仅供检索。"
         analysis = value.get('analysis', {})
         sections = [('发现明细', headers, [cells(row) for row in rows]),
                     ('资产清单', ['文件','算法','状态','发现数','迁移方向'],
                      [[a['file_name'],a['algorithm'],status(a),a['finding_count'],' / '.join(a['targets']) or '；'.join(r['label']+'（有条件参考）' for r in a.get('migration_references',[])) or '用途待确认'] for a in analysis.get('assets',[])]),
                     ('迁移待办', ['算法','用途','状态','文件数','方向','操作'],
                      [[a['algorithm'],a.get('purpose','用途待确认'),status(a),a['affected_files'],' / '.join(a['targets']) or '；'.join(r['label']+'（有条件参考）' for r in a.get('migration_references',[])) or '先确认用途','；'.join(v['description'] for v in a['actions'])] for a in analysis.get('migrations',[])]),
-                    ('跨文件调用', ['来源','行号','算法','用途','状态'],
-                     [[a['source_id'],a['line'],a['algorithm'],a['purpose'],status(a)] for a in value.get('integrated_analysis',{}).get('calls',[])])]
+                    ('静态位置与定义', ['来源','行号','算法','用途','上下文','状态'],
+                     [[a['source_id'],a['line'],a['algorithm'],a['purpose'], '未实例化定义' if a['context_kind']=='uninstantiated_template' else '允许算法策略' if a.get('evidence_scope')=='algorithm_policy' else '静态调用位置',status(a)] for a in value.get('integrated_analysis',{}).get('calls',[])])]
         runs = base.get('ai_analysis', {}).get('runs', [])
         if runs:
             sections.append(('模型运行', ['配置', '模型', '调用数', '实际token'],

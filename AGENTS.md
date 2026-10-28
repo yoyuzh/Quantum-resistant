@@ -10,6 +10,13 @@
 
 ## 模块边界
 
+本分支使用“main 产品流程 + 原版 A 静态引擎 + 薄适配层”，细节与验收记录见 `docs/original-a-engine.md`。
+`original_a/` 固定来自 d8e07c903d5cd15e19142613491bb7dbae69699d，除绝对导入命名空间迁移外不得修改算法；生产器与 verifier 必须成套使用。
+生产基础扫描经 `scanner/engine.py` 委托 A，深度分析经 `backend/original_a.py` 接入 A，不能使用 main 静态规则补齐。
+main 的 `scanner/api_catalog.py`、`deep_analysis/` 保留作 AI 检索、传输模型及基线回归参考，不代表生产静态支持范围。
+A 深度保持 200 个 `.py` 文件 / 8MiB / 120秒，原有双索引保留其有界 AST；下文两文件 AST 缓存描述仅适用于保留的 main 参考实现。
+AI 只读摘要另行逐文件解析（同时最多一份 AST），覆盖更大来源时不扩大 A 的静态证明范围。
+
 - `scan_quantum_vuln.py`：公共兼容导出及 CLI；扫描实现位于 `scanner/rules.py`、`python_analysis.py`、`text_analysis.py`、`engine.py`、`results.py`。
 - `scanner/api_catalog.py`：基础扫描、跨文件及AI检索共用的API／算法标识与规则版本；新增规则须保留正例和不受信导入、遮蔽等负例。
 - `backend/main.py`：薄路由与 `app` 入口。模型在 `models.py`，上传解析在 `uploads.py`，扫描组装在 `scanning.py`。

@@ -199,7 +199,7 @@ def integrate(base: dict) -> dict:
                       'purpose_code':effective_purpose(row) if row else operation['operation_type'],
                       'purpose_origin':row.get('purpose_origin','unknown') if row else 'static',
                       'verification_status': row['verification_status'] if row else 'confirmed' if all(c['level'] == 'E3' for c in operation['claims'][:2]) else 'pending',
-                      'api':operation['api'], 'context_kind':operation['context']['kind'],
+                      'api':operation['api'], 'context_kind':operation['context']['kind'], 'evidence_scope':operation.get('evidence_scope', 'static_call'),
                       'evidence_ids':operation['evidence_ids'],'context_id':row.get('context_id') if row else None,'origins':row.get('origins',['cross_file']) if row else ['cross_file'],
                       'finding_id': row['finding_id'] if row else None, 'call_chain': operation['context']['call_chain']})
     for row in assessed + pending:
@@ -210,7 +210,12 @@ def integrate(base: dict) -> dict:
                       'purpose_code':effective_purpose(row),
                       'verification_status': row['verification_status'], 'api':row.get('resolved_api'),
                       'context_kind':'ai_evidence','origins':row.get('origins',['ai']),'context_id':row.get('context_id'), 'call_chain': row['opinions'][0].get('related_locations', [])[:5] if row['opinions'] else []})
-    return {'version': 3, 'findings': all_rows, 'summary': build_summary(list(sources.values()), confirmed),
+    context_counts = {kind: sum(o['context']['kind'] == kind for o in operations.values())
+                      for kind in ('invocation', 'uninstantiated_template')}
+    scope_counts = {scope: sum(o.get('evidence_scope', 'static_call') == scope for o in operations.values())
+                    for scope in ('static_call', 'definition_template', 'algorithm_policy')}
+    return {'version': 3, 'context_counts': context_counts, 'evidence_scope_counts': scope_counts,
+            'findings': all_rows, 'summary': build_summary(list(sources.values()), confirmed),
             'analysis': confirmed_analysis, 'calls': calls,
             'changes': {'baseline': len(base.get('findings', [])), 'new_confirmed': added, 'purpose_completed': len(purposes),
                         'pending': len(pending), 'ai_assessed':len(assessed),

@@ -76,7 +76,13 @@ class AiService:
     def catalogue(self, job, base, budget):
         catalogue_path = getattr(job.control, 'ai_catalog', None)
         if catalogue_path:
-            return json.loads(catalogue_path.read_text(encoding='utf-8'))
+            from backend.original_a import ENGINE_IDENTITY, ADAPTER_VERSION
+            retained = json.loads(catalogue_path.read_text(encoding='utf-8'))
+            if (retained.get('engine_identity') == ENGINE_IDENTITY
+                    and retained.get('adapter_version') == ADAPTER_VERSION
+                    and retained.get('static_versions') == base.get('deep_analysis', {}).get('versions')):
+                return retained
+            job.control.ai_catalog = None
         value = catalog(base, job.control, budget.remaining)
         # Complete simple local operations need no model round trip.
         resolved = {o['operation_id'] for o in base.get('deep_analysis', {}).get('operations', [])

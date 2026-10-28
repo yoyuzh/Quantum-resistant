@@ -31,3 +31,13 @@ class SummaryStore:
         self.control.storage.append(self.path, encoded)
         self.size += len(encoded)
         self.control.source_facts[module.source_id] = StoredContent(self.path, offset, len(encoded))
+
+    def write_value(self, source_id, encoded):
+        """Persist an independent retrieval summary in the same bounded store."""
+        if self.path is None or self.size + len(encoded) > 1024 * 1024:
+            self.path = self.control.storage.write(self.control.folder, b'', '.index')
+            self.size = 0
+        offset = self.size
+        self.control.storage.append(self.path, encoded)
+        self.size += len(encoded)
+        self.control.source_facts[source_id] = StoredContent(self.path, offset, len(encoded))

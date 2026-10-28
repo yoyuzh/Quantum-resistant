@@ -19,6 +19,13 @@ const result = computed(() => props.result.integrated_analysis ? { ...props.resu
   findings: props.result.integrated_analysis.findings, summary: props.result.integrated_analysis.summary,
   analysis: props.result.integrated_analysis.analysis } : props.result);
 const deepIncomplete=computed(()=>['partial','failed','cancelled'].includes(result.value.deep_analysis?.status));
+const deepScopeNotes = computed(() => (result.value.deep_analysis?.coverage?.gaps || []).map(gap => ({
+  file_limit: '达到 200 文件上限', source_limit: '达到 8 MiB 源码上限',
+  snippet_local_only: '仅分析片段内关系', flat_paths_no_cross_module: '缺少相对路径，未推测跨模块关系',
+  package_root_not_unique: '包根不唯一', deep_interrupted: '分析已停止',
+  source_unavailable: '部分源码不可读取', parse_failed: '部分文件解析失败',
+  ast_limit: '达到语法树上限', index_limit: '达到索引结构上限', evidence_limit: '达到证据预算上限',
+}[gap] || gap)));
 const scopeDiagnostics=computed(()=>[...(result.value.diagnostics || []),...(deepIncomplete.value?result.value.deep_analysis.diagnostics || []:[])]);
 const loadSource = useSourceContent(result);
 const body = ref(null);
@@ -47,7 +54,11 @@ async function clearFilters() {
       <ScanSummary :summary="result.summary" :integrated="!!result.integrated_analysis" compact />
       <ResultHelp :score="result.summary.migration_score" :coverage="result.coverage" />
     </div>
-    <div v-if="!result.coverage || result.coverage.partial || scopeDiagnostics.length || deepIncomplete" class="result-coverage">
+    <div v-if="result.deep_analysis?.engine_identity || !result.coverage || result.coverage.partial || scopeDiagnostics.length || deepIncomplete" class="result-coverage">
+      <p v-if="result.deep_analysis?.engine_identity" class="deep-status">静态引擎：原版 A。基础扫描覆盖本次已分析文件；深度语义上限为 200 个 Python 文件、8 MiB。
+        已选 {{ result.deep_analysis.coverage?.selected?.count ?? 0 }} / {{ result.deep_analysis.coverage?.selected?.total ?? '未知' }} 个可用 Python 文件；
+        跳过 {{ Math.max(0, (result.deep_analysis.coverage?.selected?.total ?? 0) - (result.deep_analysis.coverage?.selected?.count ?? 0)) }} 个。
+        <template v-if="deepScopeNotes.length">范围说明：{{ deepScopeNotes.join('、') }}。</template>AI 模块摘要仅用于检索。</p>
       <p v-if="deepIncomplete" class="deep-status" role="status">跨文件核验未全部完成，已保留 {{ result.deep_analysis.operations?.length || 0 }} 项完整操作；规则发现仍可查看。</p>
       <CoverageNotice :coverage="result.coverage" :diagnostics="scopeDiagnostics" compact />
     </div>

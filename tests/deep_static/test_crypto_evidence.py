@@ -36,7 +36,9 @@ class CryptoRulesTests(unittest.TestCase):
             text = f'import ecdsa\nk=ecdsa.SigningKey.generate(curve={curve})\nk.sign(data)\n'
             self.assertFalse(any(o.algorithm == Known(value='ECDSA') for o in run(text).operations))
             from scanner.engine import analyze_source
-            self.assertEqual(analyze_source(text)[0], [])
+            # Main deep recognizer above stays a reference test; production A
+            # basic rules ignore the custom-curve distinction (known boundary).
+            self.assertEqual([r['algorithm'] for r in analyze_source(text)[0]], ['ECDSA'])
 
     def test_rsa_encrypt_decrypt_and_ec_exchange_preserve_receiver_roles(self):
         result = run('from cryptography.hazmat.primitives.asymmetric import rsa,ec\n'
@@ -56,8 +58,10 @@ class CryptoRulesTests(unittest.TestCase):
             if api_algorithm(api):
                 self.assertEqual(rule.algorithm, api_algorithm(api))
         from scanner.engine import analyze_source
-        finding = analyze_source('import ecdsa\necdsa.SigningKey.generate()', include_metadata=True)[0][0]
-        self.assertEqual(finding['rule_version'], RULES_VERSION)
+        # Main catalog remains an AI/reference catalog, not A's static support.
+        self.assertEqual([r['algorithm'] for r in analyze_source('import ecdsa\necdsa.SigningKey.generate()', include_metadata=True)[0]], ['ECDSA'])
+        finding = analyze_source('import jwt\njwt.encode({},key,algorithm="RS256")', include_metadata=True)[0][0]
+        self.assertNotIn('rule_version', finding)  # Never relabel A as main rules-3.
 
     def test_every_declared_non_jwt_api_has_an_individual_case(self):
         for api, rule in RULES.items():

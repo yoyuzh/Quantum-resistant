@@ -1,0 +1,1461 @@
+{
+  "baselines": {
+    "A": "d8e07c903d5cd15e19142613491bb7dbae69699d",
+    "main": "56fc462e6ea0712aad9c8c0239f79342d1fd921c"
+  },
+  "corpus_sha256": "f1b1b88e1d77fd6067ed69c6e717f0b7a77c1e543425363a4382839f93e2f5f9",
+  "manifest_sha256": "50749e5866589a645ecab59354cfad2d6e2d855817985373522ce434ba8a0cc9",
+  "exact_A_differences": [],
+  "support_exact_A_differences": [],
+  "allowed_transport_difference": "operations[].evidence_scope only",
+  "strict_scope": "complete labelled algorithm value, sink span, operation type, context kind and call chain; raw A equivalence additionally checks ALL result and basic fields",
+  "metrics": {
+    "A": {
+      "all": {
+        "historical": {
+          "operations": {
+            "tp": 38,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.908190131774416,
+              0.9999999999999999
+            ],
+            "recall_interval_95": [
+              0.908190131774416,
+              0.9999999999999999
+            ]
+          },
+          "end_to_end": {
+            "tp": 36,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9473684210526315,
+            "recall": 0.9473684210526315,
+            "precision_interval_95": [
+              0.8271453786822962,
+              0.9854457918527075
+            ],
+            "recall_interval_95": [
+              0.8271453786822962,
+              0.9854457918527075
+            ]
+          },
+          "supported_end_to_end": {
+            "tp": 35,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.9722222222222222,
+            "recall": 0.9722222222222222,
+            "precision_interval_95": [
+              0.8583028134672614,
+              0.9950795928601897
+            ],
+            "recall_interval_95": [
+              0.8583028134672614,
+              0.9950795928601897
+            ]
+          },
+          "outside_support_end_to_end": {
+            "tp": 1,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "precision_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ],
+            "recall_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ]
+          },
+          "algorithm_accuracy": 0.9473684210526315,
+          "unknown_predictions": 13,
+          "templates": {
+            "tp": 37,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.9059421741627975,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.9059421741627975,
+              1.0
+            ]
+          },
+          "edges": {
+            "CALLS": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "IMPORT_BINDING": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ASSIGN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ARGUMENT_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "RETURN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "KEY_TYPE_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            }
+          }
+        },
+        "strict_labelled_fields": {
+          "tp": 32,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.8421052631578947,
+          "recall": 0.8421052631578947,
+          "false_positives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"shadowed_or_dynamic_binding\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"RS256\"},{\"conditions\":[\"condition:false:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:191f568f7a8dfe614d87b226f34d14b78fcefe29ccf92bbcef4042f7df7a8d4a\"],\"value\":\"RS256\"}],\"kind\":\"unknown\",\"reason\":\"unbound_name\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursive_call\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_function\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ],
+          "false_negatives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition\"],\"value\":\"RS256\"},{\"conditions\":[\"not condition\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unknown_branch\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursion_limit\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_decorator\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_runtime_config\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ]
+        },
+        "known_algorithms": {
+          "tp": 24,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "false_positives": [],
+          "false_negatives": []
+        },
+        "context_and_scope_counts": {
+          "invocation:algorithm_policy": 2,
+          "invocation:static_call": 35,
+          "uninstantiated_template:definition_template": 1
+        }
+      },
+      "locked": {
+        "historical": {
+          "operations": {
+            "tp": 33,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.895730002457548,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.895730002457548,
+              1.0
+            ]
+          },
+          "end_to_end": {
+            "tp": 31,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9393939393939394,
+            "recall": 0.9393939393939394,
+            "precision_interval_95": [
+              0.8039375519135219,
+              0.9832191169128082
+            ],
+            "recall_interval_95": [
+              0.8039375519135219,
+              0.9832191169128082
+            ]
+          },
+          "supported_end_to_end": {
+            "tp": 30,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.967741935483871,
+            "recall": 0.967741935483871,
+            "precision_interval_95": [
+              0.838058948352751,
+              0.9942827784745831
+            ],
+            "recall_interval_95": [
+              0.838058948352751,
+              0.9942827784745831
+            ]
+          },
+          "outside_support_end_to_end": {
+            "tp": 1,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "precision_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ],
+            "recall_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ]
+          },
+          "algorithm_accuracy": 0.9393939393939394,
+          "unknown_predictions": 13,
+          "templates": {
+            "tp": 32,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.8928208017449293,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.8928208017449293,
+              1.0
+            ]
+          },
+          "edges": {
+            "CALLS": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "IMPORT_BINDING": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ASSIGN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ARGUMENT_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "RETURN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "KEY_TYPE_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            }
+          }
+        },
+        "strict_labelled_fields": {
+          "tp": 27,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.8181818181818182,
+          "recall": 0.8181818181818182,
+          "false_positives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"shadowed_or_dynamic_binding\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"RS256\"},{\"conditions\":[\"condition:false:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:191f568f7a8dfe614d87b226f34d14b78fcefe29ccf92bbcef4042f7df7a8d4a\"],\"value\":\"RS256\"}],\"kind\":\"unknown\",\"reason\":\"unbound_name\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursive_call\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_function\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ],
+          "false_negatives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition\"],\"value\":\"RS256\"},{\"conditions\":[\"not condition\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unknown_branch\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursion_limit\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_decorator\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_runtime_config\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ]
+        },
+        "known_algorithms": {
+          "tp": 19,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "false_positives": [],
+          "false_negatives": []
+        },
+        "context_and_scope_counts": {
+          "invocation:algorithm_policy": 2,
+          "invocation:static_call": 30,
+          "uninstantiated_template:definition_template": 1
+        }
+      }
+    },
+    "main": {
+      "all": {
+        "historical": {
+          "operations": {
+            "tp": 38,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.908190131774416,
+              0.9999999999999999
+            ],
+            "recall_interval_95": [
+              0.908190131774416,
+              0.9999999999999999
+            ]
+          },
+          "end_to_end": {
+            "tp": 35,
+            "fp": 3,
+            "fn": 3,
+            "precision": 0.9210526315789473,
+            "recall": 0.9210526315789473,
+            "precision_interval_95": [
+              0.7920062854222853,
+              0.9727854044930122
+            ],
+            "recall_interval_95": [
+              0.7920062854222853,
+              0.9727854044930122
+            ]
+          },
+          "supported_end_to_end": {
+            "tp": 34,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9444444444444444,
+            "recall": 0.9444444444444444,
+            "precision_interval_95": [
+              0.8185534279135275,
+              0.9846300133358382
+            ],
+            "recall_interval_95": [
+              0.8185534279135275,
+              0.9846300133358382
+            ]
+          },
+          "outside_support_end_to_end": {
+            "tp": 1,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "precision_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ],
+            "recall_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ]
+          },
+          "algorithm_accuracy": 0.9210526315789473,
+          "unknown_predictions": 13,
+          "templates": {
+            "tp": 37,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.9059421741627975,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.9059421741627975,
+              1.0
+            ]
+          },
+          "edges": {
+            "CALLS": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "IMPORT_BINDING": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ASSIGN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ARGUMENT_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "RETURN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "KEY_TYPE_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            }
+          }
+        },
+        "strict_labelled_fields": {
+          "tp": 32,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.8421052631578947,
+          "recall": 0.8421052631578947,
+          "false_positives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"shadowed_or_dynamic_binding\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:e02445b2aa620e5d995aeb53148e4045a3abc6e9af2f63df369209cbd36f96c6\"],\"value\":\"RS256\"},{\"conditions\":[\"condition:9b175189599c958fbc1a7faea6c266cb146cc50f26dc1c9805d583dfb59b633d\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:f70a825a7f3558bfdb7f085a35442202370f538b5cb5ae99611e3db959ff4d9b\"],\"value\":\"RS256\"}],\"kind\":\"unknown\",\"reason\":\"unbound_name\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursive_call\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_function\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ],
+          "false_negatives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition\"],\"value\":\"RS256\"},{\"conditions\":[\"not condition\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unknown_branch\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursion_limit\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_decorator\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_runtime_config\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ]
+        },
+        "known_algorithms": {
+          "tp": 24,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "false_positives": [],
+          "false_negatives": []
+        },
+        "context_and_scope_counts": {
+          "invocation:algorithm_policy": 2,
+          "invocation:static_call": 35,
+          "uninstantiated_template:definition_template": 1
+        }
+      },
+      "locked": {
+        "historical": {
+          "operations": {
+            "tp": 33,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.895730002457548,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.895730002457548,
+              1.0
+            ]
+          },
+          "end_to_end": {
+            "tp": 30,
+            "fp": 3,
+            "fn": 3,
+            "precision": 0.9090909090909091,
+            "recall": 0.9090909090909091,
+            "precision_interval_95": [
+              0.7642739435353026,
+              0.9685960584754184
+            ],
+            "recall_interval_95": [
+              0.7642739435353026,
+              0.9685960584754184
+            ]
+          },
+          "supported_end_to_end": {
+            "tp": 29,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9354838709677419,
+            "recall": 0.9354838709677419,
+            "precision_interval_95": [
+              0.7928136326370188,
+              0.9821252164780854
+            ],
+            "recall_interval_95": [
+              0.7928136326370188,
+              0.9821252164780854
+            ]
+          },
+          "outside_support_end_to_end": {
+            "tp": 1,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "precision_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ],
+            "recall_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ]
+          },
+          "algorithm_accuracy": 0.9090909090909091,
+          "unknown_predictions": 13,
+          "templates": {
+            "tp": 32,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.8928208017449293,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.8928208017449293,
+              1.0
+            ]
+          },
+          "edges": {
+            "CALLS": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "IMPORT_BINDING": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ASSIGN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ARGUMENT_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "RETURN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "KEY_TYPE_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            }
+          }
+        },
+        "strict_labelled_fields": {
+          "tp": 27,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.8181818181818182,
+          "recall": 0.8181818181818182,
+          "false_positives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"shadowed_or_dynamic_binding\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:e02445b2aa620e5d995aeb53148e4045a3abc6e9af2f63df369209cbd36f96c6\"],\"value\":\"RS256\"},{\"conditions\":[\"condition:9b175189599c958fbc1a7faea6c266cb146cc50f26dc1c9805d583dfb59b633d\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:f70a825a7f3558bfdb7f085a35442202370f538b5cb5ae99611e3db959ff4d9b\"],\"value\":\"RS256\"}],\"kind\":\"unknown\",\"reason\":\"unbound_name\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursive_call\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_function\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ],
+          "false_negatives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition\"],\"value\":\"RS256\"},{\"conditions\":[\"not condition\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unknown_branch\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursion_limit\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_decorator\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_runtime_config\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ]
+        },
+        "known_algorithms": {
+          "tp": 19,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "false_positives": [],
+          "false_negatives": []
+        },
+        "context_and_scope_counts": {
+          "invocation:algorithm_policy": 2,
+          "invocation:static_call": 30,
+          "uninstantiated_template:definition_template": 1
+        }
+      }
+    },
+    "adapted": {
+      "all": {
+        "historical": {
+          "operations": {
+            "tp": 38,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.908190131774416,
+              0.9999999999999999
+            ],
+            "recall_interval_95": [
+              0.908190131774416,
+              0.9999999999999999
+            ]
+          },
+          "end_to_end": {
+            "tp": 36,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9473684210526315,
+            "recall": 0.9473684210526315,
+            "precision_interval_95": [
+              0.8271453786822962,
+              0.9854457918527075
+            ],
+            "recall_interval_95": [
+              0.8271453786822962,
+              0.9854457918527075
+            ]
+          },
+          "supported_end_to_end": {
+            "tp": 35,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.9722222222222222,
+            "recall": 0.9722222222222222,
+            "precision_interval_95": [
+              0.8583028134672614,
+              0.9950795928601897
+            ],
+            "recall_interval_95": [
+              0.8583028134672614,
+              0.9950795928601897
+            ]
+          },
+          "outside_support_end_to_end": {
+            "tp": 1,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "precision_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ],
+            "recall_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ]
+          },
+          "algorithm_accuracy": 0.9473684210526315,
+          "unknown_predictions": 13,
+          "templates": {
+            "tp": 37,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.9059421741627975,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.9059421741627975,
+              1.0
+            ]
+          },
+          "edges": {
+            "CALLS": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "IMPORT_BINDING": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ASSIGN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ARGUMENT_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "RETURN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "KEY_TYPE_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            }
+          }
+        },
+        "strict_labelled_fields": {
+          "tp": 32,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.8421052631578947,
+          "recall": 0.8421052631578947,
+          "false_positives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"shadowed_or_dynamic_binding\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"RS256\"},{\"conditions\":[\"condition:false:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:191f568f7a8dfe614d87b226f34d14b78fcefe29ccf92bbcef4042f7df7a8d4a\"],\"value\":\"RS256\"}],\"kind\":\"unknown\",\"reason\":\"unbound_name\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursive_call\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_function\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ],
+          "false_negatives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition\"],\"value\":\"RS256\"},{\"conditions\":[\"not condition\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unknown_branch\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursion_limit\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_decorator\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_runtime_config\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ]
+        },
+        "known_algorithms": {
+          "tp": 24,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "false_positives": [],
+          "false_negatives": []
+        },
+        "context_and_scope_counts": {
+          "invocation:algorithm_policy": 2,
+          "invocation:static_call": 35,
+          "uninstantiated_template:definition_template": 1
+        }
+      },
+      "locked": {
+        "historical": {
+          "operations": {
+            "tp": 33,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.895730002457548,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.895730002457548,
+              1.0
+            ]
+          },
+          "end_to_end": {
+            "tp": 31,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9393939393939394,
+            "recall": 0.9393939393939394,
+            "precision_interval_95": [
+              0.8039375519135219,
+              0.9832191169128082
+            ],
+            "recall_interval_95": [
+              0.8039375519135219,
+              0.9832191169128082
+            ]
+          },
+          "supported_end_to_end": {
+            "tp": 30,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.967741935483871,
+            "recall": 0.967741935483871,
+            "precision_interval_95": [
+              0.838058948352751,
+              0.9942827784745831
+            ],
+            "recall_interval_95": [
+              0.838058948352751,
+              0.9942827784745831
+            ]
+          },
+          "outside_support_end_to_end": {
+            "tp": 1,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "precision_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ],
+            "recall_interval_95": [
+              0.09453120573423074,
+              0.9054687942657693
+            ]
+          },
+          "algorithm_accuracy": 0.9393939393939394,
+          "unknown_predictions": 13,
+          "templates": {
+            "tp": 32,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "precision_interval_95": [
+              0.8928208017449293,
+              1.0
+            ],
+            "recall_interval_95": [
+              0.8928208017449293,
+              1.0
+            ]
+          },
+          "edges": {
+            "CALLS": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "IMPORT_BINDING": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ASSIGN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "ARGUMENT_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "RETURN_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            },
+            "KEY_TYPE_FLOW": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "precision_interval_95": null,
+              "recall_interval_95": null
+            }
+          }
+        },
+        "strict_labelled_fields": {
+          "tp": 27,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.8181818181818182,
+          "recall": 0.8181818181818182,
+          "false_positives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"shadowed_or_dynamic_binding\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"RS256\"},{\"conditions\":[\"condition:false:b456ec110276d339427545b24c91f461da8980dfbed9a3ba983b0152bf56e1bf\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition:true:191f568f7a8dfe614d87b226f34d14b78fcefe29ccf92bbcef4042f7df7a8d4a\"],\"value\":\"RS256\"}],\"kind\":\"unknown\",\"reason\":\"unbound_name\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursive_call\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_function\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ],
+          "false_negatives": [
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_transform\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":54,\"end_line\":3,\"source_id\":\"fixture-source:71182696f29b66bba3c991076546edcfcc9ab362b2fa2af0fd0991276a310430\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:e7941bf6fe141de5c7939a401516ffd2ff06d008ec62329c025f5a4584bd5c9f\"}",
+            "{\"algorithm\":{\"alternatives\":[{\"conditions\":[\"condition\"],\"value\":\"RS256\"},{\"conditions\":[\"not condition\"],\"value\":\"HS256\"}],\"kind\":\"ambiguous\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c453ff0cca74f319b176ab6be966e72b442a51b06a3bb8e6b80a9917bb362122\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:18965007d914efd98c9ec314d29442c7172f629e4a07f2ef8eb6194f9b4c5c57\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unknown_branch\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":48,\"end_line\":6,\"source_id\":\"fixture-source:c41d607f7ceb867d56b801335294fe2a7d9657bd3ac334b58dd3c30580b04588\",\"start_col\":8,\"start_line\":6},\"snapshot_id\":\"snapshot:9179e1b982e0fc5fa2143badbd6d5cac096a9d625a65ef7b8516a5d97787e66a\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"recursion_limit\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":47,\"end_line\":3,\"source_id\":\"fixture-source:ecf619070ac087dee5e0bec798c036fb16d799d28d8f50a3a260b19f66d36d08\",\"start_col\":8,\"start_line\":3},\"snapshot_id\":\"snapshot:df2ff239afd1e953a91ebc5732ae81e912cb986e17a9cf6703310413a1557a98\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_decorator\"},\"context\":[],\"context_kind\":\"uninstantiated_template\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":56,\"end_line\":4,\"source_id\":\"fixture-source:83200df42257ed3f8222d4d53dbd20751f0b29fdaa68c214231cf6435b7a66ba\",\"start_col\":11,\"start_line\":4},\"snapshot_id\":\"snapshot:d14c59f1a88be912c5066fd48d023a1e2b34d46a0744b69c1a45f6d20fa86dbf\"}",
+            "{\"algorithm\":{\"alternatives\":[],\"kind\":\"unknown\",\"reason\":\"unsupported_runtime_config\"},\"context\":[],\"context_kind\":\"invocation\",\"operation_type\":\"sign\",\"sink\":{\"end_col\":58,\"end_line\":4,\"source_id\":\"fixture-source:a9f9066113b82681bf41eba70d9c2c3fd1158e50ab0a2ca2bc6758f30dfbac72\",\"start_col\":8,\"start_line\":4},\"snapshot_id\":\"snapshot:bb8bfeef0934b1d504830331734af5ba6f28260087766b95de0b939e88d30aea\"}"
+          ]
+        },
+        "known_algorithms": {
+          "tp": 19,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "false_positives": [],
+          "false_negatives": []
+        },
+        "context_and_scope_counts": {
+          "invocation:algorithm_policy": 2,
+          "invocation:static_call": 30,
+          "uninstantiated_template:definition_template": 1
+        }
+      }
+    }
+  },
+  "independent_holdout": "not_available",
+  "real_model": "not_run",
+  "main_model_and_projection_validated_results": 51,
+  "support_inventory": {
+    "scope": "declared direct rules and receiver methods; does not prove arbitrary programs are supported",
+    "direct_rules": [
+      {
+        "api": "Crypto.PublicKey.DSA.generate",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "DSA"
+      },
+      {
+        "api": "Crypto.PublicKey.DSA.importKey",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "DSA"
+      },
+      {
+        "api": "Crypto.PublicKey.DSA.import_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "DSA"
+      },
+      {
+        "api": "Crypto.PublicKey.ECC.generate",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "ECC"
+      },
+      {
+        "api": "Crypto.PublicKey.ECC.import_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "ECC"
+      },
+      {
+        "api": "Crypto.PublicKey.RSA.generate",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "RSA"
+      },
+      {
+        "api": "Crypto.PublicKey.RSA.importKey",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "RSA"
+      },
+      {
+        "api": "Crypto.PublicKey.RSA.import_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "RSA"
+      },
+      {
+        "api": "Crypto.Signature.DSS.new",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "unknown",
+        "algorithm": null
+      },
+      {
+        "api": "Crypto.Signature.pkcs1_15.new",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "unknown",
+        "algorithm": null
+      },
+      {
+        "api": "Crypto.Signature.pss.new",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "unknown",
+        "algorithm": null
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.ec.generate_private_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "EC"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.from_private_bytes",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "Ed25519"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "Ed25519"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey.from_public_bytes",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "Ed25519"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "RSA"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.from_private_bytes",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "X25519"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_generation",
+        "algorithm": "X25519"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.asymmetric.x25519.X25519PublicKey.from_public_bytes",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": "X25519"
+      },
+      {
+        "api": "cryptography.hazmat.primitives.serialization.load_pem_private_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": null
+      },
+      {
+        "api": "cryptography.hazmat.primitives.serialization.load_pem_public_key",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "key_import",
+        "algorithm": null
+      },
+      {
+        "api": "ecdsa.SigningKey.generate",
+        "main_declared": true,
+        "A_declared": false,
+        "operation": "key_generation",
+        "algorithm": "ECDSA"
+      },
+      {
+        "api": "jwt.decode",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "verify",
+        "algorithm": null
+      },
+      {
+        "api": "jwt.encode",
+        "main_declared": true,
+        "A_declared": true,
+        "operation": "sign",
+        "algorithm": null
+      }
+    ],
+    "receiver_methods": [
+      {
+        "key_type": "RSA:private",
+        "method": "sign",
+        "main": [
+          "sign",
+          "RSA"
+        ],
+        "A": [
+          "sign",
+          "RSA"
+        ]
+      },
+      {
+        "key_type": "RSA:private",
+        "method": "decrypt",
+        "main": [
+          "decrypt",
+          "RSA"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "RSA:public",
+        "method": "verify",
+        "main": [
+          "verify",
+          "RSA"
+        ],
+        "A": [
+          "verify",
+          "RSA"
+        ]
+      },
+      {
+        "key_type": "RSA:public",
+        "method": "encrypt",
+        "main": [
+          "encrypt",
+          "RSA"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "RSA:either",
+        "method": "sign",
+        "main": [
+          "sign",
+          "RSA"
+        ],
+        "A": [
+          "sign",
+          "RSA"
+        ]
+      },
+      {
+        "key_type": "RSA:either",
+        "method": "verify",
+        "main": [
+          "verify",
+          "RSA"
+        ],
+        "A": [
+          "verify",
+          "RSA"
+        ]
+      },
+      {
+        "key_type": "EC:private",
+        "method": "sign",
+        "main": [
+          "sign",
+          "EC"
+        ],
+        "A": [
+          "sign",
+          "EC"
+        ]
+      },
+      {
+        "key_type": "EC:private",
+        "method": "exchange",
+        "main": [
+          "key_exchange",
+          "EC"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "EC:public",
+        "method": "verify",
+        "main": [
+          "verify",
+          "EC"
+        ],
+        "A": [
+          "verify",
+          "EC"
+        ]
+      },
+      {
+        "key_type": "EC:either",
+        "method": "sign",
+        "main": [
+          "sign",
+          "EC"
+        ],
+        "A": [
+          "sign",
+          "EC"
+        ]
+      },
+      {
+        "key_type": "EC:either",
+        "method": "verify",
+        "main": [
+          "verify",
+          "EC"
+        ],
+        "A": [
+          "verify",
+          "EC"
+        ]
+      },
+      {
+        "key_type": "ECDSA:private",
+        "method": "sign",
+        "main": [
+          "sign",
+          "ECDSA"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "ECDSA:public",
+        "method": "verify",
+        "main": [
+          "verify",
+          "ECDSA"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "ECDSA:either",
+        "method": "sign",
+        "main": [
+          "sign",
+          "ECDSA"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "ECDSA:either",
+        "method": "verify",
+        "main": [
+          "verify",
+          "ECDSA"
+        ],
+        "A": null
+      },
+      {
+        "key_type": "Ed25519:private",
+        "method": "sign",
+        "main": [
+          "sign",
+          "Ed25519"
+        ],
+        "A": [
+          "sign",
+          "Ed25519"
+        ]
+      },
+      {
+        "key_type": "Ed25519:public",
+        "method": "verify",
+        "main": [
+          "verify",
+          "Ed25519"
+        ],
+        "A": [
+          "verify",
+          "Ed25519"
+        ]
+      },
+      {
+        "key_type": "Ed25519:either",
+        "method": "sign",
+        "main": [
+          "sign",
+          "Ed25519"
+        ],
+        "A": [
+          "sign",
+          "Ed25519"
+        ]
+      },
+      {
+        "key_type": "Ed25519:either",
+        "method": "verify",
+        "main": [
+          "verify",
+          "Ed25519"
+        ],
+        "A": [
+          "verify",
+          "Ed25519"
+        ]
+      },
+      {
+        "key_type": "X25519:private",
+        "method": "exchange",
+        "main": [
+          "key_exchange",
+          "X25519"
+        ],
+        "A": [
+          "key_exchange",
+          "X25519"
+        ]
+      }
+    ]
+  }
+}

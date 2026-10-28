@@ -1,0 +1,49 @@
+{
+  "files": 201,
+  "text_bytes": 8430608,
+  "elapsed_seconds": 0.558,
+  "peak_rss_bytes": 77922304,
+  "temporary_bytes": 9100266,
+  "source_count": 201,
+  "findings": 25,
+  "deep_status": "partial",
+  "parsed_files": 199,
+  "deep_coverage": {
+    "collected": {
+      "count": 201,
+      "total": 201
+    },
+    "available": {
+      "count": 201,
+      "total": null
+    },
+    "selected": {
+      "count": 199,
+      "total": 201
+    },
+    "parsed": {
+      "count": 199,
+      "total": 199
+    },
+    "analyzed": {
+      "count": 199,
+      "total": 199
+    },
+    "partial": true,
+    "gaps": [
+      "source_limit"
+    ]
+  },
+  "retrieval_index": {
+    "purpose": "ai_retrieval_only",
+    "parsed": 201,
+    "total": 201,
+    "bytes": 30039,
+    "partial": false,
+    "gaps": [],
+    "max_ast_files": 1
+  },
+  "engine_identity": "original-a:d8e07c903d5cd15e19142613491bb7dbae69699d",
+  "model_calls": 0,
+  "scope": "synthetic text corpus; not a real-repository precision/recall benchmark"
+}

@@ -1,0 +1,20 @@
+{
+  "role": "development compatibility and known safety boundaries; not independent holdout",
+  "cases": [
+    {"id":"class_template","files":{"main.py":"import jwt\nclass Tokens:\n def issue(self): return jwt.encode({},key,algorithm=\"RS256\")\n"},"deep_gold":[["main.py",3,"sign","RS256","uninstantiated_template"]]},
+    {"id":"unrelated_eval","files":{"main.py":"import jwt\ndef unrelated(text): return eval(text)\njwt.encode({},key,algorithm=\"RS256\")\n"},"deep_gold":[["main.py",3,"sign","RS256","invocation"]]},
+    {"id":"rsa_encrypt_decrypt","files":{"main.py":"from cryptography.hazmat.primitives.asymmetric import rsa\nk=rsa.generate_private_key(65537,2048)\nk.public_key().encrypt(data,pad)\nk.decrypt(cipher,pad)\n"},"deep_gold":[["main.py",2,"key_generation","RSA","invocation"],["main.py",3,"encrypt","RSA","invocation"],["main.py",4,"decrypt","RSA","invocation"]]},
+    {"id":"ecdsa_generate_sign","files":{"main.py":"from ecdsa import SigningKey,NIST256p\nk=SigningKey.generate(curve=NIST256p)\nk.sign(data)\n"},"deep_gold":[["main.py",2,"key_generation","ECDSA","invocation"],["main.py",3,"sign","ECDSA","invocation"]]},
+    {"id":"rsa_encrypt_bound","files":{"main.py":"from cryptography.hazmat.primitives.asymmetric import rsa\nk=rsa.generate_private_key(65537,2048)\npub=k.public_key()\npub.encrypt(data,pad)\nk.decrypt(cipher,pad)\n"},"deep_gold":[["main.py",2,"key_generation","RSA","invocation"],["main.py",4,"encrypt","RSA","invocation"],["main.py",5,"decrypt","RSA","invocation"]]},
+    {"id":"ec_exchange","files":{"main.py":"from cryptography.hazmat.primitives.asymmetric import ec\nk=ec.generate_private_key(ec.SECP256R1())\nk.exchange(ec.ECDH(),peer)\n"},"deep_gold":[["main.py",2,"key_generation","ECC","invocation"],["main.py",3,"key_exchange","EC","invocation"]]},
+    {"id":"node_import","files":{"main.ts":"import { generateKeyPairSync as make } from \"node:crypto\";\nmake(\"rsa\", {modulusLength:2048});\n"},"basic_gold":[["main.ts",2,"RSA"]]},
+    {"id":"unimported_js","files":{"main.js":"RSA.generate(2048)\n"},"basic_gold":[]},
+    {"id":"javascript_interpolation","files":{"main.js":"const note = `text\n${RSA.generate(2048)}\n${`nested ${DSA.generate()}`}`;"},"basic_gold":[]},
+    {"id":"config_near_name","files":{"main.py":"monkey=\"RS256\"\n"},"basic_gold":[]},
+    {"id":"config_prose","files":{"main.py":"algorithm=\"documentation mentions RS256\"\n"},"basic_gold":[]},
+    {"id":"custom_ecdsa_curve","files":{"main.py":"import ecdsa\nk=ecdsa.SigningKey.generate(curve=ecdsa.Ed25519)\nk.sign(data)\n"},"basic_gold":[],"deep_gold":[]},
+    {"id":"class_namespace_capture","files":{"main.py":"class Tokens:\n import jwt\n def issue(self): return jwt.encode({},key,algorithm=\"RS256\")\n"},"deep_gold":[]},
+    {"id":"explicit_namespace_write","files":{"main.py":"import jwt\ndef poison():\n globals()[\"jwt\"] = custom\njwt.encode({},key,algorithm=\"RS256\")\n"},"deep_gold":[]},
+    {"id":"decode_policy","files":{"main.py":"import jwt\njwt.decode(token,key,algorithms=[\"RS256\"])\n"},"deep_gold":[["main.py",2,"verify","RS256","invocation"]],"note":"gold is the allowed-algorithm policy, not token runtime algorithm"}
+  ]
+}
