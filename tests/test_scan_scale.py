@@ -140,7 +140,7 @@ class ScaleTests(unittest.TestCase):
         self.assertLess(len(json.dumps(metadata)), len(json.dumps(full)))
         self.assertLess(perf_counter() - started, 30)
 
-    def test_github_archive_pinned_and_three_requests_for_120_files(self):
+    def test_github_archive_pinned_and_four_requests_for_120_files(self):
         calls = []
         def handler(request):
             calls.append(str(request.url))
@@ -148,14 +148,16 @@ class ScaleTests(unittest.TestCase):
                 return httpx.Response(200, json={'default_branch': 'main'})
             if '/git/trees/' in request.url.path:
                 return httpx.Response(200, json={'sha': 'fixed-sha', 'tree': [{'type': 'blob', 'path': f'pkg/{i}.py', 'size': len(CODE)} for i in range(120)]})
-            if request.url.path == '/a/b/archive/fixed-sha.zip':
+            if '/commits/' in request.url.path:
+                return httpx.Response(200,json={'sha':'c'*40})
+            if request.url.path == '/a/b/zip/'+'c'*40:
                 return httpx.Response(200, content=archive_bytes(120))
             return httpx.Response(404)
         real = httpx.Client
         with patch('backend.remote_sources.httpx.Client', side_effect=lambda **kw: real(transport=httpx.MockTransport(handler))):
             docs = github_sources('https://github.com/a/b', 5000, Deadline.after())
         self.assertEqual(len(docs), 120)
-        self.assertEqual(len(calls), 3)
+        self.assertEqual(len(calls), 4)
         self.assertFalse(docs.coverage['partial'])
 
     def test_archive_failure_falls_back_and_tree_version_is_pinned(self):
@@ -166,15 +168,17 @@ class ScaleTests(unittest.TestCase):
                 return httpx.Response(200, json={'default_branch': 'main'})
             if '/git/trees/' in request.url.path:
                 return httpx.Response(200, json={'sha': 'fixed-sha', 'tree': [{'type': 'blob', 'path': f'{i}.py', 'size': len(CODE)} for i in range(35)]})
+            if '/commits/' in request.url.path:
+                return httpx.Response(200,json={'sha':'c'*40})
             if '/contents/' in request.url.path:
-                self.assertEqual(request.url.params['ref'], 'fixed-sha')
+                self.assertEqual(request.url.params['ref'], 'c'*40)
                 return httpx.Response(200, json={'encoding': 'base64', 'content': base64.b64encode(CODE.encode()).decode()})
             return httpx.Response(404)
         real = httpx.Client
         with patch('backend.remote_sources.httpx.Client', side_effect=lambda **kw: real(transport=httpx.MockTransport(handler))):
             docs = github_sources('https://github.com/a/b', 5000, Deadline.after())
         self.assertEqual(len(docs), 35)
-        self.assertEqual(len(calls), 38)
+        self.assertEqual(len(calls), 39)
 
     def test_pypi_more_than_80_files(self):
         real = httpx.Client

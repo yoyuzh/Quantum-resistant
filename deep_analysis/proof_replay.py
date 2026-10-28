@@ -13,7 +13,7 @@ from typing import Callable
 from deep_analysis.crypto_rules import RULES
 from deep_analysis.identity import stable_id
 from deep_analysis.models import Alternative, Ambiguous, Budgets, Known, Span, Unknown
-from deep_analysis.symbol_index import Index, Module, dotted, has_dynamic_namespace, import_base, is_class_method, location, resolve
+from deep_analysis.symbol_index import Index, Module, dotted, import_base, location, resolve
 
 Edge = tuple[str, Span, Span]
 
@@ -51,17 +51,9 @@ class Replay:
         self.index, self.budgets, self.checkpoint = index, budgets, checkpoint
         self.modules = {m.source_id: m for m in index.modules}
         self.calls = {c.location: (m, c) for m in index.modules for c in m.calls}
-        self.nodes = {location(m.source_id, n): n for m in index.modules for n in ast.walk(m.tree)
-                      if hasattr(n, 'end_lineno') and n.end_lineno is not None}
-        self.functions = {}
-        for module in index.modules:
-            pending = [(module.tree, '<module>')]
-            while pending:
-                node, scope = pending.pop()
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    scope += '.' + node.name
-                    self.functions[module.source_id + ':' + scope] = (module, node, scope)
-                pending.extend((n, scope) for n in ast.iter_child_nodes(node))
+        from deep_analysis.lazy_ast import SpanNodes, Functions
+        self.nodes = SpanNodes(index.modules)
+        self.functions = Functions(index.modules)
         self.cross = all(m.name is not None for m in index.modules)
         self.active = 0
         self.visits = 0
@@ -83,7 +75,7 @@ class Replay:
     def _expr(self, node: ast.AST, scope: Scope) -> Witness:
         module = scope.module
         span = location(module.source_id, node)
-        if scope.blocked or has_dynamic_namespace(module, scope.name):
+        if scope.blocked or any(s.kind == 'dynamic_namespace' for s in module.symbols):
             return unknown('unsupported_scope')
         if isinstance(node, ast.Constant) and type(node.value) in (str, int, float, bool, type(None)):
             try:
@@ -278,6 +270,10 @@ class Replay:
             bound = self.api_arguments(node, scope, rule.parameters, rule.optional, rule.keyword_only)
             if bound is None:
                 return unknown('invalid_argument_binding')
+            if rule.library == 'ecdsa':
+                from deep_analysis.curves import supported_curve
+                if not supported_curve(node, scope.module, list(self.modules.values())):
+                    return unknown('unsupported_ecdsa_curve')
             if rule.key_type:
                 return Witness(Known(value=rule.algorithm or 'generic_key_type'), span,
                                frozenset({('KEY_TYPE_FLOW', span, span)}), frozenset({span}), rule.key_type, span)
@@ -289,10 +285,11 @@ class Replay:
                     if scheme == 'DSS' and (not isinstance(bound['mode'].value, Known) or bound['mode'].value.value not in ('fips-186-3', 'deterministic-rfc6979')):
                         return unknown('unsupported_signer_mode')
                     return replace(base, value=Known(value='generic_key_type'), key_type='signer:' + scheme + ':' + family).edge('KEY_TYPE_FLOW', base.origin, span)
-        if isinstance(node.func, ast.Attribute) and node.func.attr in ('public_key', 'publickey') and not node.args and not node.keywords:
+        if isinstance(node.func, ast.Attribute) and node.func.attr in ('public_key', 'publickey', 'get_verifying_key') and not node.args and not node.keywords:
             base = self.expr(node.func.value, scope)
             family = base.key_type.split(':')[0] if base.key_type else None
-            if family in ('RSA', 'EC', 'Ed25519', 'X25519'):
+            supported = family == 'ECDSA' if node.func.attr == 'get_verifying_key' else family in ('RSA', 'EC', 'Ed25519', 'X25519')
+            if supported:
                 return replace(base, key_type=family + ':public').edge('KEY_TYPE_FLOW', base.last, span)
         if target in self.functions:
             child = self.enter(node, scope, target)
@@ -359,8 +356,6 @@ class Replay:
                 scope = self.enter(self.nodes[call_span], scope, entry[1].target)
         if scope.module != indexed[0] or scope.name != indexed[1].scope:
             return None
-        if not chain and scope.name != '<module>' and not is_class_method(scope.module, scope.name):
-            scope = replace(scope, blocked=True)
         return scope
 
     def lexical_conditions(self, span: Span) -> tuple[str, ...]:
@@ -373,7 +368,7 @@ class Replay:
             stmt = next((n for n in body if (n.lineno, n.col_offset) <= point < (n.end_lineno, n.end_col_offset)), None)
             if isinstance(stmt, ast.If):
                 flag = any((n.lineno, n.col_offset) <= point < (n.end_lineno, n.end_col_offset) for n in stmt.body)
-                conditions.append(stable_id(f'condition:{str(flag).lower()}', [location(module.source_id, stmt.test).model_dump(mode='json')]))
+                conditions.append(stable_id('condition', [location(module.source_id, stmt.test).model_dump(mode='json'), flag]))
                 body = stmt.body if flag else stmt.orelse
             else:
                 break

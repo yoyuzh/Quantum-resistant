@@ -103,7 +103,7 @@ class SnapshotIdentity(Contract):
     snapshot_id: Text
     source_type: SourceType
     path_fidelity: Literal["relative_paths", "flat_basename", "snippet"]
-    sources: Annotated[tuple[SourceIdentity, ...], Field(max_length=200)]
+    sources: Annotated[tuple[SourceIdentity, ...], Field(max_length=5000)]
     package_roots: Annotated[tuple[Text, ...], Field(max_length=200)] = ()
     commit: Text | None = None
     collection_version: Text
@@ -114,8 +114,8 @@ class SnapshotIdentity(Contract):
         ids = [source.source_id for source in self.sources]
         if len(ids) != len(set(ids)):
             raise ValueError("快照source_id重复")
-        if sum(source.size_bytes for source in self.sources) > 8 * 1024 * 1024:
-            raise ValueError("快照超过8MiB")
+        if sum(source.size_bytes for source in self.sources) > 100 * 1024 * 1024:
+            raise ValueError("快照超过100MiB")
         return self
 
 
@@ -127,7 +127,7 @@ class ArgumentFact(Contract):
 
 class CallContext(Contract):
     kind: Literal["invocation", "uninstantiated_template"]
-    call_chain: Annotated[tuple[Span, ...], Field(max_length=3)] = ()
+    call_chain: Annotated[tuple[Span, ...], Field(max_length=5)] = ()
     arguments: Annotated[tuple[ArgumentFact, ...], Field(max_length=64)] = ()
     conditions: Annotated[tuple[Text, ...], Field(max_length=16)] = ()
 
@@ -181,8 +181,8 @@ class EvidencePath(Contract):
     claim_type: ClaimType | None = None
     snapshot_id: Text
     context: CallContext
-    nodes: Annotated[tuple[EvidenceNode, ...], Field(min_length=1, max_length=200)]
-    edges: Annotated[tuple[EvidenceEdge, ...], Field(max_length=200)] = ()
+    nodes: Annotated[tuple[EvidenceNode, ...], Field(min_length=1, max_length=400)]
+    edges: Annotated[tuple[EvidenceEdge, ...], Field(max_length=400)] = ()
     verification_status: Literal["unverified", "valid", "invalid"] = "unverified"
     historical_verification_status: Literal["valid", "invalid"] | None = None
     replay_status: Literal["available", "unavailable", "requires_revalidation"] = "requires_revalidation"
@@ -201,6 +201,7 @@ class EvidencePath(Contract):
 
 
 class CryptoOperation(Contract):
+    evidence_scope: Literal['static_call', 'algorithm_policy'] = 'static_call'
     operation_id: Text
     template_id: Text
     api: Text
@@ -229,19 +230,19 @@ class CryptoOperation(Contract):
 
 
 class Budgets(Contract):
-    python_files: Annotated[int, Field(strict=True, ge=0, le=200)] = 200
-    source_bytes: Annotated[int, Field(strict=True, ge=0, le=8 * 1024 * 1024)] = 8 * 1024 * 1024
+    python_files: Annotated[int, Field(strict=True, ge=0, le=5000)] = 5000
+    source_bytes: Annotated[int, Field(strict=True, ge=0, le=100 * 1024 * 1024)] = 100 * 1024 * 1024
     ast_nodes: Annotated[int, Field(strict=True, ge=0, le=50000)] = 50000
     ast_depth: Annotated[int, Field(strict=True, ge=0, le=64)] = 64
-    index_nodes: Annotated[int, Field(strict=True, ge=0, le=100000)] = 100000
-    index_edges: Annotated[int, Field(strict=True, ge=0, le=200000)] = 200000
-    structure_bytes: Annotated[int, Field(strict=True, ge=0, le=32 * 1024 * 1024)] = 32 * 1024 * 1024
-    slice_nodes: Annotated[int, Field(strict=True, ge=0, le=200)] = 200
-    call_depth: Annotated[int, Field(strict=True, ge=0, le=3)] = 3
+    index_nodes: Annotated[int, Field(strict=True, ge=0, le=2000000)] = 2000000
+    index_edges: Annotated[int, Field(strict=True, ge=0, le=4000000)] = 4000000
+    structure_bytes: Annotated[int, Field(strict=True, ge=0, le=256 * 1024 * 1024)] = 256 * 1024 * 1024
+    slice_nodes: Annotated[int, Field(strict=True, ge=0, le=400)] = 400
+    call_depth: Annotated[int, Field(strict=True, ge=0, le=5)] = 5
     contexts_per_function: Annotated[int, Field(strict=True, ge=0, le=64)] = 64
     value_candidates: Annotated[int, Field(strict=True, ge=0, le=4)] = 4
-    seconds: Annotated[float, Field(ge=0, le=120)] = 120
-    effective_seconds: Annotated[float, Field(ge=0, le=120)] = 120
+    seconds: Annotated[float, Field(ge=0, le=180)] = 180
+    effective_seconds: Annotated[float, Field(ge=0, le=180)] = 180
     queue_seconds: Annotated[float, Field(ge=0)] = 0
     cpu_wait_seconds: Annotated[float, Field(ge=0)] = 0
     analysis_seconds: Annotated[float, Field(ge=0)] = 0

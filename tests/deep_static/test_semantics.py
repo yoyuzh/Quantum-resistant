@@ -8,7 +8,7 @@ from unittest.mock import patch
 from deep_analysis.abstract_values import FactStore
 from deep_analysis.engine import analyze
 from deep_analysis.models import Ambiguous, Budgets, Known, Unknown
-from tests.deep_static.test_snapshot_index import snapshot
+from tests.deep_static.helpers import snapshot
 
 
 def run_files(files, **kwargs):
@@ -191,7 +191,7 @@ class FlowTests(unittest.TestCase):
 
     def test_missing_module_and_flat_input_do_not_join_values(self):
         from deep_analysis.snapshot import build_snapshot
-        from tests.deep_static.test_snapshot_index import records
+        from tests.deep_static.helpers import records
         files = {'config.py': 'ALG="RS256"', 'app.py': 'import jwt\nfrom config import ALG\njwt.encode({},k,algorithm=ALG)'}
         flat = build_snapshot(records(files), 'manual_upload')
         self.assertEqual(algorithm(jwt_candidates(analyze(flat))[0]).reason, 'cross_module_disabled')

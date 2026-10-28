@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-RULES_VERSION = 'crypto-subset-1'
-ENGINE_VERSION = 'deep-ast-1'
-VERIFIER_VERSION = 'ast-witness-1'
-LIBRARY_PROFILES = ('PyJWT 2.10.1', 'cryptography 45 API subset', 'PyCryptodome 3.23.0')
+from scanner.api_catalog import RULES_VERSION, JWT_ALGORITHMS, api_algorithm
+ENGINE_VERSION = 'deep-ast-2'
+VERIFIER_VERSION = 'ast-witness-2'
+LIBRARY_PROFILES = ('PyJWT 2.10.1', 'cryptography 45 API subset', 'PyCryptodome 3.23.0', 'python-ecdsa default-curve subset')
 PYCA = 'cryptography.hazmat.primitives.'
 
 
@@ -26,6 +26,8 @@ class Rule:
 
 def _rules() -> tuple[Rule, ...]:
     rules = [Rule('jwt.encode', 'PyJWT', 'sign', None), Rule('jwt.decode', 'PyJWT', 'verify', None)]
+    rules.append(Rule('ecdsa.SigningKey.generate', 'ecdsa', 'key_generation', 'ECDSA', 'ECDSA:private',
+                      optional=('curve', 'entropy', 'hashfunc')))
     for suffix, algorithm, parameters in (
         ('rsa.generate_private_key', 'RSA', ('public_exponent', 'key_size')),
         ('ec.generate_private_key', 'EC', ('curve',)),
@@ -64,17 +66,12 @@ def _rules() -> tuple[Rule, ...]:
                           parameters=('key', 'mode') if scheme == 'DSS' else ('rsa_key',),
                           optional=('encoding', 'randfunc') if scheme == 'DSS' else ('mask_func', 'salt_bytes', 'rand_func') if scheme == 'pss' else (),
                           keyword_only=('mask_func', 'salt_bytes', 'rand_func') if scheme == 'pss' else ()))
-    return tuple(rules)
+    return tuple(Rule(**{**rule.__dict__, 'algorithm': api_algorithm(rule.api) or rule.algorithm}) for rule in rules)
 
 
 RULES = {rule.api: rule for rule in _rules()}
-JWT_ALGORITHMS = {
-    **{a: ('RSA', 'quantum_vulnerable') for a in ('RS256', 'RS384', 'RS512', 'PS256', 'PS384', 'PS512')},
-    **{a: ('EC', 'quantum_vulnerable') for a in ('ES256', 'ES384', 'ES512', 'ES256K')},
-    **{a: ('HMAC-SHA' + a[2:], 'symmetric') for a in ('HS256', 'HS384', 'HS512')},
-    'EdDSA': ('EdDSA', 'quantum_vulnerable'),
-}
-KEY_FAMILIES = frozenset({'RSA', 'EC', 'ECC', 'DSA', 'Ed25519', 'X25519'})
+
+KEY_FAMILIES = frozenset({'RSA', 'EC', 'ECC', 'DSA', 'ECDSA', 'Ed25519', 'X25519'})
 
 
 def method_rule(key_type: str | None, method: str) -> tuple[str, str] | None:
@@ -86,7 +83,11 @@ def method_rule(key_type: str | None, method: str) -> tuple[str, str] | None:
         return (method, parts[2]) if method in ('sign', 'verify') else None
     if family == 'X25519':
         return ('key_exchange', family) if method == 'exchange' and role == 'private' else None
-    if family in ('RSA', 'EC', 'Ed25519'):
+    if family == 'EC' and method == 'exchange' and role == 'private':
+        return 'key_exchange', family
+    if family == 'RSA' and ((method == 'encrypt' and role == 'public') or (method == 'decrypt' and role == 'private')):
+        return method, family
+    if family in ('RSA', 'EC', 'Ed25519', 'ECDSA'):
         if method == 'sign' and role in ('private', 'either'):
             return method, family
         if method == 'verify' and role in ('public', 'either'):
@@ -99,7 +100,9 @@ def method_parameters(key_type: str, method: str) -> tuple[str, ...]:
         return ('msg_hash',) if method == 'sign' else ('msg_hash', 'signature')
     family = key_type.split(':')[0]
     if method == 'exchange':
-        return ('peer_public_key',)
+        return ('algorithm', 'peer_public_key') if family == 'EC' else ('peer_public_key',)
+    if method in ('encrypt', 'decrypt'):
+        return ('plaintext' if method == 'encrypt' else 'ciphertext', 'padding')
     data = ('data',) if method == 'sign' else ('signature', 'data')
     if family == 'RSA':
         return (*data, 'padding', 'algorithm')

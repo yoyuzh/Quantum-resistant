@@ -96,7 +96,7 @@ class Verifier:
                 return {}, required, 'invalid_method_binding'
             key_fact = key_fact.edge('KEY_TYPE_FLOW', key_fact.last, operation.sink_location)
             role, family = match
-            library = 'PyCryptodome' if key_fact.key_type.startswith('signer:') else 'cryptography'
+            library = 'PyCryptodome' if key_fact.key_type.startswith('signer:') else 'ecdsa' if key_fact.key_type.startswith('ECDSA:') else 'cryptography'
             api = library + '.' + key_fact.key_type + '.' + node.func.attr
             algorithm, role_fact = replace(key_fact, value=Known(value=family)), replace(key_fact, value=Known(value=role))
         if operation.api != api or operation.library != library or operation.operation_type != role:

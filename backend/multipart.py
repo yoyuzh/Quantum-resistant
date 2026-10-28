@@ -64,9 +64,9 @@ class MultipartParser:
                     raise HTTPException(400, '上传文件头格式不正确或存在重复头')
                 filename = headers.get_filename()
                 self.field = headers.get_param('name', header='content-disposition')
-                if self.path_fields and self.field in ('manifest', 'analysis_mode') and filename is None:
+                if self.path_fields and self.field in ('manifest', 'analysis_mode', 'ai_assisted', 'ai_profile_id', 'ai_profile_version') and filename is None:
                     self.name = self.field
-                    self.part_limit = 4 * 1024 * 1024 if self.field == 'manifest' else 16
+                    self.part_limit = 4 * 1024 * 1024 if self.field == 'manifest' else 128
                 else:
                     if not filename or self.field != 'files':
                         raise HTTPException(422 if self.path_fields else 400, '上传文件字段必须为 files')

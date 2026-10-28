@@ -8,7 +8,7 @@ from backend.scanning import build_scan_response
 from backend.popular import batch_incomplete
 
 
-def remote_work(kind, value, budget, *, collector, analysis_mode='basic'):
+def remote_work(kind, value, budget, *, collector):
     source_type = 'github_repository' if kind == 'github' else 'pypi_package'
     pipeline = ScanPipeline(budget, source_type)
     try:
@@ -20,14 +20,12 @@ def remote_work(kind, value, budget, *, collector, analysis_mode='basic'):
             docs = CollectedSources(pipeline.documents, partial=True, diagnostics=[{'code': 'collection_interrupted', 'message': str(exc)}])
         if not docs:
             raise CollectionError('未找到可扫描的文本文件')
-        from backend.deep_work import complete_scan
-        result = build_scan_response(docs, source_type, deadline=budget).model_dump()
-        return complete_scan(result, pipeline.documents, budget, analysis_mode)
+        return build_scan_response(docs, source_type, deadline=budget).model_dump()
     finally:
         pipeline.finish()
 
 
-def local_work(documents, source_type, budget, *, analysis_mode='basic', relative_paths=None):
+def local_work(documents, source_type, budget):
     pipeline = ScanPipeline(budget, source_type)
     budget.control.emit(stage='读取与分析', candidate_files=len(documents), analysis_total=len(documents), totals_final=True)
     accepted = []
@@ -47,9 +45,7 @@ def local_work(documents, source_type, budget, *, analysis_mode='basic', relativ
                 break
         docs = CollectedSources(accepted, candidates=len(documents), skipped=len(documents) - len(accepted), partial=len(accepted) < len(documents),
                                 skip_reasons={failure_reason: len(documents) - len(accepted)} if len(accepted) < len(documents) else {}, diagnostics=diagnostics)
-        from backend.deep_work import complete_scan
-        result = build_scan_response(docs, source_type, deadline=budget).model_dump()
-        return complete_scan(result, pipeline.documents, budget, analysis_mode, relative_paths=relative_paths)
+        return build_scan_response(docs, source_type, deadline=budget).model_dump()
     finally:
         pipeline.finish()
 
@@ -64,6 +60,9 @@ def popular_work(payload, budget, *, search, batch_scan, save, output_path):
     incomplete = batch_incomplete(result) or budget.control.cancelled.is_set()
     result.meta['incomplete'] = incomplete
     result.meta['saved_snapshot'] = False
+    if getattr(budget.control,'assisted_popular',False):
+        budget.control.popular_commit=(save,output_path)
+        return asdict(result)
     if not incomplete:
         if not budget.control.begin_commit():
             result.meta['incomplete'] = True

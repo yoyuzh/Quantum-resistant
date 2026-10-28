@@ -1,1 +1,1 @@
-"""可选、独立于确定性扫描的 AI 辅助分析。"""
+"""Evidence-grounded model assistance; never changes static findings."""

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import re
 import tarfile
 import zipfile
 from collections import Counter
@@ -12,7 +13,6 @@ import httpx
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes
 from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries, has_environment_proxy, remote_client_options
 from backend.collection_config import MAX_ARCHIVE_BYTES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
-from backend.remote_cache import RemoteSourceCache
 from backend.collectors import is_supported_source_path, source_priority
 
 
@@ -92,14 +92,8 @@ def decode_github_blob(payload: dict) -> str:
         raise FileCollectionError("文件不是有效 UTF-8 文本", 'encoding') from exc
 
 
-def github_sources(url: str, max_files: int, deadline: Deadline, *, cache: RemoteSourceCache | None = None) -> CollectedSources:
+def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSources:
     limit = max(1, min(max_files, MAX_COLLECTED_FILES))
-    cache_key = f"{url}|{limit}"
-    if cache:
-        cached = cache.load("github", cache_key, deadline=deadline)
-        if cached:
-            deadline.control.emit(stage="使用 GitHub 本地缓存", collected_files=len(cached))
-            return cached
     owner, repo = urlparse(url).path.strip("/").split("/")
     api = f"https://api.github.com/repos/{owner}/{repo}"
     headers, branches, last_error = github_headers(), ["main", "master"], None
@@ -130,18 +124,27 @@ def github_sources(url: str, max_files: int, deadline: Deadline, *, cache: Remot
                     raise CollectionError("GitHub 文件列表响应格式无效")
                 candidates = [i for i in payload.get("tree", []) if i.get("type") == "blob" and is_supported_source_path(str(i.get("path", "")))]
                 candidates.sort(key=lambda i: source_priority(i["path"]))
-                version = str(payload.get('sha') or branch)
+                # A tree SHA identifies a tree object, not a downloadable commit/ref.
+                version = branch
+                if payload.get('sha') and not re.fullmatch(r'[0-9a-fA-F]{40}', branch):
+                    try:
+                        commit_data = github_get(client, f'{api}/commits/{quote(branch, safe="")}', headers=headers,
+                                            attempts=1, deadline=deadline).json()
+                        commit = commit_data.get('sha') if isinstance(commit_data,dict) else None
+                        if isinstance(commit,str) and re.fullmatch(r'[0-9a-fA-F]{40}',commit):
+                            version = commit
+                    except (CollectionTimeout, GitHubAccessError):
+                        raise
+                    except (httpx.HTTPError, ValueError, CollectionError, OSError):
+                        pass
                 if len(candidates) > 32 or payload.get('truncated'):
                     try:
                         deadline.control.emit(stage='下载仓库归档')
-                        archive = github_get(client, f'{url}/archive/{quote(version, safe="")}.zip', headers=headers,
+                        archive = github_get(client, f'https://codeload.github.com/{owner}/{repo}/zip/{quote(version, safe="")}', headers=headers,
                                              max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
                         archive_path = archive.extensions.get('archive_path')
                         try:
-                            docs = collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
-                            if cache:
-                                cache.save("github", cache_key, docs)
-                            return docs
+                            return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
                         finally:
                             if archive_path:
                                 deadline.control.storage.remove(archive_path)
@@ -199,11 +202,8 @@ def github_sources(url: str, max_files: int, deadline: Deadline, *, cache: Remot
                             reasons[getattr(value, 'reason', 'download_failure')] += 1
                     reasons['cancelled' if deadline.control.cancelled.is_set() else 'timeout'] += max(0, len(eligible) - len(completed))
                     deadline.control.emit(processed_files=len(candidates), skipped_files=skipped, analysis_total=len(docs), totals_final=True)
-                    result = CollectedSources(docs, limit=limit, candidates=None if payload.get("truncated") else len(candidates),
-                                              skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
-                    if cache:
-                        cache.save("github", cache_key, result)
-                    return result
+                    return CollectedSources(docs, limit=limit, candidates=None if payload.get("truncated") else len(candidates),
+                                            skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
                 if timed_out:
                     raise CollectionTimeout("GitHub 文件采集超时")
                 if access_error:
@@ -220,7 +220,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline, *, cache: Remot
         for branch in branches:
             try:
                 deadline.control.emit(stage="下载仓库归档")
-                archive = github_get(client, f"{url}/archive/refs/heads/{quote(branch, safe='')}.zip", headers=headers,
+                archive = github_get(client, f"https://codeload.github.com/{owner}/{repo}/zip/{quote(branch, safe='')}", headers=headers,
                                      max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
                 archive_path = archive.extensions.get('archive_path')
                 try:
@@ -229,8 +229,6 @@ def github_sources(url: str, max_files: int, deadline: Deadline, *, cache: Remot
                     if archive_path:
                         deadline.control.storage.remove(archive_path)
                 if docs:
-                    if cache:
-                        cache.save("github", cache_key, docs)
                     return docs
             except (CollectionTimeout, GitHubAccessError):
                 raise
@@ -244,13 +242,7 @@ def pypi_candidate_score(item: dict) -> tuple:
     return (0 if item.get("packagetype") == "sdist" else 1, 0 if "py3-none-any.whl" in filename else 1, filename)
 
 
-def pypi_sources(name: str, deadline: Deadline, *, cache: RemoteSourceCache | None = None) -> CollectedSources:
-    cache_key = name.lower()
-    if cache:
-        cached = cache.load("pypi", cache_key, deadline=deadline)
-        if cached:
-            deadline.control.emit(stage="使用 PyPI 本地缓存", collected_files=len(cached))
-            return cached
+def pypi_sources(name: str, deadline: Deadline) -> CollectedSources:
     last_error: Exception | None = None
     configured = remote_client_options()
     options = [configured]
@@ -295,8 +287,6 @@ def pypi_sources(name: str, deadline: Deadline, *, cache: RemoteSourceCache | No
                             if archive_path:
                                 deadline.control.storage.remove(archive_path)
                         if docs:
-                            if cache:
-                                cache.save("pypi", cache_key, docs)
                             return docs
                     except CollectionTimeout:
                         raise

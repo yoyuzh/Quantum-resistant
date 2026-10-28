@@ -8,7 +8,7 @@ from yaml.events import AliasEvent, CollectionEndEvent, CollectionStartEvent
 from yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
 from scanner.control import AnalysisLimit, MAX_DEPTH, MAX_NODES, checkpoint
-from scanner.rules import Finding, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
+from scanner.rules import sensitive_context, Finding, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
 
 
 class ConfigError(Exception):
@@ -69,7 +69,7 @@ def scan_config(source: str, suffix: str, *, pem_values: list[tuple[int, str]] |
                     raise AnalysisLimit('复杂配置键未纳入支持范围')
                 # Nested mappings establish their own key context, not prose
                 # found anywhere underneath a broad "security" section.
-                stack.append((value, bool(SENSITIVE_STRING_CONTEXT_RE.search(key.value))))
+                stack.append((value, bool(sensitive_context(key.value))))
         elif isinstance(node, SequenceNode):
             stack.extend((item, sensitive) for item in reversed(node.value))
         elif isinstance(node, ScalarNode) and sensitive and node.tag == 'tag:yaml.org,2002:str':

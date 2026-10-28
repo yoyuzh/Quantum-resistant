@@ -13,6 +13,7 @@ from deep_analysis.symbol_index import location
 
 
 class CryptoEvaluator(Evaluator):
+    template_facts = True
     def _expression(self, node: ast.expr, frame: Frame, static_default: bool) -> Fact:
         if isinstance(node, ast.Dict) and not frame.blocked:
             if len(node.keys) > 32 or any(k is None or not isinstance(k, ast.Constant) or type(k.value) is not str for k in node.keys):
@@ -32,6 +33,10 @@ class CryptoEvaluator(Evaluator):
             arguments, reason = self.rule_arguments(site, frame)
             if reason:
                 return self.store.unknown(reason)
+            if rule.library == 'ecdsa':
+                from deep_analysis.curves import supported_curve
+                if not supported_curve(site.node, frame.module, self.discovery.index.modules):
+                    return self.store.unknown('unsupported_ecdsa_curve')
             key_type = rule.key_type
             origin = site.span
             base = None
@@ -50,9 +55,11 @@ class CryptoEvaluator(Evaluator):
                                        base.steps if base else (), frame.conditions,
                                        key_type=key_type, key_origin=origin)
                 return self.edge(fact, 'KEY_TYPE_FLOW', origin or site.span, site.span, frame)
-        if site and site.call.target is None and isinstance(node.func, ast.Attribute) and node.func.attr in ('public_key', 'publickey'):
+        if site and site.call.target is None and isinstance(node.func, ast.Attribute) and node.func.attr in ('public_key', 'publickey', 'get_verifying_key'):
             receiver = self.expression(node.func.value, frame)
-            if receiver.key_type and receiver.key_type.split(':')[0] in ('RSA', 'EC', 'Ed25519', 'X25519') and not node.args and not node.keywords:
+            family = receiver.key_type.split(':')[0] if receiver.key_type else None
+            supported = family == 'ECDSA' if node.func.attr == 'get_verifying_key' else family in ('RSA', 'EC', 'Ed25519', 'X25519')
+            if supported and not node.args and not node.keywords:
                 family = receiver.key_type.split(':')[0]
                 fact = self.store.fact(receiver.value, receiver.steps, receiver.conditions,
                                        key_type=family + ':public', key_origin=receiver.key_origin)

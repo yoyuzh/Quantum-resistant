@@ -20,7 +20,7 @@ class EvidenceMetadataTests(unittest.TestCase):
         old, notes = analyze_source(RSA)
         new, new_notes = analyze_source(RSA, include_metadata=True)
         self.assertEqual(notes, new_notes)
-        self.assertEqual(old, [{k: v for k, v in f.items() if k not in {"detection_method", "library", "resolved_api"}} for f in new])
+        self.assertEqual(old, [{k: v for k, v in f.items() if k not in {"detection_method", "library", "resolved_api", "rule_id", "rule_version"}} for f in new])
         self.assertEqual(new[0]["detection_method"], "ast_call")
         self.assertEqual(new[0]["library"], "cryptography")
         self.assertEqual(new[0]["resolved_api"], "cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key")
@@ -85,7 +85,7 @@ class AnalysisReportTests(unittest.TestCase):
         self.assertEqual(len(migrations[0]["actions"]), 4)
 
     def test_legacy_missing_metadata_remains_unknown(self):
-        legacy = [{k: v for k, v in f.items() if k not in {"detection_method", "library", "resolved_api"}}
+        legacy = [{k: v for k, v in f.items() if k not in {"detection_method", "library", "resolved_api", "rule_id", "rule_version"}}
                   for f in self.result["findings"]]
         analysis = build_analysis(legacy)
         self.assertEqual(analysis["assets"][0]["detection_methods"], ["unknown"])

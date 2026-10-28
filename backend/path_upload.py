@@ -99,4 +99,16 @@ async def read_path_upload(request, storage, folder):
             if mode not in ('basic', 'deep'):
                 raise HTTPException(422, 'analysis_mode必须为basic或deep')
             fingerprint = await run_in_threadpool(bind_manifest, fields['manifest'], documents, fingerprints, mode)
+            raw_ai = fields.get('ai_assisted', b'false')
+            if raw_ai not in (b'true', b'false'):
+                raise HTTPException(422, 'ai_assisted必须为true或false')
+            fingerprint['ai_assisted'] = raw_ai == b'true'
+            for key in ('ai_profile_id','ai_profile_version'):
+                if key in fields:
+                    try:
+                        value=fields[key].decode('ascii')
+                        if not 1<=len(value)<=64: raise ValueError()
+                    except (UnicodeError,ValueError):
+                        raise HTTPException(422,'模型选择字段无效') from None
+                    fingerprint[key]=value
             return documents, fingerprint

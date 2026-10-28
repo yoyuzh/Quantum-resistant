@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-import json
 from math import sqrt
 from typing import Annotated, Callable, Literal
 
@@ -11,48 +10,6 @@ from deep_analysis.inputs import LogicalInput
 from pydantic import Field
 
 from deep_analysis.models import AbstractValue, Contract, EdgeType, OperationType, Span, Text
-
-
-_REASON_ALIASES = {
-    "recursive_call": "recursion",
-    "recursion_limit": "recursion",
-    "unsupported_decorator": "unsupported_function",
-    "unsupported_function": "unsupported_function",
-    "shadowed_or_dynamic_binding": "unsupported_value",
-    "unsupported_transform": "unsupported_value",
-    "unsupported_runtime_config": "unsupported_configuration",
-}
-
-
-def _canonical_condition(value: str) -> str:
-    if value == "condition":
-        return "branch:true"
-    if value == "not condition":
-        return "branch:false"
-    if value.startswith("condition:true:"):
-        return "branch:true"
-    if value.startswith("condition:false:"):
-        return "branch:false"
-    return value
-
-
-def _canonical_value(value: dict) -> dict:
-    result = dict(value)
-    if result.get("kind") == "unknown":
-        reason = result.get("reason", "")
-        if result.get("alternatives") and reason in {"unbound_name", "unbound_local"}:
-            reason = "unknown_branch"
-        result["reason"] = _REASON_ALIASES.get(reason, reason)
-        result["alternatives"] = [
-            {**item, "conditions": [_canonical_condition(condition) for condition in item.get("conditions", [])]}
-            for item in result.get("alternatives", [])
-        ]
-    elif result.get("kind") == "ambiguous":
-        result["alternatives"] = [
-            {**item, "conditions": [_canonical_condition(condition) for condition in item.get("conditions", [])]}
-            for item in result.get("alternatives", [])
-        ]
-    return result
 
 
 class OperationLabel(Contract):
@@ -80,10 +37,7 @@ class Prediction(Contract):
 
 def _key(label: OperationLabel, *, algorithm: bool) -> str:
     # Support membership belongs to the gold set, never to the prediction.
-    data = label.model_dump(exclude={"supported"} | (set() if algorithm else {"algorithm"}))
-    if algorithm:
-        data["algorithm"] = _canonical_value(data["algorithm"])
-    return json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return label.model_dump_json(exclude={"supported"} | (set() if algorithm else {"algorithm"}))
 
 
 def _ratio(numerator: int, denominator: int) -> float | None:

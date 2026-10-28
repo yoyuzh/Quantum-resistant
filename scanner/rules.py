@@ -175,9 +175,15 @@ DIRECT_REGEX_RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
 
 
 SENSITIVE_STRING_CONTEXT_RE = re.compile(
-    r"(algorithm|alg|jwt|ssh|tls|ssl|cipher|signature|key|pem|cert|certificate)",
+    r"(?:^|[_\-.])(?:algorithms?|alg|jwt|ssh|tls|ssl|ciphers?|signature|keys?|pem|cert|certificate)(?:$|[_\-.])",
     re.IGNORECASE,
 )
+
+
+def sensitive_context(name: str) -> bool:
+    name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', name)
+    name = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', name)
+    return bool(SENSITIVE_STRING_CONTEXT_RE.search(name))
 
 
 STRING_IDENTIFIER_RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (

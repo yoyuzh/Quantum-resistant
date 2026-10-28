@@ -29,7 +29,7 @@ def anchor_span(case: dict, reference: list) -> Span:
 
 def load_catalog() -> tuple[dict, ...]:
     raw = (ROOT / "corpus.json").read_bytes()
-    manifest = json.loads((ROOT / "manifest.json").read_text())
+    manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
     if hashlib.sha256(raw).hexdigest() != manifest["corpus_sha256"]:
         raise ValueError("夹具清单已变化，必须审查并显式重新冻结")
     cases = json.loads(raw)

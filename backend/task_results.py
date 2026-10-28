@@ -18,7 +18,7 @@ def persist_result(store, job, value):
             if content or not source.get('char_count'):
                 paths[identity] = store.storage.write_source(job.folder, content.encode('utf-8'))
         source['content'] = ''
-        source['content_available'] = identity in paths
+        source['content_available'] = identity in paths or bool(getattr(job.control, 'source_task_id', None) and source.get('content_available'))
     try:
         path = store.storage.write_json(job.folder, result)
     except RuntimeError:

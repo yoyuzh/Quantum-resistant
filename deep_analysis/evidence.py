@@ -62,10 +62,10 @@ def project(snapshot: Snapshot, index: Index, proposal: Proposal, claim_type: st
             edges.update(api_bindings(index, source))
             edges.update(api_bindings(index, target))
     positions.update(p for _, a, b in edges for p in (a, b))
-    if len(positions) > min(200, slice_nodes) or len(edges) > min(200, slice_nodes):
+    if len(positions) > min(400, slice_nodes) or len(edges) > min(400, slice_nodes):
         raise OverflowError('evidence_slice_limit')
-    ast_nodes = {location(m.source_id, n): n for m in index.modules for n in ast.walk(m.tree)
-                 if hasattr(n, 'end_lineno') and n.end_lineno is not None}
+    from deep_analysis.lazy_ast import SpanNodes
+    ast_nodes = SpanNodes(index.modules)
     identities = {s.source_id: s for s in snapshot.identity.sources}
     nodes = []
     for span in sorted(positions, key=lambda p: (p.source_id, p.start_line, p.start_col, p.end_line, p.end_col)):

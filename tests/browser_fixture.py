@@ -1,7 +1,7 @@
 """Offline browser acceptance server: python -m tests.browser_fixture (port 8018).
 
-Uses real scan/upload/report routes; substitutes only remote collection and batch
-search. All generated popular data lives in a temporary directory.
+Uses real scan/upload/report routes, mocked remote collection and opt-in source
+expiry/desktop layout fixtures. Popular data lives in a temporary directory.
 """
 from __future__ import annotations
 
@@ -15,13 +15,13 @@ import uvicorn
 
 from backend import main
 from backend.collection_common import CollectedSources, CollectionError, CollectionTimeout
-from backend.popular import BatchResult, RepoInfo, run_batch_scan
-from backend.reporting import beijing_now_iso
+from backend.popular import RepoInfo, run_batch_scan
 from backend import task_routes, scanning
 from backend.scanning import build_scan_response
 from backend.html_report import build_html_report
 from backend.task_store import TaskStore
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
+from fastapi import HTTPException
 
 CODE = "from cryptography.hazmat.primitives.asymmetric import rsa\n" + "rsa.generate_private_key(public_exponent=65537, key_size=2048)\n" * 55
 
@@ -61,6 +61,20 @@ def collect(value, **kwargs):
 refreshes = 0
 real_analyze = scanning.analyze_source
 real_result = TaskStore.result
+real_source = TaskStore.source
+
+
+@main.app.get('/fixture/desktop-bridge.js', include_in_schema=False)
+def desktop_bridge() -> Response:
+    return Response("window.quantumDesktop={platform:'win32',readTheme:()=>localStorage.getItem('app-theme'),saveTheme:()=>{}};",
+                    media_type='application/javascript')
+
+
+@main.app.get('/fixture/desktop', response_class=HTMLResponse, include_in_schema=False)
+def desktop_layout() -> str:
+    """Visual layout only; does not grant Electron capabilities or emulate OS chrome."""
+    html = (Path(__file__).resolve().parents[1] / 'web' / 'index.html').read_text(encoding='utf-8')
+    return html.replace('<head>', '<head><script src="/fixture/desktop-bridge.js"></script>')
 
 
 def fixture_result(self, identity, include_content=True):
@@ -70,6 +84,13 @@ def fixture_result(self, identity, include_content=True):
         result['coverage'] = None
         result['diagnostics'] = []
     return result
+
+
+def fixture_source(self: TaskStore, identity: str, source_id: str) -> dict:
+    result = real_result(self, identity, include_content=False)
+    if any('expired' in (source.get('origin') or '') for source in result.get('sources', [])):
+        raise HTTPException(404, '模拟源码已过期，请重新扫描；现有代码证据仍可查看。')
+    return real_source(self, identity, source_id)
 
 
 def slow_analyze(content, filename, *args, **kwargs):
@@ -125,6 +146,7 @@ if __name__ == "__main__":
              patch.object(main, "scan_popular", popular), \
              patch.object(task_routes, 'fetch_popular_repos', task_search), \
              patch.object(TaskStore, 'result', fixture_result), \
+             patch.object(TaskStore, 'source', fixture_source), \
              patch.object(scanning, 'analyze_source', slow_analyze), \
              patch('backend.pipeline.analyze_source', slow_analyze), \
              patch('backend.popular.analyze_source', slow_analyze), \

@@ -4,6 +4,7 @@ import re
 from dataclasses import asdict
 from pathlib import Path
 
+from scanner.api_catalog import RULES_VERSION
 from scanner.control import AnalysisLimit, MAX_SOURCE_BYTES, checkpoint
 from scanner.config_analysis import ConfigError, scan_config
 from scanner.pem_analysis import pem_material
@@ -36,9 +37,12 @@ def analyze_source(source: str, filename: str = "snippet.py", source_type: str =
                 diagnostics.extend(dict(note, source_id=identity) for note in visitor.diagnostics)
             except (SyntaxError, IndentationError, ValueError, TypeError, RecursionError):
                 diagnostics.append({"code": "syntax_fallback", "message": f"{filename} 无法完成 Python AST 分析，已使用有限的文本规则。", "source_id": identity})
-                found = scan_with_regex(source, include_pem=False)
+                found = scan_with_regex(source, include_pem=False, dotnet=False)
         else:
-            found = scan_with_regex(source, c_style=c_style, include_pem=False)
+            found = scan_with_regex(source, c_style=c_style, include_pem=False, dotnet=suffix == '.cs')
+            if suffix in {'.js', '.jsx', '.ts', '.tsx'}:
+                from scanner.foreign_analysis import scan_node_crypto
+                found.extend(scan_node_crypto(source))
         materials = config_pem if suffix in {'.json', '.yaml', '.yml'} else pem_material(source, suffix, tree)
         for first_line, material in materials:
             checkpoint()
@@ -56,6 +60,9 @@ def analyze_source(source: str, filename: str = "snippet.py", source_type: str =
     for item in merge_findings(found):
         checkpoint()
         record = asdict(item)
+        if include_metadata:
+            record['rule_id'] = item.resolved_api or item.detection_method or 'legacy'
+            record['rule_version'] = RULES_VERSION
         if not include_metadata:
             for key in ("detection_method", "library", "resolved_api"):
                 record.pop(key)

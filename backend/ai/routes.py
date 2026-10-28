@@ -1,94 +1,140 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
-from backend import task_routes
-from backend.ai.models import AiAnalysisResult, Preview, PreviewRequest, SubmitRequest
-from backend.ai.runner import analyze
-from backend.collection_common import CollectionTimeout
+import json
+import asyncio
+import ipaddress
+import time
+from threading import Event
+
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from backend.ai.config import get_config
+from backend import task_routes, runtime
+from backend.ai.config import Settings
+from backend.ai.contracts import Submit
+from backend.ai.provider import ProviderError, complete
 
-router = APIRouter(prefix="/api/ai", tags=["AI 辅助分析"])
-task_router = APIRouter(tags=["AI 辅助分析"])
-
-
-@router.get("/config")
-def configuration() -> JSONResponse:
-    return JSONResponse(get_config().public(), headers={"Cache-Control": "no-store"})
+router = APIRouter()
 
 
-def require_config():
-    config = get_config()
-    if not config.enabled or not config.valid:
-        raise HTTPException(503, config.reason)
-    return config
-
-
-@router.post("/previews")
-def preview(payload: PreviewRequest):
-    config = require_config()
+def local(request):
+    host = request.client.host if request.client else ''
     try:
-        return task_routes.store.ai_previews.prepare(payload.source_task_id, config)
-    except CollectionTimeout:
-        raise HTTPException(504, "AI 本地预览准备超时，请缩小范围") from None
+        allowed = ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        allowed = host == 'testclient'
+    if not allowed:
+        raise HTTPException(403, '模型配置仅允许本机管理，内网访问只能读取状态')
 
 
-@task_router.post("/api/tasks/ai", status_code=202)
-def submit(payload: SubmitRequest, request_id: task_routes.RequestId):
-    store = task_routes.store
-    fingerprint = payload.model_dump()
-    # 必须先检查幂等，已接纳的任务不依赖预览 TTL 或当前配置。
-    with store.lock:
-        store._prune()
-        for job in store.jobs.values():
-            if job.request_id == request_id:
-                if job.kind != "ai" or job.payload.get("request") != fingerprint:
-                    raise HTTPException(409, "请求标识已用于其他输入")
-                return store._snapshot(job)
-        config = require_config()
-        previews = store.ai_previews
-        previews.prune()
-        entry = previews.entries.get(payload.preview_id)
-        if entry is None:
-            consumed = any(job.kind == "ai" and job.payload.get("preview_id") == payload.preview_id
-                           for job in store.jobs.values())
-            raise HTTPException(409 if consumed else 404, "预览已消费" if consumed else "预览不存在或已过期，请重新预览")
-        snapshot = Preview.model_validate_json(entry["path"].read_bytes())
-        if payload.digest != snapshot.digest or config.internal_version() != entry["config"]:
-            raise HTTPException(409, "预览摘要或模型配置已变化，请重新预览")
-        ticket = store.reserve()
-        folder = None
-        try:
-            folder = store.storage.folder()
-            # 独立副本移交任务；失败时原预览不消费。
-            store.storage.write(folder, snapshot.model_dump_json().encode("utf-8"), ".json")
-            state = store.submit("ai", {"request": fingerprint, "source_task_id": snapshot.source_task_id,
-                                       "preview_id": snapshot.preview_id}, request_id,
-                                 lambda budget: analyze(snapshot, config, budget), folder=folder, admission=ticket)
-        except (RuntimeError, OSError):
-            ticket.release()
-            if folder:
-                store.storage.remove_folder(folder)
-            raise HTTPException(429, "AI 任务临时存储容量不足，请稍后重试") from None
-        except BaseException:
-            ticket.release()
-            if folder:
-                store.storage.remove_folder(folder)
-            raise
-        entry["timer"].cancel()
-        store.storage.remove_folder(entry["folder"])
-        del previews.entries[payload.preview_id]
-        return state
+def configure(settings):
+    from backend.ai.profiles import ProfileInput
+    service=task_routes.store.ai
+    with service.settings_lock:
+        identity=service.profiles.active
+        # Legacy API remains process-only when remember was omitted.
+        value=ProfileInput(**settings.model_dump(),name=service.config.get().profile_name or '默认配置')
+        saved=service.profiles.put(identity,value,activate=True,persist=bool(settings.remember or 'remember' in settings.model_fields_set))
+        return saved
 
 
-@router.get("/tasks/{identity}/export")
+@router.get('/api/ai/config')
+def config(request: Request):
+    try:
+        local(request)
+        manage = True
+    except HTTPException:
+        manage = False
+    service=task_routes.store.ai
+    active=service.profiles.active
+    value=service.profiles.public(active) if active in service.profiles.values else service.config.get().public()
+    return JSONResponse({**value, 'active_profile_id':active, 'profile_count':len(service.profiles.values), 'can_manage': manage,
+                         'credential_storage': 'desktop' if runtime.desktop else value.get('credential_storage','process'),
+                         'credential_persisted': value.get('credential_persisted',False)}, headers={'Cache-Control': 'no-store'})
+
+
+@router.put('/api/ai/config')
+def save(settings: Settings, request: Request):
+    local(request)
+    if runtime.desktop:
+        raise HTTPException(403, '桌面配置须通过受限进程通信保存')
+    return JSONResponse(configure(settings), headers={'Cache-Control': 'no-store'})
+
+
+@router.delete('/api/ai/config/credential')
+def clear(request: Request):
+    local(request)
+    if runtime.desktop:
+        raise HTTPException(403, '桌面凭据须通过受限进程通信删除')
+    with task_routes.store.ai.settings_lock:
+        service=task_routes.store.ai
+        if service.profiles.active:
+            service.profiles.remove(service.profiles.active,credential_only=True)
+        else:
+            service.config.clear_key()
+    return JSONResponse(task_routes.store.ai.config.get().public(), headers={'Cache-Control': 'no-store'})
+
+
+@router.post('/api/ai/test')
+async def test(request: Request, profile_id: str | None = None):
+    local(request)
+    service = task_routes.store.ai
+    config = service.profiles.values.get(profile_id) if profile_id else service.config.get()
+    if config is None:
+        raise HTTPException(404,'模型配置不存在')
+    if not config.base_url or service.client is None:
+        raise HTTPException(503, '请先保存模型配置')
+    ticket = task_routes.store.reserve()
+    end = time.monotonic() + 45
+    stopped = Event()
+    def check():
+        if stopped.is_set() or not service.profiles.valid(config,require_consent=False):
+            raise ProviderError('config_changed', '连接测试已停止或模型配置已变化')
+        if time.monotonic() >= end:
+            raise ProviderError('provider_timeout', '连接测试超时')
+    value = {'model': config.model, 'stream': False, config.output_parameter: 64,
+             'messages': [{'role': 'user', 'content': 'Return only the JSON object {"ok":true}.'}]}
+    if config.json_mode:
+        value['response_format'] = {'type': 'json_object'}
+    if config.preset == 'deepseek' and config.reasoning_disabled:
+        value['thinking'] = {'type': 'disabled'}
+    from backend.ai.protocols import encode
+    async def exchange():
+        check()
+        return await complete(service.client, config, json.dumps(encode(config,value)).encode(), check)
+    try:
+        future = task_routes.store.scheduler.submit(exchange, loop=service.loop)
+        content, usage = await asyncio.wait_for(asyncio.wrap_future(future), 45)
+        if json.loads(content) != {'ok': True}:
+            raise ValueError()
+        service.profiles.report(config,'tested')
+        return {'ok': True, 'usage': usage}
+    except (ProviderError, ValueError) as exc:
+        service.profiles.report(config,exc.code if isinstance(exc,ProviderError) else 'provider_format')
+        raise HTTPException(502, exc.message if isinstance(exc, ProviderError) else '模型连接成功，但未按测试协议返回JSON') from None
+    except asyncio.TimeoutError:
+        raise HTTPException(504, '连接测试等待或请求超时') from None
+    finally:
+        stopped.set()
+        ticket.release()
+
+
+@router.post('/api/tasks/ai', status_code=202)
+def submit(payload: Submit, request_id: task_routes.RequestId):
+    return task_routes.store.ai.submit(payload.source_task_id, request_id,payload.model_dump(exclude={'source_task_id'},exclude_none=True))
+
+
+@router.post('/api/tasks/{identity}/stop-ai')
+def stop(identity: str):
+    return task_routes.store.ai.stop(identity)
+
+
+@router.get('/api/tasks/{identity}/analysis/export')
 def export(identity: str):
     store = task_routes.store
     with store.read_job(identity) as job:
-        if job.kind != "ai":
-            raise HTTPException(409, "此导出接口只接受 AI 分析任务")
-        # 严格模型构成导出白名单，禁止复用任意供应商对象。
-        result = AiAnalysisResult.model_validate(store.result(identity, include_content=False))
-    return JSONResponse(result.model_dump(), headers={
-        "Content-Disposition": 'attachment; filename="ai-analysis.json"', "Cache-Control": "no-store"})
+        if job.ended is None:
+            raise HTTPException(409, '请等待任务结束后导出')
+        value = store.checkpoint(identity)
+        result = {k: value[k] for k in ('scanned_at', 'source_type', 'coverage', 'diagnostics', 'deep_analysis', 'ai_analysis') if k in value}
+        return JSONResponse(result, headers={'Cache-Control': 'no-store', 'Content-Disposition': 'attachment; filename="assisted-analysis.json"'})

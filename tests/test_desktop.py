@@ -124,6 +124,23 @@ class DesktopProcessTests(unittest.TestCase):
         self.process.stdin.close()
         self.assertEqual(self.process.wait(timeout=12), 0)
 
+    def test_private_ai_configuration_never_echoes_key_and_http_cannot_write(self):
+        settings = {'preset': 'compatible', 'base_url': 'https://model.invalid/v1',
+                    'model': 'fixture', 'api_key': 'stdio-fixture-secret', 'consent': True}
+        self.assertEqual(self.client.put('/api/ai/config', json=settings).status_code, 403)
+        self.process.stdin.write(json.dumps({'command': 'configure_ai', 'id': 2, 'settings': settings}) + '\n')
+        self.process.stdin.flush()
+        response = self.lines.get(timeout=5)
+        self.assertEqual(response['event'], 'ai_config')
+        self.assertTrue(response['config']['ready'])
+        self.assertNotIn('stdio-fixture-secret', json.dumps(response))
+        public = self.client.get('/api/ai/config')
+        self.assertTrue(public.json()['has_key'])
+        self.assertNotIn('stdio-fixture-secret', public.text)
+        self.process.stdin.write('{"command":"clear_ai","id":3}\n')
+        self.process.stdin.flush()
+        self.assertFalse(self.lines.get(timeout=5)['config']['has_key'])
+
 
 if __name__ == '__main__':
     unittest.main()

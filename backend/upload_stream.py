@@ -26,6 +26,8 @@ async def read_upload(request, storage, folder, *, allow_mode=False):
                              max_file_bytes=MAX_COLLECTED_FILE_BYTES, max_files=MAX_COLLECTED_FILES, path_fields=allow_mode)
     documents, manifest = [], []
     mode = None
+    ai_assisted = None
+    selection = {}
     received = text_bytes = 0
     iterator = request.stream().__aiter__()
     end = asyncio.get_running_loop().time() + UPLOAD_TIMEOUT_SECONDS
@@ -47,6 +49,19 @@ async def read_upload(request, storage, folder, *, allow_mode=False):
         for event in events:
             if allow_mode:
                 field, name, body = event
+                if field in ('ai_profile_id','ai_profile_version'):
+                    if field in selection or len(body)>64:
+                        raise HTTPException(422,'模型选择字段无效')
+                    try:
+                        selection[field]=body.decode('ascii')
+                    except UnicodeError:
+                        raise HTTPException(422,'模型选择字段无效') from None
+                    continue
+                if field == 'ai_assisted':
+                    if ai_assisted is not None or body not in (b'true', b'false'):
+                        raise HTTPException(422, 'ai_assisted必须为单个true或false字段')
+                    ai_assisted = body == b'true'
+                    continue
                 if field != 'files':
                     if field != 'analysis_mode' or mode is not None or body not in (b'basic', b'deep'):
                         raise HTTPException(422, 'analysis_mode必须为单个basic或deep字段')
@@ -65,7 +80,9 @@ async def read_upload(request, storage, folder, *, allow_mode=False):
         if finished:
             if allow_mode and not documents:
                 raise HTTPException(422, '请上传至少一个文件')
-            fingerprint = {'files': manifest, 'file_count': len(documents)}
+            fingerprint = {'files': manifest, 'file_count': len(documents), **selection}
             if mode == 'deep':
                 fingerprint['analysis_mode'] = mode
+            if ai_assisted is not None:
+                fingerprint['ai_assisted'] = ai_assisted
             return documents, fingerprint

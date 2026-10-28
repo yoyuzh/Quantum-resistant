@@ -52,6 +52,8 @@ class RequestBoundary:
                 return await self.reject(scope, receive, send, 403, '请求来源不受信任，请从本项目页面操作')
         async def secured_send(message):
             if message['type'] == 'http.response.start':
+                if scope['path'].startswith('/api/ai/'):
+                    message['headers']=[(k,v) for k,v in message.get('headers',[]) if k.lower()!=b'cache-control']+[(b'cache-control',b'no-store')]
                 message['headers'] = [*message.get('headers', []),
                                       (b'x-content-type-options', b'nosniff'),
                                       (b'x-frame-options', b'DENY')]

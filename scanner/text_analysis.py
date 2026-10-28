@@ -9,7 +9,7 @@ from scanner.control import checkpoint, mask_span
 from scanner.lexing import c_style_channels
 from scanner.pem_analysis import pem_material
 from scanner.python_analysis import QuantumCryptoVisitor
-from scanner.rules import DIRECT_REGEX_RULES, Finding, PEM_HEADER_RULES, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
+from scanner.rules import sensitive_context, DIRECT_REGEX_RULES, Finding, PEM_HEADER_RULES, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
 
 
 def strip_strings_and_comments(source: str) -> str:
@@ -84,7 +84,7 @@ def scan_pem(source: str) -> list[Finding]:
     return results
 
 
-def scan_with_regex(source: str, aliases: dict[str, str] | None = None, *, c_style: bool = False, include_pem: bool = True) -> list[Finding]:
+def scan_with_regex(source: str, aliases: dict[str, str] | None = None, *, c_style: bool = False, include_pem: bool = True, dotnet: bool = True) -> list[Finding]:
     if c_style:
         clean, config_source, _ = c_style_channels(source)
     else:
@@ -103,6 +103,10 @@ def scan_with_regex(source: str, aliases: dict[str, str] | None = None, *, c_sty
     for number, line in enumerate(clean.splitlines(), 1):
         checkpoint()
         for key, pattern, evidence in DIRECT_REGEX_RULES:
+            if evidence.startswith('.NET') and not dotnet:
+                continue
+            if not evidence.startswith('.NET'):
+                continue  # Python fallback calls require an actual imported target below.
             if pattern.search(line):
                 results.append(finding(number, key, evidence))
         # Consume each maximal name once; never retry every dotted suffix.
@@ -123,9 +127,10 @@ def scan_with_regex(source: str, aliases: dict[str, str] | None = None, *, c_sty
             continue
         raw = without_hash_comment(raw_lines[number - 1])
         context = re.match(r"\s*['\"]?([\w.-]+)['\"]?\s*[:=]\s*(.*)", raw)
-        if context and SENSITIVE_STRING_CONTEXT_RE.search(context.group(1)):
+        if context and sensitive_context(context.group(1)):
             for key, pattern, evidence in STRING_IDENTIFIER_RULES:
-                match = pattern.search(context.group(2))
+                value = context.group(2).strip().strip(';').strip().strip('"\'')
+                match = pattern.fullmatch(value)
                 if match:
                     results.append(finding(number, key, f"{evidence}: {match.group()}", "text_config"))
     unique = {(f.line, f.algorithm): f for f in results}

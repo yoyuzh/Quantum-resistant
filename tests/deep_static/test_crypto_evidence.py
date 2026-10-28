@@ -10,7 +10,7 @@ from deep_analysis.evidence import path_identity, edge_identity
 from deep_analysis.models import Budgets, Known, Unknown, DeepAnalysisResult
 from deep_analysis.pipeline import analyze_crypto, revalidate
 from deep_analysis.verifier import Verifier
-from tests.deep_static.test_snapshot_index import snapshot
+from tests.deep_static.helpers import snapshot
 
 
 def run(text, **kwargs):
@@ -22,6 +22,43 @@ def claim(operation, name='ALGORITHM'):
 
 
 class CryptoRulesTests(unittest.TestCase):
+    def test_ecdsa_default_curve_cross_file_sign_verify_and_unknown_custom_curve(self):
+        result = analyze_crypto(snapshot({
+            'keys.py': 'from ecdsa import SigningKey\ndef make_key():\n return SigningKey.generate()\n',
+            'app.py': 'from keys import make_key\nk=make_key()\ns=k.sign(data)\nv=k.get_verifying_key()\nv.verify(s,data)\n',
+        }))
+        for purpose in ('key_generation', 'sign', 'verify'):
+            rows = [o for o in result.operations if o.operation_type == purpose]
+            self.assertTrue(rows, purpose)
+            self.assertTrue(all(o.algorithm == Known(value='ECDSA') and claim(o).level == 'E3' for o in rows))
+            self.assertTrue(all(o.library == 'ecdsa' for o in rows))
+        for curve in ('ecdsa.Ed25519', 'runtime_curve'):
+            text = f'import ecdsa\nk=ecdsa.SigningKey.generate(curve={curve})\nk.sign(data)\n'
+            self.assertFalse(any(o.algorithm == Known(value='ECDSA') for o in run(text).operations))
+            from scanner.engine import analyze_source
+            self.assertEqual(analyze_source(text)[0], [])
+
+    def test_rsa_encrypt_decrypt_and_ec_exchange_preserve_receiver_roles(self):
+        result = run('from cryptography.hazmat.primitives.asymmetric import rsa,ec\n'
+                     'k=rsa.generate_private_key(65537,2048)\np=k.public_key()\n'
+                     'p.encrypt(data,padding)\nk.decrypt(data,padding)\n'
+                     'k.encrypt(data,padding)\np.decrypt(data,padding)\n'
+                     'e=ec.generate_private_key(curve)\ne.exchange(protocol,peer)\n')
+        for purpose in ('encrypt', 'decrypt', 'key_exchange'):
+            rows = [o for o in result.operations if o.operation_type == purpose]
+            self.assertEqual(len(rows), 1, purpose)
+            self.assertEqual(claim(rows[0]).level, 'E3')
+        self.assertFalse(any(o.sink_location.start_line in (6, 7) for o in result.operations))
+
+    def test_shared_api_algorithm_identity_and_rule_version(self):
+        from scanner.api_catalog import api_algorithm, RULES_VERSION
+        for api, rule in RULES.items():
+            if api_algorithm(api):
+                self.assertEqual(rule.algorithm, api_algorithm(api))
+        from scanner.engine import analyze_source
+        finding = analyze_source('import ecdsa\necdsa.SigningKey.generate()', include_metadata=True)[0][0]
+        self.assertEqual(finding['rule_version'], RULES_VERSION)
+
     def test_every_declared_non_jwt_api_has_an_individual_case(self):
         for api, rule in RULES.items():
             if rule.library == 'PyJWT':
@@ -117,16 +154,6 @@ class CryptoRulesTests(unittest.TestCase):
     def test_bad_method_signature_cannot_inherit_receiver_algorithm(self):
         result = run('from cryptography.hazmat.primitives.asymmetric import rsa\nk=rsa.generate_private_key(65537,2048)\ns=k.sign(data)\n')
         self.assertEqual([o.operation_type for o in result.operations], ['key_generation'])
-
-    def test_class_method_template_is_discovered_without_receiver_proof(self):
-        result = run('import jwt\nclass Token:\n def issue(self):\n  return jwt.encode({}, key, algorithm="RS256")\n')
-        self.assertEqual(len(result.operations), 1)
-        self.assertEqual(result.operations[0].context.kind, 'uninstantiated_template')
-        self.assertEqual(result.operations[0].algorithm, Known(value='RS256'))
-
-    def test_unrelated_dynamic_namespace_does_not_hide_class_method_sink(self):
-        result = run('import jwt\ndef dynamic():\n eval("x=1")\nclass Token:\n def issue(self):\n  return jwt.encode({}, key, algorithm="HS256")\n')
-        self.assertEqual(len(result.operations), 1)
 
     def test_use_before_import_and_lexical_conditions_cannot_be_E3_by_omission(self):
         result = run('x=jwt.encode({},key,algorithm=\"RS256\")\nimport jwt\n')

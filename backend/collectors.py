@@ -6,7 +6,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, SourceDocument, get_with_retries
-from backend.remote_cache import REMOTE_SOURCE_CACHE
 from backend.collection_config import *
 
 
@@ -40,12 +39,12 @@ def source_priority(path: str) -> tuple[int, int, str]:
 
 def collect_github_sources(repository_url: str, max_files: int = MAX_COLLECTED_FILES, *, deadline: Deadline | None = None) -> CollectedSources:
     from backend.remote_sources import github_sources
-    return github_sources(validate_github_repository_url(repository_url), max_files, deadline or Deadline.after(), cache=REMOTE_SOURCE_CACHE)
+    return github_sources(validate_github_repository_url(repository_url), max_files, deadline or Deadline.after())
 
 
 def collect_pypi_sources(package_name: str, *, deadline: Deadline | None = None) -> CollectedSources:
     from backend.remote_sources import pypi_sources
-    return pypi_sources(validate_pypi_package_name(package_name), deadline or Deadline.after(), cache=REMOTE_SOURCE_CACHE)
+    return pypi_sources(validate_pypi_package_name(package_name), deadline or Deadline.after())
 
 
 from backend.archives import collect_from_zip_bytes, collect_from_tar_bytes, safe_archive_member_name

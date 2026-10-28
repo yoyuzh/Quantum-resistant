@@ -4,7 +4,6 @@ import base64
 import io
 import os
 import tarfile
-import tempfile
 import threading
 import unittest
 import urllib.request
@@ -16,7 +15,6 @@ import httpx
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes, safe_archive_member_name
 from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries, remote_client_options
 from backend.remote_sources import decode_github_blob, github_get, github_headers, github_sources, pypi_sources
-from backend.remote_cache import RemoteSourceCache
 
 
 def zip_bytes(files):
@@ -59,45 +57,6 @@ class ArchiveTests(unittest.TestCase):
 
 
 class HttpCollectionTests(unittest.TestCase):
-    def test_github_cache_avoids_second_remote_download(self):
-        source = b'algorithm = "RS256"\n'
-        with tempfile.TemporaryDirectory() as directory:
-            cache = RemoteSourceCache(directory)
-            real_client = httpx.Client
-
-            def handle(request):
-                if request.url.host == "api.github.com" and request.url.path.endswith("/repos/a/b"):
-                    return httpx.Response(200, json={"default_branch": "main"})
-                if request.url.path.endswith("/git/trees/main"):
-                    return httpx.Response(200, json={"sha": "abc", "tree": [{"type": "blob", "path": "crypto.py", "size": 22, "url": "https://api.github.com/repos/a/b/git/blobs/one"}]})
-                if request.url.path.endswith("/git/blobs/one"):
-                    return httpx.Response(200, json={"encoding": "base64", "content": base64.b64encode(source).decode()})
-                return httpx.Response(404)
-
-            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
-                first = github_sources("https://github.com/a/b", 2, Deadline.after(3), cache=cache)
-            self.assertEqual(len(first), 1)
-            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: self.fail("network attempted")):
-                second = github_sources("https://github.com/a/b", 2, Deadline.after(3), cache=cache)
-            self.assertEqual(second, first)
-
-    def test_pypi_cache_avoids_second_remote_download(self):
-        archive = zip_bytes([("package/a.py", "x=1")])
-        with tempfile.TemporaryDirectory() as directory:
-            cache = RemoteSourceCache(directory)
-            real_client = httpx.Client
-
-            def handle(request):
-                if request.url.host == "pypi.org":
-                    return httpx.Response(200, json={"urls": [{"filename": "package.whl", "url": "https://files.pythonhosted.org/package.whl"}]})
-                return httpx.Response(200, content=archive)
-
-            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
-                first = pypi_sources("cached-package", Deadline.after(3), cache=cache)
-            with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: self.fail("network attempted")):
-                second = pypi_sources("cached-package", Deadline.after(3), cache=cache)
-            self.assertEqual(second, first)
-
     def test_windows_proxy_and_explicit_environment_priority(self):
         registry = {"https": "http://127.0.0.1:7890"}
         with patch.dict(os.environ, {"NO_PROXY": "localhost"}, clear=True), \
@@ -196,7 +155,7 @@ class HttpCollectionTests(unittest.TestCase):
             calls.append((request.url.host, request.url.path))
             if request.url.host == "api.github.com":
                 return httpx.Response(403, headers={'X-RateLimit-Remaining': '0', 'Retry-After': '120'})
-            if request.url.path.endswith("/main.zip"):
+            if request.url.path.endswith("/zip/main"):
                 return httpx.Response(200, content=archive)
             return httpx.Response(404)
         with patch.dict(os.environ, {"GITHUB_TOKEN": "unused-old-token"}), \
@@ -216,13 +175,35 @@ class HttpCollectionTests(unittest.TestCase):
             calls.append(request.url.path)
             if request.url.host == "api.github.com":
                 return httpx.Response(429, headers={"Retry-After": "120"})
-            if request.url.path.endswith("/master.zip"):
+            if request.url.path.endswith("/zip/master"):
                 return httpx.Response(200, content=archive)
             return httpx.Response(404)
         with patch("backend.remote_sources.httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
             result = github_sources("https://github.com/a/b", 2, Deadline.after(3))
         self.assertEqual(result[0][1], "crypto.py")
-        self.assertEqual(calls[-2:], ["/a/b/archive/refs/heads/main.zip", "/a/b/archive/refs/heads/master.zip"])
+        self.assertEqual(calls[-2:], ["/a/b/zip/main", "/a/b/zip/master"])
+
+    def test_large_archive_uses_commit_instead_of_tree_object(self):
+        commit='a'*40
+        tree='b'*40
+        archive=zip_bytes([('b-commit/crypto.py','algorithm="RS256"')])
+        calls=[]
+        def handle(request):
+            calls.append(str(request.url))
+            if request.url.path=='/repos/a/b':
+                return httpx.Response(200,json={'default_branch':'main'})
+            if '/git/trees/' in request.url.path:
+                return httpx.Response(200,json={'sha':tree,'tree':[{'path':f'{i}.py','type':'blob'} for i in range(40)]})
+            if '/commits/' in request.url.path:
+                return httpx.Response(200,json={'sha':commit})
+            if request.url.host=='codeload.github.com' and request.url.path.endswith('/zip/'+commit):
+                return httpx.Response(200,content=archive)
+            self.fail('unexpected archive or individual file request: '+str(request.url))
+        real_client=httpx.Client
+        with patch('backend.remote_sources.httpx.Client',side_effect=lambda **kw:real_client(transport=httpx.MockTransport(handle))):
+            result=github_sources('https://github.com/a/b',50,Deadline.after(5))
+        self.assertEqual(len(result),1)
+        self.assertFalse(any('/zip/'+tree in url for url in calls))
 
     def test_github_expired_deadline_never_connects(self):
         real_client = httpx.Client

@@ -9,6 +9,7 @@ from typing import Callable
 
 from deep_analysis.models import Budgets, Coverage, CoverageCount, Diagnostic, Span
 from deep_analysis.snapshot import Snapshot
+from deep_analysis.lazy_ast import AstCache
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,20 @@ class Module:
     path: str
     symbols: tuple[Symbol, ...]
     calls: tuple[Call, ...]
-    tree: ast.Module = field(repr=False, compare=False)
+    tree_ref: object = field(repr=False, compare=False)
+
+    @property
+    def tree(self):
+        return self.tree_ref() if callable(self.tree_ref) else self.tree_ref
+
+    def node_at(self, span):
+        found = None
+        for node in ast.walk(self.tree):
+            if getattr(node, "end_lineno", None) is not None and location(self.source_id, node) == span:
+                found = node
+        if found is None:
+            raise KeyError(span)
+        return found
 
 
 @dataclass(frozen=True)
@@ -50,27 +64,6 @@ class Index:
     nodes_used: int = 0
     edges_used: int = 0
     structure_bytes: int = 0
-
-
-def has_dynamic_namespace(module: Module, scope: str) -> bool:
-    current = scope
-    while True:
-        if any(symbol.kind == 'dynamic_namespace' and symbol.scope == current for symbol in module.symbols):
-            return True
-        if current == '<module>':
-            return False
-        current = current.rsplit('.', 1)[0]
-
-
-def is_class_method(module: Module, scope: str) -> bool:
-    if '.' not in scope:
-        return False
-    class_scope, _ = scope.rsplit('.', 1)
-    if '.' not in class_scope:
-        return False
-    parent_scope, class_name = class_scope.rsplit('.', 1)
-    return any(symbol.kind == 'class' and symbol.scope == parent_scope and symbol.name == class_name
-               for symbol in module.symbols)
 
 
 def location(source_id: str, node: ast.AST) -> Span:
@@ -176,7 +169,7 @@ def collect_symbols(source_id: str, tree: ast.Module, checkpoint: Callable[[], o
 
 def resolve(name: str | None, scope: str, module: Module, modules: list[Module], cross_module: bool,
             seen: tuple[tuple[str, str], ...] = ()) -> tuple[str | None, str | None]:
-    if has_dynamic_namespace(module, scope):
+    if any(s.kind == 'dynamic_namespace' for s in module.symbols):
         return None, 'dynamic_namespace'
     if not name:
         return None, 'dynamic_call'
@@ -223,7 +216,7 @@ def resolve(name: str | None, scope: str, module: Module, modules: list[Module],
                 return None, 'missing_module'
             if any(m.path.split('/')[-1] == top + '.py' or top in m.path.split('/')[:-1] for m in modules):
                 return None, 'local_library_collision'
-            if top in ('jwt', 'cryptography', 'Crypto'):
+            if top in ('jwt', 'cryptography', 'Crypto', 'ecdsa'):
                 return target, None
             return None, 'missing_module'
         if any(s.name == '*' and s.scope == current for s in module.symbols):
@@ -247,8 +240,7 @@ def index_calls(module: Module, modules: list[Module], cross_module: bool,
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             inner = scope + '.' + node.name
             if isinstance(node, ast.ClassDef):
-                pending.extend((child, inner) for child in reversed(node.body))
-                continue  # Class dispatch remains unresolved; method bodies are still useful templates.
+                continue  # Class/method dispatch is indexed as symbols; calls need later receiver proof.
             pending.extend((child, inner) for child in reversed(node.body))
             continue
         if isinstance(node, (ast.Lambda, ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
@@ -262,6 +254,7 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
     budgets = budgets or Budgets()
     if not 10 <= target_minor <= sys.version_info.minor:
         raise ValueError('目标语法必须为3.10至宿主版本')
+    cache = getattr(snapshot, "ast_cache", None) or AstCache(snapshot.logical.sources, checkpoint)
     modules, diagnostics = [], list(snapshot.diagnostics)
     roots = snapshot.identity.package_roots
     cross = snapshot.identity.path_fidelity == 'relative_paths' and len(roots) == 1
@@ -270,7 +263,7 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
         checkpoint()
         identity = source.identity
         try:
-            tree = ast.parse(source.content, filename=identity.relative_path, feature_version=(3, target_minor))
+            tree = cache.get(identity.source_id)[0]
             stack: list[tuple[ast.AST, int]] = [(tree, 0)]
             count = 0
             while stack:
@@ -300,6 +293,9 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
                 target = '.'.join([base, target]) if base else None
             mapped.append(replace(symbol, target=target))
         module = replace(module, symbols=tuple(mapped))
+        # Store raw call spans now. Resolution after all modules are indexed does
+        # not need a second parse of every file.
+        module = replace(module, calls=index_calls(module, [], False, checkpoint))
         ast_bytes = len(ast.dump(tree, include_attributes=True).encode('utf-8'))
         encoded = ast_bytes + len(json.dumps([(s.name, s.kind, s.scope, s.target, s.location.model_dump()) for s in mapped], ensure_ascii=False).encode('utf-8'))
         if nodes + count > budgets.index_nodes or size + encoded + len(source.content.encode('utf-8')) > budgets.structure_bytes:
@@ -307,10 +303,14 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
             break
         nodes += count
         size += encoded + len(source.content.encode('utf-8'))
-        modules.append(module)
+        modules.append(replace(module, tree_ref=lambda identity=identity.source_id: cache.get(identity)[0]))
     output = []
     for module in modules:
-        calls = index_calls(module, modules, cross, checkpoint)
+        calls = []
+        for call in module.calls:
+            checkpoint()
+            target, reason = resolve(call.expression, call.scope, module, modules, cross)
+            calls.append(replace(call, target=target, reason=reason))
         # Failed/excluded local modules still shadow an installed library of the same name.
         calls = tuple(replace(c, target=None, reason='unavailable_or_ambiguous_local')
                       if c.target and ':' not in c.target and any(
@@ -331,5 +331,9 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
         'partial': snapshot.identity.coverage.partial or bool(diagnostics),
         'gaps': tuple(sorted(set(snapshot.identity.coverage.gaps) | {d.code for d in diagnostics}))[:200],
     })
+    if hasattr(cache, 'summarize'):
+        for module in output:
+            checkpoint()
+            cache.summarize(module)
     return Index(tuple(output), tuple(diagnostics[:200]), coverage, sys.version.split()[0], f'3.{target_minor}',
                  nodes_used=nodes, edges_used=edges, structure_bytes=size)

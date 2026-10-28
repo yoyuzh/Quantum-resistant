@@ -73,7 +73,8 @@ class ScannerRepairTests(unittest.TestCase):
                 self.assertEqual(self.algorithms(source, 'test.ts'), [])
         source = 'const note = `text\n${RSA.generate(2048)}\n${`nested ${DSA.generate()}`}`;'
         findings, _ = analyze_source(source, 'test.js')
-        self.assertEqual([(item['line'], item['algorithm']) for item in findings], [(2, 'RSA'), (3, 'DSA')])
+        # Unimported Python-style names in JS interpolation do not prove a crypto API.
+        self.assertEqual(findings, [])
 
     def test_pem_comments_and_documentation(self):
         header = '-----BEGIN RSA PRIVATE KEY-----'

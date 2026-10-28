@@ -12,7 +12,7 @@ from deep_analysis.identity import stable_id
 from deep_analysis.models import Budgets, Known, Span, Unknown
 from deep_analysis.semantic_models import Fact
 from deep_analysis.snapshot import Snapshot
-from deep_analysis.symbol_index import Module, dotted, has_dynamic_namespace, import_base, location
+from deep_analysis.symbol_index import Module, dotted, import_base, location
 
 SEMANTICS_VERSION = 'bounded-backward-1'
 
@@ -129,7 +129,7 @@ class Evaluator:
     def _expression(self, node: ast.expr, frame: Frame, static_default: bool) -> Fact:
         if frame.blocked:
             return self.store.unknown(frame.blocked, conditions=frame.conditions)
-        if has_dynamic_namespace(frame.module, frame.scope):
+        if any(s.kind == 'dynamic_namespace' for s in frame.module.symbols):
             return self.store.unknown('dynamic_namespace')
         if any(s.kind == 'import' and s.name == '*' for s in frame.module.symbols):
             return self.store.unknown('wildcard_import')
@@ -160,7 +160,7 @@ class Evaluator:
         return self.edge(self.store.unknown('unsupported_transform', conditions=frame.conditions), 'DERIVED', node, node, frame)
 
     def branch(self, frame: Frame, test: ast.expr, truth: bool) -> Frame:
-        condition = stable_id(f'condition:{str(truth).lower()}', [location(frame.module.source_id, test).model_dump(mode='json')])
+        condition = stable_id('condition', [location(frame.module.source_id, test).model_dump(mode='json'), truth])
         if len(frame.conditions) >= 16:
             return replace(frame, blocked='condition_limit')
         return replace(frame, conditions=(*frame.conditions, condition))

@@ -24,7 +24,9 @@ METHOD_HINTS = frozenset({'encode', 'decode', 'sign', 'verify', 'exchange', 'enc
 class CallSite:
     module: Module
     call: Call
-    node: ast.Call
+    @property
+    def node(self):
+        return self.module.node_at(self.call.location)
 
     @property
     def span(self) -> Span:
@@ -35,7 +37,11 @@ class CallSite:
 class Function:
     module: Module
     scope: str
-    node: ast.FunctionDef | ast.AsyncFunctionDef
+    span: Span
+
+    @property
+    def node(self):
+        return self.module.node_at(self.span)
 
     @property
     def identity(self) -> str:
@@ -49,22 +55,18 @@ class Discovery:
         self.calls: dict[Span, CallSite] = {}
         self.incoming: dict[str, list[CallSite]] = {}
         self.sinks: list[CallSite] = []
-        library_hint = any(s.kind == 'import' and s.target and s.target.split('.')[0] in ('jwt', 'Crypto', 'cryptography')
+        library_hint = any(s.kind == 'import' and s.target and s.target.split('.')[0] in ('jwt', 'Crypto', 'cryptography', 'ecdsa')
                            for module in index.modules for s in module.symbols)
         for module in index.modules:
-            pending = [(module.tree, '<module>')]
-            while pending:
+            for symbol in module.symbols:
                 checkpoint()
-                node, scope = pending.pop()
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    scope = scope + '.' + node.name
-                    function = Function(module, scope, node)
+                if symbol.kind == 'function':
+                    scope = symbol.scope + '.' + symbol.name
+                    function = Function(module, scope, symbol.location)
                     self.functions[function.identity] = function
-                pending.extend((n, scope) for n in reversed(list(ast.iter_child_nodes(node))))
-            nodes = {location(module.source_id, n): n for n in ast.walk(module.tree) if isinstance(n, ast.Call)}
             for call in module.calls:
                 checkpoint()
-                site = CallSite(module, call, nodes[call.location])
+                site = CallSite(module, call)
                 self.calls[site.span] = site
                 if call.target and ':' in call.target:
                     self.incoming.setdefault(call.target, []).append(site)

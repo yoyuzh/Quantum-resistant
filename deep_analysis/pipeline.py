@@ -1,4 +1,4 @@
-"""Static crypto closure, deliberately not yet wired into HTTP task scheduling."""
+"""Static crypto closure with independently replayed evidence claims."""
 from __future__ import annotations
 
 from typing import Callable
@@ -59,6 +59,7 @@ def analyze_crypto(snapshot: Snapshot, *, budgets: Budgets | None = None,
         claims = tuple(Claim(claim_type=name, value=fact.value, resolution_status={'known': 'resolved', 'ambiguous': 'ambiguous', 'unknown': 'unknown'}[fact.value.kind],
                              level='E1', evidence_ids=(projected[name].evidence_id,)) for name, fact in proposal.facts)
         operation = CryptoOperation(operation_id=candidate.operation_id, template_id=candidate.template_id,
+                                    evidence_scope='algorithm_policy' if proposal.api == 'jwt.decode' else 'static_call',
                                     api=proposal.api, library=proposal.library, operation_type=proposal.operation,
                                     algorithm=claims[0].value, algorithm_family=proposal.family,
                                     resolution_status=claims[0].resolution_status,
