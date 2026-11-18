@@ -9,6 +9,7 @@ import httpx
 from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, remote_client_options
 from backend.collectors import collect_github_sources
 from backend.remote_sources import describe_http_error, github_get, github_headers
+from backend.repository_inventory import algorithm_inventory
 from backend.reporting import beijing_now_iso
 from backend.collection_config import MAX_COLLECTED_FILES, POPULAR_TIMEOUT_SECONDS, POPULAR_TEXT_BYTES, MAX_TEXT_BYTES
 from backend.collection_common import CollectionControl, CollectedSources
@@ -49,6 +50,7 @@ class RepoScanResult:
     error_code: str | None = None
     repository_id: str | None = None
     analysis_summary: dict | None = None
+    algorithm_inventory: dict | None = None
 
 
 @dataclass
@@ -105,7 +107,7 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
         coverage = response.coverage.model_dump()
         return RepoScanResult(repo.full_name, repo.star_count, repo.html_url, int(score["score"]), len(findings),
             algorithms=sorted({f["algorithm"] for f in findings}), findings=ordered[:20],
-            coverage=coverage,
+            coverage=coverage, algorithm_inventory=details[2] if details else algorithm_inventory(findings),
             diagnostics=diagnostics, details_truncated=len(findings) > 20,
             repository_id=details[0] if details else None, analysis_summary=details[1] if details else None)
     except (CollectionError, OSError, ValueError) as exc:

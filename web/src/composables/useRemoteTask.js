@@ -4,8 +4,8 @@ import { followTask } from '../utils/remoteTasks.js';
 import { uploadRequest } from '../api/upload.js';
 import { createRequestId } from '../utils/requestId.js';
 
-export function useRemoteTask(kind, state) {
-  const key = `quantum-task-${kind}`;
+export function useRemoteTask(kind, state, storageKey = kind) {
+  const key = `quantum-task-${storageKey}`;
   let cancelController;
   let disposed = false;
   let pendingSubmission = null;

@@ -51,6 +51,11 @@ def check(command: list[str]) -> None:
             assert request('/api/health')[0] == 200
             assert request('/docs')[0] == 404
             assert request('/api/popular/results')[0] == 404
+            status, body, _ = request('/api/repository-library')
+            library = json.loads(body)
+            assert status == 200 and library['schema_version'] == 1 and library['repos']
+            assert all(r['revision'] and r['coverage']['scanned_files'] for r in library['repos'])
+            assert request('/api/repository-library/import', library)[0] == 200
             assert request('/static/src/App.vue')[0] == 404
             code = 'from cryptography.hazmat.primitives.asymmetric import rsa\nrsa.generate_private_key(public_exponent=65537, key_size=2048)\n'
             status, body, _ = request('/api/tasks/snippet', {'content': code, 'filename': '中文 测试.py'},

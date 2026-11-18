@@ -10,7 +10,7 @@ const rows = computed(() =>
 const partial = computed(
   () => (props.result?.repos || []).filter((r) => r.coverage?.partial).length,
 );
-const total = computed(() => rows.value.reduce((sum, row) => sum + row.count, 0));
+const pending = computed(() => (props.result?.repos || []).reduce((sum, row) => sum + (row.analysis_summary?.pending || 0), 0));
 const maximum=computed(()=>Math.max(1,...rows.value.map(row=>row.count)));
 </script>
 <template>
@@ -18,7 +18,7 @@ const maximum=computed(()=>Math.max(1,...rows.value.map(row=>row.count)));
     <summary>本次批次概览 · {{ rows.length }} 个可用仓库</summary>
     <p class="small muted">
       可用 {{ rows.length }} 个 · 部分扫描 {{ partial }} 个 · 失败/未完成
-      {{ result.failures?.length || 0 }} 个
+      {{ result.failures?.length || 0 }} 个 · 证据不足 {{ pending }} 项，未计入下方对比
     </p>
     <div class="repository-comparison" aria-label="仓库静态确认与AI研判对比"><button v-for="row in rows" :key="row.key" @click="$emit('select',row.key)"><strong>{{ row.label }}</strong><span class="comparison-track"><i class="static" :style="{width:row.static/maximum*100+'%'}"></i><i class="assessed" :style="{width:row.assessed/maximum*100+'%'}"></i></span><small>静态 {{ row.static }} / AI {{ row.assessed }}</small></button></div>
   </details>

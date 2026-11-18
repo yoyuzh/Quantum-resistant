@@ -11,6 +11,7 @@ from backend.uploads import normalize_filename
 from backend.collection_config import MAX_COLLECTED_FILE_BYTES
 from backend.popular import fetch_popular_repos, run_batch_scan
 from backend.task_store import TaskStore
+from backend.repository_library import AppendRequest, batch_records, merge_library, read_library
 from backend.task_execution import remote_work as execute_remote, local_work, popular_work as execute_popular
 
 store = TaskStore()
@@ -118,6 +119,40 @@ async def files_with_paths(request: Request, request_id: RequestId):
 @router.get('/{identity}/checkpoint')
 def checkpoint(identity: str):
     return store.checkpoint(identity)
+
+
+def append_repositories(payload: AppendRequest, budget):
+    from dataclasses import asdict
+    from backend.popular import RepoInfo, batch_incomplete
+
+    known = {r.full_name.casefold() for r in read_library().repos}
+    targets = [name for name in payload.repositories if payload.refresh_existing or name.casefold() not in known]
+    if not targets:
+        raise HTTPException(409, '这些仓库均已入库，可勾选重新扫描')
+    budget.control.assisted_popular = True
+    budget.control.emit(stage='采集与分析仓库', total_repos=len(targets))
+    batch = run_batch_scan([RepoInfo(name, 'https://github.com/' + name, 0) for name in targets], deadline=budget)
+    batch.meta.update(query='用户指定的 GitHub 仓库', skipped_existing=len(payload.repositories)-len(targets),
+                      incomplete=batch_incomplete(batch) or bool(batch.failures))
+    result = asdict(batch)
+    records = batch_records(result)
+    result['meta']['library_saved'] = False
+    if records and budget.control.begin_commit():
+        try:
+            merge_library(records)
+        except HTTPException as exc:
+            result['meta']['save_error'] = exc.detail
+            result['meta']['incomplete'] = True
+        else:
+            result['meta']['library_saved'] = True
+    return result
+
+
+@router.post('/library', status_code=202)
+def library_scan(payload: AppendRequest, request_id: RequestId):
+    from backend.main import POPULAR_SCAN_LOCK
+    return store.submit('popular', {'library': payload.model_dump()}, request_id,
+                        lambda budget: append_repositories(payload, budget), POPULAR_SCAN_LOCK)
 
 
 @router.post('/popular', status_code=202)

@@ -13,7 +13,7 @@ export function useSourceContent(result) {
     controller = new AbortController();
     cache.clear();
   }
-  watch(() => [result.value?.scanned_at, result.value?.source_type], clear);
+  watch([() => result.value?.task_id, () => result.value?.sources], clear, { flush: 'sync' });
   onUnmounted(clear);
   return async (id) => {
     const source = result.value.sources.find((item) => item.source_id === id);

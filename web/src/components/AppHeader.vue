@@ -121,4 +121,8 @@ h1 {
   }
   .version { display: none; }
 }
+@media (max-height: 540px) and (orientation: landscape) {
+  .app-header:not(.desktop-overlay) { gap:3px 10px; padding-block:4px; }
+  .brand-mark { width:23px; height:23px; border-radius:6px; }
+}
 </style>

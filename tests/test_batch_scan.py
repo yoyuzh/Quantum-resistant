@@ -81,6 +81,16 @@ class PopularServiceTests(unittest.TestCase):
         self.assertEqual(collect.call_args.kwargs["max_files"], 5000)
 
     @patch("backend.popular.collect_github_sources")
+    def test_inventory_precedes_detail_cap(self, collect):
+        collect.return_value = [("origin", "src/config.py", 'algorithm = "RS256"\n' * 21)]
+        result = scan_single_repo(repo())
+        self.assertEqual(len(result.findings), 20)
+        group, = result.algorithm_inventory["groups"]
+        self.assertEqual((group["algorithm"], group["count"]), ("RSA", 21))
+        self.assertEqual((group["example"]["path"], group["example"]["line"]), ("src/config.py", 1))
+        self.assertNotIn("evidence", group["example"])
+
+    @patch("backend.popular.collect_github_sources")
     def test_failed_empty_and_clean_collection(self, collect):
         collect.side_effect = CollectionError("failure")
         self.assertFalse(scan_single_repo(repo()).success)
@@ -91,6 +101,7 @@ class PopularServiceTests(unittest.TestCase):
         result = scan_single_repo(repo())
         self.assertTrue(result.success)
         self.assertEqual(result.migration_score, 0)
+        self.assertEqual(result.algorithm_inventory['groups'], [])
 
     @patch("backend.popular.scan_single_repo")
     def test_batch_preserves_order_and_failures(self, scan):

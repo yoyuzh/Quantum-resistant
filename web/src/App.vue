@@ -14,6 +14,7 @@ import ScanActivity from './components/ScanActivity.vue';
 import ScanHelp from './components/ScanHelp.vue';
 import ResultsWorkspace from './components/ResultsWorkspace.vue';
 import AppIcon from './components/AppIcon.vue';
+import RepositoryLibrary from './components/RepositoryLibrary.vue';
 import PopularView from './components/PopularView.vue';
 import { useScan } from './composables/useScan.js';
 import { usePopular } from './composables/usePopular.js';
@@ -25,8 +26,8 @@ import { focusDestination } from './utils/navigation.js';
 function initialMode() {
   try {
     const saved = sessionStorage.getItem('quantum-active-source');
-    return ['snippet', 'files', 'github', 'pypi'].includes(saved) ? saved : 'snippet';
-  } catch { return 'snippet'; }
+    return ['atlas', 'snippet', 'files', 'github', 'pypi'].includes(saved) ? saved : 'atlas';
+  } catch { return 'atlas'; }
 }
 const mode = ref(initialMode());
 const drafts = reactive({
@@ -99,9 +100,10 @@ async function prepareRepository(value) {
 
 <template>
   <AppHeader :theme="theme" @toggle-theme="toggle"><ModeTabs v-model="mode" /></AppHeader>
-  <main class="app-main" :class="{ 'results-expanded': mode !== 'popular' && inputLayout.collapsed }">
+  <main class="app-main" :class="{ 'results-expanded': inputLayout?.collapsed }">
+    <RepositoryLibrary v-if="mode === 'atlas'" />
     <PopularView
-      v-if="mode === 'popular'"
+      v-else-if="mode === 'popular'"
       :state="popular"
       @update:top="popular.top = $event"
       @refresh="runPopular(true)"

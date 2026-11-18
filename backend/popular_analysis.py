@@ -6,6 +6,7 @@ from collections import deque, OrderedDict
 from backend.ai.config import BUDGETS, digest
 from backend.ai.context import catalog, packets
 from backend.integration import integrate
+from backend.repository_inventory import algorithm_inventory
 
 
 def keep_snapshot(repo, base, budget):
@@ -22,7 +23,8 @@ def keep_snapshot(repo, base, budget):
         parent.popular_snapshots[identity] = {'path':path, 'control':child, 'name':repo.full_name}
         parent.source_paths.update(getattr(child, 'source_paths', {}))
     return identity, {**base['integrated_analysis']['changes'],'deep_status':base['deep_analysis']['status'],
-                      'migration_score':base['integrated_analysis']['summary']['migration_score']['score']}
+                      'migration_score':base['integrated_analysis']['summary']['migration_score']['score']}, algorithm_inventory(
+                          base['integrated_analysis']['findings'], deep_status=base['deep_analysis']['status'])
 
 
 def fair_allocations(counts: dict[str,int], limit: int) -> dict[str,int]:
@@ -115,13 +117,15 @@ def project(store, job, value):
             if record.get('ai_marker')!=marker:
                 metadata={k:v for k,v in ai.items() if k not in ('opinions','coverage')}
                 previous={**previous,'ai_analysis':{**metadata,'opinions':opinions,'shared_budget':True,
-                    'status':'completed' if len(opinions)==total else ai['status'],
+                    'status':'completed' if ai['status'] != 'skipped' and len(opinions)==total else ai['status'],
                     'coverage':{'discovered':total,'completed':len(opinions),'remaining':max(0,total-len(opinions))}}}
                 previous['integrated_analysis']=integrate(previous)
                 path=store.storage.write_json(job.folder,previous)
                 with store.lock:
                     old=record['path']; record.update(path=path,ai_marker=marker)
                     store.storage.remove(old)
+        repo['algorithm_inventory'] = algorithm_inventory(previous['integrated_analysis']['findings'],
+            deep_status=previous['deep_analysis']['status'], ai_status=previous.get('ai_analysis', {}).get('status'))
         repo['analysis_summary']={**previous['integrated_analysis']['changes'],'deep_status':previous['deep_analysis']['status'],
                                   'migration_score':previous['integrated_analysis']['summary']['migration_score']['score']}
     return result
