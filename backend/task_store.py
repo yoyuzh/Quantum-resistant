@@ -236,7 +236,7 @@ class TaskStore:
         try:
             result = work(budget)
             self._save(job, result)
-            if job.kind == 'popular' and job.payload.get('ai_assisted') and not job.control.cancelled.is_set():
+            if job.kind == 'popular' and job.payload.get('ai_assisted') and result.get('repos') and not job.control.cancelled.is_set():
                 continuation = self.ai.continue_popular(job,result)
                 if continuation:
                     return
@@ -271,7 +271,7 @@ class TaskStore:
             result=commit(self,job,result)
         self._save(job, result)
         with self.lock:
-            has_result = bool(result.get('repos') if job.kind == 'popular' else result.get('sources'))
+            has_result = bool((result.get('repos') or result.get('failures')) if job.kind == 'popular' else result.get('sources'))
             if job.kind == 'ai':
                 has_result = 'ai_analysis' in result
             advanced_partial = any(result.get(key, {}).get('status') in {'partial', 'failed', 'cancelled'}

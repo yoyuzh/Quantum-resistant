@@ -8,9 +8,13 @@ from pathlib import Path
 
 
 def write_results(result, output_path: Path) -> None:
+    write_json(asdict(result), output_path)
+
+
+def write_json(value: dict, output_path: Path) -> None:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    content = json.dumps(asdict(result), indent=2, ensure_ascii=False)
+    content = json.dumps(value, indent=2, ensure_ascii=False)
     fd, name = tempfile.mkstemp(dir=output_path.parent, prefix=".popular_", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:

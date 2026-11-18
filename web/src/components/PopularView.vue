@@ -7,6 +7,8 @@ import PopularDetail from './PopularDetail.vue';
 import SelectControl from './SelectControl.vue';
 import ScanLoading from './ScanLoading.vue';
 import AppIcon from './AppIcon.vue';
+import { request } from '../api/client.js';
+import RepositoryAtlas from './RepositoryAtlas.vue';
 import PopularOverview from './PopularOverview.vue';
 import ScanHelp from './ScanHelp.vue';
 import AiControls from './AiControls.vue';
@@ -15,6 +17,19 @@ const props = defineProps({ state: Object });
 defineEmits(['refresh', 'reload', 'update:top', 'cancel', 'scan-repository']);
 const displayed=computed(()=>props.state.result);
 const selected = ref('');
+const saving = ref(false);
+const saveNote = ref('');
+watch(displayed, () => { saveNote.value = ''; });
+async function saveBatch() {
+  const batch = displayed.value;
+  saving.value = true;
+  try {
+    const saved = await request('/api/repository-library/batches/' + encodeURIComponent(batch.task_id), { method: 'POST' });
+    if (batch === displayed.value) saveNote.value = '已收录可用结果，资料库共 ' + saved.total + ' 个仓库。';
+  } catch (error) {
+    if (batch === displayed.value) saveNote.value = error.message;
+  } finally { saving.value = false; }
+}
 const settingsExpanded=ref(false);
 const listBody = ref(null);
 const detail = ref(null);
@@ -93,6 +108,9 @@ watch(
             本次结果不完整。{{ displayed.meta.save_error }}
           </p>
 
+          <button v-if="displayed.task_id && repos.length" class="button secondary compact" :disabled="saving" @click="saveBatch">将本批加入仓库资料库</button>
+          <span v-if="saveNote" class="small" role="status">{{ saveNote }}</span>
+          <RepositoryAtlas :result="displayed" />
           <PopularOverview :result="displayed" @select="selectRepository" />
           <p class="small">
             成功 {{ repos.length }} 个 · 失败

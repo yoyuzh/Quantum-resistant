@@ -55,6 +55,9 @@ def popular_work(payload, budget, *, search, batch_scan, save, output_path):
     repos = search(payload.top, deadline=budget.child(30))
     budget.control.emit(stage='采集与分析仓库', total_repos=len(repos))
     result = batch_scan(repos, deadline=budget)
+    if not result.repos and result.failures and getattr(budget.control, 'assisted_popular', False):
+        result.meta.update(incomplete=True, saved_snapshot=False)
+        return asdict(result)
     if not result.repos:
         raise CollectionError('没有完成的仓库；上次榜单已保留')
     incomplete = batch_incomplete(result) or budget.control.cancelled.is_set()

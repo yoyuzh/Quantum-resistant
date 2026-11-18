@@ -1,7 +1,8 @@
-"""Collect license files of exactly the frozen runtime's installed distributions."""
+"""Collect notices for the frozen runtime and bundled web graphics libraries."""
 from __future__ import annotations
 
 from importlib import metadata
+import json
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
@@ -40,6 +41,12 @@ python_license = next((candidate for candidate in (
 if python_license is None:
     raise RuntimeError('缺少CPython许可文件，请将所用Python的LICENSE保存为desktop/build/CPYTHON-LICENSE.txt后重新构建')
 parts.append('\nCPython\n' + python_license.read_text(encoding='utf-8') + '\n')
+web_modules = root.parent / 'web' / 'node_modules'
+three = json.loads((web_modules / 'three' / 'package.json').read_text(encoding='utf-8'))
+gsap = json.loads((web_modules / 'gsap' / 'package.json').read_text(encoding='utf-8'))
+parts.append(f"\nThree.js {three['version']} (web visualization)\nhttps://threejs.org/\n"
+             + (web_modules / 'three' / 'LICENSE').read_text(encoding='utf-8') + '\n')
+parts.append(f"\nGSAP {gsap['version']} (camera and node transitions)\n{gsap['license']}\n")
 (root / 'build').mkdir(exist_ok=True)
 notice = '\n'.join(line.rstrip() for line in ''.join(parts).splitlines())
 (root / 'build' / 'THIRD-PARTY-NOTICES.txt').write_text(notice.rstrip() + '\n', encoding='utf-8')

@@ -145,6 +145,11 @@ class RecoveryAndPopularTests(unittest.TestCase):
             self.assertEqual(response.status_code,202,response.text)
             identity=response.json()['id'];result=self.wait(identity,seconds=8)
             self.assertEqual(write.call_count,1)
+        from backend.popular_analysis import project
+        with task_routes.store.read_job(identity) as job:
+            projected = project(task_routes.store, job, result)
+        self.assertEqual([r['algorithm_inventory'] for r in projected['repos']],
+                         [r['algorithm_inventory'] for r in result['repos']])
         self.assertEqual(result['ai_analysis']['coverage']['completed'],2)
         locations=[]
         for repo in result['repos']:
@@ -152,12 +157,34 @@ class RecoveryAndPopularTests(unittest.TestCase):
             self.assertEqual(detail.status_code,200,detail.text)
             value=detail.json();self.assertEqual(len(value['sources']),1)
             locations.append(value['sources'][0]['source_id'])
+            inventory = repo['algorithm_inventory']
+            self.assertEqual(inventory['basis'], 'integrated')
+            self.assertEqual(inventory['stages']['ai_assessed'], 'completed')
+            for group in inventory['groups']:
+                self.assertEqual(group['example']['source_id'], locations[-1])
+                self.assertEqual(group['count'], sum(
+                    row['algorithm'] == group['algorithm'] and row['verification_status'] == group['status']
+                    and row['effective_purpose_code'] == group['purpose'] and row['purpose_origin'] == group['origin']
+                    for row in value['integrated_analysis']['findings']))
+            self.assertEqual(sum(g['count'] for g in inventory['groups']), len(value['integrated_analysis']['findings']))
             self.assertEqual(value['ai_analysis']['coverage']['completed'],1)
             report=self.client.get('/api/tasks/'+identity+'/report/json?repository_id='+repo['repository_id'])
             self.assertEqual(report.status_code,200,report.text)
             self.assertEqual(report.json()['sources'][0]['source_id'],value['sources'][0]['source_id'])
         self.assertEqual(len(set(locations)),2)
         self.assertLessEqual(result['ai_analysis']['calls'],2)
+
+    def test_failed_batch_remains_downloadable(self):
+        repositories = [RepoInfo('one/first', 'https://github.com/one/first', 1)]
+        with patch.object(task_routes, 'fetch_popular_repos', return_value=repositories), \
+             patch('backend.popular.collect_github_sources', return_value=[]), patch.object(main, 'write_results') as save:
+            task = self.client.post('/api/tasks/popular', json={'top': 1, 'ai_assisted': False},
+                                    headers={'X-Request-ID': 'all-failed-inventory-1234'}).json()
+            batch = self.wait(task['id'])
+            self.assertEqual(batch['repos'], [])
+            self.assertEqual(batch['failures'][0]['full_name'], 'one/first')
+            self.assertTrue(batch['meta']['incomplete'])
+            save.assert_not_called()
 
     def test_stopping_popular_ai_preserves_results_without_overwriting_snapshot(self):
         self.configure();self.fake.delay=.8
