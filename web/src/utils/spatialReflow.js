@@ -86,7 +86,7 @@ export function labelSlots(anchor, body, {w,h}) {
   ];
 }
 
-export function repositoryLabelSlots(anchor, {w}, width) {
+export function peripheralLabelSlots(anchor, {w}, width) {
   const sides = [w/2+7,width-w/2-7].sort((a,b)=>Math.abs(a-anchor.x)-Math.abs(b-anchor.x));
   return [
     ...[66,88,112,142,174].flatMap(n=>[[0,n],[0,-n],[n,0],[-n,0],
@@ -128,16 +128,17 @@ function clipPolygon(points, border) {
   return points;
 }
 
-export function solveLayerSpacing(layers, projection) {
+export function solveLayerSpacing(layers, projection, atlas = false) {
   const {width,height} = projection;
   const frame = [{x:0,y:0},{x:width,y:0},{x:width,y:height},{x:0,y:height}];
   const boards = layers.filter(layer=>layer.data.length).flatMap(layer=>{
     const {x,y,z} = layer.center;
     const at = projection.point(x,y,z,layer.index);
     if (at.z<-1 || at.z>1) return [];
+    const inset = atlas ? .5 : .38;
     function measure(offset) {
       const outline = [[-1,1],[1,1],[1,-1],[-1,-1]].map(([sx,sy])=>
-        projection.point(x+sx*layer.width*.38,y+sy*layer.height*.38,z,layer.index,0,offset));
+        projection.point(x+sx*layer.width*inset,y+sy*layer.height*inset,z,layer.index,0,offset));
       const area = signedArea(outline);
       if (Math.abs(area)<1 || outline.some(p=>p.z<-1 || p.z>1)) return {area:0,visible:0,polygon:[]};
       if (area<0) outline.reverse();
@@ -152,7 +153,7 @@ export function solveLayerSpacing(layers, projection) {
     let value = 0;
     for (const [i,first] of placed.entries()) {
       value += first.cost;
-      for (const other of placed.slice(i+1)) value += Math.max(0,overlap(first.shape,other.shape)-.16);
+      for (const other of placed.slice(i+1)) value += Math.max(0,overlap(first.shape,other.shape)-(atlas ? .06 : .16));
     }
     return value;
   }
@@ -160,7 +161,7 @@ export function solveLayerSpacing(layers, projection) {
   let bestScore = score(best);
   if (!bestScore) return new Map();
   for (const axis of ['x','y']) {
-    const distance = Math.min(96,(axis==='x' ? width : height)*.17);
+    const distance = Math.min(atlas ? 154 : 96,(axis==='x' ? width : height)*(atlas ? .20 : .17));
     const ordered = boards.slice().sort((a,b)=>a.at[axis]-b.at[axis]);
     const options = ordered.map(board=>{
       const list = [{board,shape:board.home,at:board.at[axis],cost:0}];
@@ -169,7 +170,7 @@ export function solveLayerSpacing(layers, projection) {
         const offset = projection.world(pos.x,pos.y,board.layer.depth)?.sub(board.layer.center);
         if (!offset) continue;
         offset.z = 0;
-        offset.clampLength(0,Math.min(110,board.layer.width*.35));
+        offset.clampLength(0,atlas ? board.layer.width*.55 : Math.min(110,board.layer.width*.35));
         const shape = board.measure(offset);
         if (shape.visible < board.home.visible*.93) continue;
         const {x,y,z} = board.layer.center;
@@ -200,6 +201,7 @@ export function solveSpatialReflow(layout, projection, focus, variant, size) {
   const rank = n => (n.row ? 200 : 0)+(focus.nodes.has(n.id) ? 120 : 0)+(n.group ? 28 : 0);
   const ordered = [...layout.nodes.values()].sort((a,b)=>rank(b)-rank(a));
   const compact = width<620;
+  const footprint = variant==='atlas' ? .66 : .5;
   for (const node of ordered) {
     const base = node.position;
     const center = projection.point(base.x,base.y,base.z,node.layer);
@@ -216,8 +218,9 @@ export function solveSpatialReflow(layout, projection, focus, variant, size) {
       if (!pos) continue;
       pos.z = base.z;
       if (pos.distanceToSquared(base) > max*max ||
-          Math.abs(pos.x-layer.center.x)+nx/2>layer.width/2 ||
-          Math.abs(pos.y-layer.center.y)+ny/2>layer.height/2) continue;
+          Math.abs(pos.x-layer.center.x)+nx*footprint>layer.width/2 ||
+          Math.abs(pos.y-layer.center.y)+ny*footprint>layer.height/2 ||
+          (variant==='atlas' && pos.y-ny*footprint<layer.center.y-layer.height/2+26)) continue;
       const body = projection.body(node,pos);
       const pad = {left:body.left-gap,right:body.right+gap,top:body.top-gap,bottom:body.bottom+gap};
       if (!insideFrame(pad,width,height,0) || bodies.some(b=>intersects(b,pad)) ||
@@ -226,7 +229,7 @@ export function solveSpatialReflow(layout, projection, focus, variant, size) {
       if (!needLabel) break;
       const anchor = projection.label(node,pos);
       const metrics = measured;
-      const slots = [...labelSlots(anchor,body,metrics),...repositoryLabelSlots(anchor,metrics,width)];
+      const slots = [...labelSlots(anchor,body,metrics),...peripheralLabelSlots(anchor,metrics,width)];
       const hint = slots.find(([dx,dy])=>{
         const box = labelBox(anchor.x+dx,anchor.y+dy,metrics.w,metrics.h);
         if (!insideFrame(box,width,height,43) || intersects(box,body) ||

@@ -70,4 +70,8 @@ const modes = [
 @media (max-width: 600px), (pointer: coarse) {
   .button { min-height: 44px; }
 }
+@media(max-height:540px) and (orientation:landscape) {
+  .mode-tabs { flex-wrap:nowrap; }
+  .button { min-height:32px; padding:3px 6px; font-size:12px; gap:4px; }
+}
 </style>

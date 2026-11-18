@@ -16,19 +16,19 @@ function grid(index, count, columns, horizontal, vertical) {
 }
 
 function shape(node, atlas, peak) {
-  if (node.kind === 'category') return [47, 47, 16];
+  if (node.kind === 'category') return atlas ? [55,55,16] : [47,47,16];
   if (node.kind === 'reference') return [32, 35, 26];
   const weight = Math.log1p(node.total || 0) / Math.log1p(peak);
   if (node.kind === 'file') {
-    const thickness = atlas ? 6 + 24 * weight : 15;
-    return [44, 30, thickness];
+    const thickness = atlas ? 9 + 21 * weight : 15;
+    return atlas ? [52,35,thickness] : [44,30,thickness];
   }
-  const diameter = atlas ? 22 + 34 * weight : 35;
+  const diameter = atlas ? 25 + 37 * weight : 35;
   return [diameter, diameter, diameter];
 }
 
 function atlasPoint(node, index, count, compact, columns) {
-  if (node.kind === 'category') return grid(index, count, 2, compact ? 116 : 169, compact ? 65 : 100);
+  if (node.kind === 'category') return grid(index, count, 2, compact ? 119 : 169, compact ? 86 : 100);
   if (node.kind === 'file') return grid(index, count, columns, compact ? 117 : 133, compact ? 77 : 102);
   if (count>15) return grid(index,count,columns,84,77);
   if (index === 0) return [0, 0];
@@ -47,10 +47,10 @@ export function layeredLayout(graph, variant, compact = false) {
     const columns = atlas && kind==='file' ? Math.max(1,Math.min(compact?2:4,Math.ceil(data.length/2)))
       : Math.max(2, Math.ceil(Math.sqrt(data.length * 1.35)));
     let width = atlas ? compact ? 264 : 420 : Math.max(310, columns * 120 + 36);
-    let height = atlas ? compact ? 250 : 323 : Math.max(215, Math.ceil(data.length / columns) * 83 + 44);
+    let height = atlas ? compact ? 278 : 350 : Math.max(215, Math.ceil(data.length / columns) * 83 + 44);
     if (atlas && graph.expanded && kind==='file') {
       if (!compact) width = Math.max(width,(columns-1)*133+120);
-      height = Math.max(height,Math.ceil(data.length/columns)*(compact?77:102)+38);
+      height = Math.max(height,Math.ceil(data.length/columns)*(compact?77:102)+54);
     }
     if (atlas && kind==='algorithm' && data.length>15) {
       width = Math.max(width,columns*84+24);
@@ -61,8 +61,14 @@ export function layeredLayout(graph, variant, compact = false) {
   const spacing = Math.max(...layers.map(layer => layer.width));
   const nodes = new Map();
   for (const layer of layers) {
-    const spread = compact ? spacing * .10 : Math.max(atlas ? 218 : 175, spacing * .42);
-    layer.center = new Vector3((layer.index - 1) * spread, 0, layer.depth);
+    const spread = atlas ? (compact ? spacing*.36 : spacing*.82)
+      : compact ? spacing*.10 : Math.max(175,spacing*.42);
+    const step = layer.index - 1;
+    layer.center = new Vector3(step*spread, atlas ? step*48 : 0, layer.depth);
+    if (atlas) layer.caption = {
+      layer:layer.index, size:[164,36,1],
+      position:layer.center.clone().add(new Vector3(0,19-layer.height/2,-.7)),
+    };
     layer.data.forEach((node, index) => {
       const point = atlas ? atlasPoint(node, index, layer.data.length, compact, layer.columns)
         : grid(index, layer.data.length, layer.columns, 120, 83);

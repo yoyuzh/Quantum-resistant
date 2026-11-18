@@ -82,6 +82,10 @@ function buildGraph(sources, rankings, status, width, filter, scaleMax, expanded
     const space = n.width - 2*n.padding - 2;
     const wrapTitle = title => lines(title, space, n.fontSize, 600, repo || n.group ? Infinity : 2);
     n.lines = wrapTitle(n.label);
+    if (n.group && n.lines.length === 2 && n.lines[1].length === 1) {
+      n.lines[1] = n.lines[0].slice(-1) + n.lines[1];
+      n.lines[0] = n.lines[0].slice(0,-1);
+    }
     if (repo && n.lines.length > 1) {
       const slash = n.label.indexOf('/') + 1;
       n.lines = [...wrapTitle(n.label.slice(0, slash)), ...wrapTitle(n.label.slice(slash))];

@@ -16,6 +16,7 @@ const mode = ref('confirmed');
 const filter = ref('');
 const selected = ref(null);
 const evidence = ref(null);
+let evidenceTrigger;
 const rankings = computed(() => atlas.value.rankings[mode.value] || []);
 const rows = computed(() => atlas.value.rows.filter(row => !filter.value || row.count(filter.value, mode.value) > 0));
 const groups = computed(() => repositoryCategories(atlas.value.rows));
@@ -43,9 +44,15 @@ function chooseMode(value) {
 }
 watch(filter, () => { selected.value = null; });
 async function select(row, algorithm) {
+  if (!evidence.value?.contains(document.activeElement)) evidenceTrigger = document.activeElement;
   selected.value = { row, algorithm };
   await nextTick();
   evidence.value?.focus();
+}
+async function closeEvidence() {
+  selected.value = null;
+  await nextTick();
+  evidenceTrigger?.focus({ preventScroll: true });
 }
 function download() {
   const url = URL.createObjectURL(new Blob([inventoryMarkdown(atlas.value)], { type: 'text/markdown;charset=utf-8' }));
@@ -66,20 +73,23 @@ function download() {
       <header class="atlas-header">
         <div><h2 id="atlas-title">多仓库密码算法全景图</h2>
           <p>{{ batchScope(atlas) }} <strong v-if="result.meta?.incomplete"> · 本批未完整结束</strong></p></div>
-        <div class="atlas-actions"><button class="button secondary compact" @click="download">{{ inline ? '导出清单' : '导出批次清单' }}</button>
+        <div class="atlas-actions"><slot name="actions" /><button class="button secondary compact" @click="download">{{ inline ? '导出清单' : '导出批次清单' }}</button>
           <button v-if="!inline" class="button secondary compact" @click="dialog.close()">关闭</button></div>
-      </header>
-      <div class="atlas-filters"><div class="atlas-actions" aria-label="判断来源">
+        <div class="atlas-filters"><div class="atlas-actions" role="group" aria-label="判断来源">
         <button v-for="s in atlas.modes" :key="s" class="button secondary compact" :aria-pressed="s === mode" @click="chooseMode(s)">{{ label(s) }}</button>
-      </div>
-      </div>
+        </div>
+        </div>
+      </header>
       <div class="atlas-scene">
-        <RepositoryRelations :rows="rows" :rankings="rankings" :scale-max="scaleMax" :status="mode" :filter="filter"
-          :stamp="formatTime(result.scanned_at)+'（北京时间）'" @filter="filter=$event" @select="select" @clear-evidence="selected=null" />
-        <aside v-if="selected" ref="evidence" class="atlas-evidence-hud" aria-label="仓库关系证据" tabindex="-1" @keydown.esc.stop="selected=null">
-          <button class="button secondary compact close-evidence" @click="selected=null">收起证据</button>
-          <AtlasEvidence :row="selected.row" :algorithm="selected.algorithm" :status="mode" :task-id="result.task_id" />
-        </aside>
+        <RepositoryRelations :rows="rows" :rankings="rankings" :scale-max="scaleMax" :status="mode" :filter="filter" :evidence-open="Boolean(selected)"
+          :stamp="formatTime(result.scanned_at)+'（北京时间）'" @filter="filter=$event" @select="select" @clear-evidence="selected=null">
+          <template #evidence="{ fullscreen }">
+            <aside v-if="selected" ref="evidence" class="atlas-evidence-hud" :class="{ 'fullscreen-evidence': fullscreen }" aria-label="仓库关系证据" tabindex="-1" @keydown.esc.stop.prevent="closeEvidence">
+              <button class="button secondary compact close-evidence" @click="closeEvidence">收起证据</button>
+              <AtlasEvidence :row="selected.row" :algorithm="selected.algorithm" :status="mode" :task-id="result.task_id" />
+            </aside>
+          </template>
+        </RepositoryRelations>
       </div>
       <details class="scope-note"><summary>扫描时间与样本范围</summary>
         <p>{{ formatTime(result.scanned_at) }}（北京时间） · {{ result.meta?.query || '样本条件未知' }}</p>
@@ -101,7 +111,7 @@ function download() {
 .atlas-header p { margin:4px 0; color:var(--text-secondary); }
 .scope-note { margin-block:12px; font-size:13px; color:var(--text-secondary); }
 .scope-note summary { cursor:pointer; }
-.atlas-filters { display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap; }
+.atlas-filters { flex-basis:100%; display:flex; align-items:center; flex-wrap:wrap; }
 button[aria-pressed=true] { box-shadow:inset 0 0 0 2px var(--accent); }
 .atlas-inline h2 { margin:0; font-size:clamp(21px,2.2vw,32px); }
 .atlas-scene { position:relative; }
@@ -111,4 +121,19 @@ button[aria-pressed=true] { box-shadow:inset 0 0 0 2px var(--accent); }
 .close-evidence { margin-bottom:8px; }
 @media(max-width:700px) { .atlas-evidence-hud { top:auto; bottom:10px; left:8px; right:8px; width:auto; max-height:48dvh; } }
 @media(max-width:600px) { .atlas-inline { padding:8px 2px; } .atlas-inline h2 { font-size:19px; } .atlas-header .button { padding-inline:7px; font-size:12px; } }
+.atlas-evidence-hud.fullscreen-evidence { position:fixed; inset:auto 12px 12px; margin-inline-start:auto; max-height:55dvh; }
+@media(min-width:650px) and (orientation:landscape) {
+  .atlas-evidence-hud.fullscreen-evidence { position:static; margin:0; width:auto; max-height:calc(100dvh - 112px); }
+}
+@media(max-height:540px) and (orientation:landscape) {
+  .atlas-inline { padding:6px 2px; }
+  .atlas-inline h2 { font-size:16px; line-height:1.15; }
+  .atlas-header { margin-bottom:4px; gap:4px 8px; }
+  .atlas-header p { margin-block:2px; font-size:12px; line-height:1.3; }
+  .atlas-header .button { padding-inline:7px; font-size:12px; }
+  .atlas-filters { flex-basis:auto; }
+  .atlas-filters .atlas-actions { gap:4px; }
+  .atlas-evidence-hud.fullscreen-evidence { max-height:calc(100dvh - 70px); }
+  .atlas-evidence-hud :deep(.findings-list) { height:auto; overflow:visible; }
+}
 </style>

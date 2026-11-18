@@ -98,6 +98,17 @@ test('窄屏及桌面节点分列，标签有空间，端口没有越界', () =>
   }
 });
 
+test('窄屏分类分行保留全名，避免只留一个尾字', () => {
+  const groups = repositoryCategories(atlas.rows);
+  const graph = groupedRepositoryGraph(groups, '', 1, atlas.rankings.confirmed, 'confirmed', 350, '');
+  const categories = graph.nodes.filter(node => node.group);
+  assert.ok(categories.some(node => node.lines.length === 2));
+  for (const node of categories) {
+    assert.equal(node.lines.join(''), node.label);
+    if (node.lines.length === 2) assert.ok(node.lines[1].length >= 2);
+  }
+});
+
 test('长仓库名在最窄图幅上仍保留完整 owner/repo', () => {
   const name = 'owner-' + 'w'.repeat(33) + '/repo-' + 'W'.repeat(95);
   const sample = repositoryAtlas({repos: [{...seed.repos[0], full_name: name}]});

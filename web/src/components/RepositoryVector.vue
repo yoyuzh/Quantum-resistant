@@ -5,11 +5,11 @@ import { wrapDiagramText } from '../utils/flowPacking.js';
 import { label } from '../utils/repositoryAtlas.js';
 import { clamp, zoomView } from '../utils/workbenchScene.js';
 
-const props = defineProps({graph:Object, selected:String, status:String, stamp:String});
+const props = defineProps({graph:Object, selected:String, selectedEdge:String, status:String, stamp:String, fullscreen:Boolean});
 const emit = defineEmits(['select','select-edge']);
 const svg = ref(null), pattern = useId()+'-grid';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-const floating = ref(!reduced.matches), toolsOpen = ref(false);
+const floating = ref(false), toolsOpen = ref(false);
 const camera = shallowRef({x:0,y:0,scale:1});
 const poses = shallowRef(new Map());
 let goal = camera.value, elapsed = 0, last = 0, frame = 0, visible = true, observer;
@@ -40,7 +40,7 @@ function moveNode(id,x,y,settle=false) {
 }
 const focusId = computed(() => props.selected || props.graph.expanded);
 const members = computed(() => new Set(props.graph.branches.map(edge => edge.target)));
-const activeEdges = computed(() => new Set(props.graph.links.filter(e =>
+const activeEdges = computed(() => props.selectedEdge ? new Set([props.selectedEdge]) : new Set(props.graph.links.filter(e =>
   e.source===focusId.value || e.target===focusId.value ||
   (focusId.value===props.graph.expanded && members.value.has(e.source))).map(e=>e.id)));
 const activeNodes = computed(() => {
@@ -94,7 +94,7 @@ function boundedCamera({x,y,scale}) {
 }
 function focusCamera() {
   const g=props.graph;
-  if (!focusId.value || !svg.value) {goal={x:0,y:0,scale:1};return;}
+  if (!props.selected || !svg.value) {goal={x:0,y:0,scale:1};return;}
   const connected=g.nodes.filter(n=>activeNodes.value.has(n.id));
   if (!connected.length) return;
   const left=Math.min(...connected.map(n=>resting.get(n.id).x-n.width/2)), right=Math.max(...connected.map(n=>resting.get(n.id).x+n.width/2));
@@ -105,17 +105,8 @@ function focusCamera() {
   const y1=Math.min(g.height,(Math.min(innerHeight,clip?.bottom ?? innerHeight)-origin)/unit);
   const height=y1>y0+80 ? y1-y0 : g.height;
   const centerY=y1>y0+80 ? (y1+y0)/2 : g.height/2;
-  const groupFocus = !props.selected;
-  const minimum = groupFocus ? (g.width < 590 ? .95 : .84) : MIN_SCALE;
-  const outerLeft = Math.min(...g.nodes.map(n => resting.get(n.id).x - n.width/2));
-  const outerRight = Math.max(...g.nodes.map(n => resting.get(n.id).x + n.width/2));
-  const maximum = groupFocus ? Math.min(1.18, (g.width-12)/(outerRight-outerLeft)) : 1.65;
-  const scale=clamp(Math.min((g.width-24)/(right-left+20),(height-18)/(bottom-top+20)),minimum,maximum);
-  const x = g.width/2-(left+right)*scale/2;
-  const y = groupFocus && (bottom-top)*scale > height-18 ? y0+9-top*scale : centerY-(top+bottom)*scale/2;
-  const lowY = 5-top*scale, highY = g.height-5-bottom*scale;
-  goal=boundedCamera({scale,x:groupFocus ? clamp(x,6-outerLeft*scale,g.width-6-outerRight*scale) : x,
-    y:groupFocus && lowY <= highY ? clamp(y,lowY,highY) : y});
+  const scale = clamp(Math.min((g.width-24)/(right-left+20),(height-18)/(bottom-top+20)),MIN_SCALE,1.65);
+  goal=boundedCamera({scale,x:g.width/2-(left+right)*scale/2,y:centerY-(top+bottom)*scale/2});
 }
 function layout() {
   resting=focusId.value ? arrangeNeighborhood(props.graph,focusId.value) : props.graph.home;
@@ -147,7 +138,11 @@ function zoom(factor, p = {x:props.graph.width/2,y:props.graph.height/2}) {
   if(scale===goal.scale)return;
   goal=boundedCamera(zoomView(goal,scale/goal.scale,p.x,p.y));invalidate();
 }
-function wheel(e) {zoom(Math.exp(-clamp(e.deltaY,-160,160)*.0025),point(e));}
+function wheel(e) {
+  if (e.ctrlKey || e.metaKey || (!props.fullscreen && !svg.value.matches(':focus-within'))) return;
+  e.preventDefault();
+  zoom(Math.exp(-clamp(e.deltaY,-160,160)*.0025),point(e));
+}
 function begin(e) {
   if(e.button!==0 || pointers.size>=2)return;
   const p=point(e);
@@ -198,8 +193,18 @@ function finish(e,cancel=false) {
   }
   gesture=null;
 }
+function revealFocusedNode(event, node) {
+  if (!event.currentTarget.matches(':focus-visible')) return;
+  const {x,y,scale} = goal;
+  const p = position(node);
+  const nextX = clamp(x,5-(p.x-node.width/2)*scale,props.graph.width-5-(p.x+node.width/2)*scale);
+  const nextY = clamp(y,5-(p.y-node.height/2)*scale,props.graph.height-5-(p.y+node.height/2)*scale);
+  if (nextX===x && nextY===y) return;
+  goal = boundedCamera({x:nextX,y:nextY,scale});
+  invalidate();
+}
 function key(e) {
-  if(e.key==='Escape' && focusId.value){e.preventDefault();emit('select',props.selected ? '' : props.graph.expanded);return;}
+  if(e.key==='Escape' && (focusId.value || props.selectedEdge) && !props.fullscreen){e.preventDefault();emit('select',props.selected || props.selectedEdge ? '' : props.graph.expanded);return;}
   if(['+','=','-','0'].includes(e.key)){e.preventDefault();if(e.key==='0') reset();else zoom(e.key==='-'?1/1.3:1.3);}
   if(e.key.startsWith('Arrow')){
     e.preventDefault();const dx=({ArrowLeft:-1,ArrowRight:1})[e.key]||0,dy=({ArrowUp:-1,ArrowDown:1})[e.key]||0;
@@ -210,7 +215,7 @@ function key(e) {
   }
 }
 function visibility(){if(!document.hidden){last=0;invalidate();}}
-function motionPreference(){floating.value=!reduced.matches;invalidate();}
+function motionPreference(){if(reduced.matches)floating.value=false;invalidate();}
 onMounted(()=>{
   observer=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting; if(visible){last=0;invalidate();}else {cancelAnimationFrame(frame);frame=0;}});
   observer.observe(svg.value); reduced.addEventListener('change',motionPreference);document.addEventListener('visibilitychange',visibility);invalidate();
@@ -219,6 +224,14 @@ onBeforeUnmount(()=>{visible=false;cancelAnimationFrame(frame);observer?.disconn
 function position(n){return poses.value.get(n.id)||props.graph.home.get(n.id);}
 function path(e){return relationPath(poses.value.get(e.source)||props.graph.home.get(e.source),poses.value.get(e.target)||props.graph.home.get(e.target),e);}
 const linkPaths = computed(() => new Map(props.graph.links.map(edge => [edge.id,path(edge)])));
+const portPair = computed(() => {
+  const edge = props.graph.links.find(item=>item.id===props.selectedEdge);
+  if (!edge) return null;
+  const source = poses.value.get(edge.source) || props.graph.home.get(edge.source);
+  const target = poses.value.get(edge.target) || props.graph.home.get(edge.target);
+  return {edge,points:[{x:source.x+edge.from.x,y:source.y+edge.from.y},
+    {x:target.x+edge.to.x,y:target.y+edge.to.y}]};
+});
 function exportGraph(){
   const g=props.graph, copy=svg.value.cloneNode(true), style=getComputedStyle(svg.value);
   const settled = id => overrides.get(id) || resting.get(id);
@@ -268,9 +281,9 @@ function exportGraph(){
 }
 </script>
 <template>
-  <section class="vector-stage">
+  <section class="vector-stage" :class="{ 'vector-fullscreen': fullscreen }">
     <div class="graph-tools" :class="{expanded:toolsOpen}"><div class="legends"><span class="graph-key"><i/>类别 <i class="repo-key"/>仓库 <b/>算法</span>
-      <span v-if="status!=='legacy'" class="weight-key" aria-label="记录数线宽图例">
+      <span v-if="status!=='legacy'" class="weight-key" role="group" aria-label="记录数线宽图例">
         <span v-for="v in scaleSamples" :key="v"><svg width="26" height="22" aria-hidden="true"><path d="M1 11H25" stroke="currentColor" :stroke-width="strokeWidth(v,graph.peak,status)"/></svg>{{ v }} 项</span>
       </span></div>
       <div class="actions">
@@ -283,15 +296,16 @@ function exportGraph(){
         <slot name="fullscreen" />
       </div>
     </div>
-    <svg ref="svg" class="network" role="group" aria-label="仓库算法关系图，点击分类展开，点击仓库或算法聚焦，拖动节点调整位置，滚轮或双指缩放" tabindex="0"
-      :viewBox="`0 0 ${graph.width} ${graph.height}`" :font-family="graph.fontFamily" @wheel.prevent="wheel" @pointerdown="begin" @pointermove="move"
+    <div class="network-frame">
+    <svg ref="svg" class="network" role="group" aria-label="仓库算法关系图，点击分类展开，点击仓库或算法聚焦，拖动节点调整位置，聚焦图面后滚轮缩放，也可使用缩放按钮" tabindex="0"
+      :viewBox="`0 0 ${graph.width} ${graph.height}`" :font-family="graph.fontFamily" @wheel="wheel" @pointerdown="begin" @pointermove="move"
       @pointerup="finish($event)" @pointercancel="finish($event,true)" @lostpointercapture="finish($event,true)" @keydown="key">
       <defs><pattern :id="pattern" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="var(--workspace-dot)"/></pattern></defs>
       <rect width="100%" height="100%" fill="var(--bg-elevated)"/><rect width="100%" height="100%" :fill="'url(#'+pattern+')'"/>
       <g data-camera :transform="`translate(${camera.x} ${camera.y}) scale(${camera.scale})`">
-        <g v-for="e in graph.links" :key="e.id" :data-edge="e.id" class="edge" :opacity="activeEdges.has(e.id) ? 1 : .68">
+        <g v-for="e in graph.links" :key="e.id" :data-edge="e.id" class="edge" :opacity="activeEdges.has(e.id) ? 1 : (focusId || selectedEdge) ? .15 : .68">
           <title>{{ e.sourceLabel }} → {{ e.algorithm }} · {{ status==='legacy'?'基础检出':e.value+' 项' }}</title>
-          <path :d="linkPaths.get(e.id)" fill="none" :stroke="e.color" :stroke-width="e.band" :stroke-dasharray="status==='ai_assessed'?'8 4':status==='pending'?'3 4':undefined"/>
+          <path :d="linkPaths.get(e.id)" fill="none" :stroke="e.color" :stroke-width="selectedEdge===e.id ? Math.max(3.5,e.band*1.32) : activeEdges.has(e.id) ? e.band*1.14 : e.band" :stroke-dasharray="status==='ai_assessed'?'8 4':status==='pending'?'3 4':undefined"/>
           <path data-hit :d="linkPaths.get(e.id)" fill="none" stroke="transparent" stroke-width="12"/>
         </g>
         <path v-for="branch in graph.branches" :key="branch.target" :data-branch="branch.target" class="membership"
@@ -300,7 +314,7 @@ function exportGraph(){
         <g v-for="n in graph.nodes" :key="n.id" role="button" tabindex="0" class="vertex" :class="{member:n.parent,hovered:hover===n.id}" :data-node="n.id" :aria-label="n.label"
           :aria-pressed="n.group ? undefined : selected===n.id" :aria-expanded="n.group ? n.expanded : undefined"
           :transform="`translate(${position(n).x} ${position(n).y})`"
-          @pointerenter="hover=n.id" @pointerleave="hover=''"
+          @pointerenter="hover=n.id" @pointerleave="hover=''" @focus="revealFocusedNode($event,n)"
           @keydown.enter.stop.prevent="emit('select',selected===n.id?'':n.id)" @keydown.space.stop.prevent="emit('select',selected===n.id?'':n.id)">
           <title>{{ n.label }} · {{ n.detailLines.join('') }}</title>
           <rect v-if="selected===n.id || n.expanded" :x="-n.width/2-5" :y="-n.height/2-5" :width="n.width+10" :height="n.height+10" :rx="n.radius+5" :fill="n.color" opacity=".2"/>
@@ -314,13 +328,20 @@ function exportGraph(){
             <text v-for="(line,i) in n.detailLines" :key="'d'+i" :x="n.group ? -5 : 0" :y="-(n.lines.length*22+n.detailLines.length*20)/2+16+n.lines.length*22+i*20" font-size="12.5" fill="var(--text-secondary)">{{ line }}</text>
           </g>
         </g>
+        <g v-if="portPair" pointer-events="none">
+          <circle v-for="(point,i) in portPair.points" :key="i" :cx="point.x" :cy="point.y" r="3.8"
+            :fill="portPair.edge.color" stroke="var(--bg-surface)" stroke-width="1.1" />
+        </g>
       </g>
     </svg>
+    </div>
   </section>
 </template>
 <style scoped>
 .vector-stage { overflow:hidden; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-elevated); }
-.network { display:block; width:100%; touch-action:none; cursor:grab; user-select:none; }
+.network-frame { overflow:auto; min-width:0; }
+.network { display:block; width:100%; touch-action:pan-x pan-y; cursor:grab; user-select:none; }
+.vector-fullscreen .network { touch-action:none; }
 .network:active,.vertex:active { cursor:grabbing; }
 .vertex,.edge { cursor:pointer; }
 .edge { transition:opacity 180ms ease; }
@@ -340,10 +361,18 @@ function exportGraph(){
 .tools-toggle { display:none; }
 @media(max-width:600px){
   .tools-toggle { display:inline-flex; }
-  .graph-tools:not(.expanded) .view-actions,.graph-tools:not(.expanded) .weight-key { display:none; }
+  .legends { display:contents; }
+  .weight-key { order:1; flex-basis:100%; }
+  .vector-stage:not(.vector-fullscreen) .graph-tools:not(.expanded) .view-actions { display:none; }
+  .vector-fullscreen .tools-toggle { display:none; }
   .graph-tools.expanded .actions { flex-basis:100%; }
 }
 @media(prefers-reduced-motion:reduce){
   .edge,.membership,.vertex.member { animation:none; transition:none; }
+}
+@media(max-height:540px) and (orientation:landscape) {
+  .graph-tools { padding:4px 8px; }
+  .vector-stage:not(.vector-fullscreen) .tools-toggle { display:inline-flex; }
+  .vector-stage:not(.vector-fullscreen) .graph-tools:not(.expanded) .view-actions { display:none; }
 }
 </style>

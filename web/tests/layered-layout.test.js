@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { Quaternion, Vector3 } from 'three';
+import { BoxGeometry, Euler, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, PerspectiveCamera, Quaternion, Raycaster, Spherical, Vector3 } from 'three';
 import { repositoryAtlas } from '../src/utils/repositoryAtlas.js';
 import { categoryScale, repositoryCategories } from '../src/utils/repositoryCategories.js';
 import { groupedRepositoryGraph } from '../src/utils/repositoryGraph.js';
 import { layeredLayout, spatialFocus } from '../src/composables/useLayered3DLayout.js';
-import { cameraShot, layerPoses } from '../src/utils/layeredCamera.js';
-import { edgePlan } from '../src/utils/layeredObjects.js';
+import { cameraShot, layerAim, layerPoses, SPATIAL_FOV } from '../src/utils/layeredCamera.js';
+import { spatialProjection, solveLayerSpacing } from '../src/utils/spatialReflow.js';
+import { edgePlan, pickSpatialTarget } from '../src/utils/layeredObjects.js';
 import { createLayeredTextures } from '../src/utils/layeredTextures.js';
 
 const seed = JSON.parse(readFileSync(new URL('../repository-seed.json',import.meta.url)));
@@ -71,6 +72,32 @@ test('窄屏取景有限，逐层正视直接对准所选切面',()=>{
   }
 });
 
+test('横屏展开或转向后，整块切面仍处于视口内',()=>{
+  const layout = layeredLayout(graph('category:identity'),'atlas');
+  for (const [width,height] of [[1326,612],[1166,490],[760,440]]) {
+    const options = {aspect:width/height,variant:'atlas',review:null,focus:['category:identity']};
+    const initial = cameraShot(layout,options);
+    const home = new Spherical().setFromVector3(initial.position.clone().sub(initial.target));
+    for (const yaw of [-Math.PI/5,0,Math.PI/5]) {
+      const direction = new Vector3().setFromSphericalCoords(1,home.phi,home.theta+yaw);
+      const shot = cameraShot(layout,{...options,direction});
+      const camera = new PerspectiveCamera(SPATIAL_FOV,options.aspect,1,18000);
+      camera.position.copy(shot.position);
+      camera.lookAt(shot.target);
+      camera.updateMatrixWorld();
+      const attitude = new Quaternion().setFromEuler(layerAim(new Euler(),direction,true));
+      const base = spatialProjection(camera,width,height,layerPoses(layout.layers,attitude,new Map()));
+      const shifts = solveLayerSpacing(layout.layers,base,true);
+      const projection = spatialProjection(camera,width,height,layerPoses(layout.layers,attitude,shifts));
+      for (const layer of layout.layers) for (const x of [-1,1]) for (const y of [-1,1]) {
+        const point = projection.point(layer.center.x+x*layer.width/2,layer.center.y+y*layer.height/2,layer.depth,layer.index);
+        assert(point.x>=12 && point.x<=width-12 && point.y>=12 && point.y<=height-12,
+          '切面留白不足 '+JSON.stringify({width,height,yaw,layer:layer.index,point}));
+      }
+    }
+  }
+});
+
 test('本地生成的节点颜色和粗糙度贴图具有刻纹与色阶',()=>{
   const materials = createLayeredTextures();
   assert.deepEqual(Object.keys(materials),['category','file','algorithm']);
@@ -90,6 +117,35 @@ test('工作台主干预算优先保留焦点关系',()=>{
   assert.equal(edgePlan({links},new Set([0]),false).length,180);
   assert.equal(edgePlan({links},new Set([0]),true).length,420);
   assert.equal(edgePlan({links},new Set([0]),false)[0].id,0);
+});
+
+test('点击前层底座或节点不会选中被遮挡的后层节点或经过的连线',()=>{
+  const material = new MeshBasicMaterial();
+  function node(id,x,z,width) {
+    const mesh = new InstancedMesh(new BoxGeometry(width,2,1),material,1);
+    mesh.setMatrixAt(0,new Matrix4().makeTranslation(x,0,z));
+    mesh.userData.ids = [id];
+    return mesh;
+  }
+  const front = node('front',0,3,1);
+  const pad = node('front',0,3,2);
+  const back = node('back',.8,0,2);
+  const board = new Mesh(new BoxGeometry(10,10,1),material);
+  board.position.z = 2;
+  board.updateMatrixWorld();
+  const edge = new Mesh(new BoxGeometry(2,1,1),material);
+  edge.position.z = 5;
+  edge.userData.edge = {id:'link'};
+  edge.updateMatrixWorld();
+  const surfaces = [front,pad,back,board];
+  const ray = new Raycaster(new Vector3(.8,0,8),new Vector3(0,0,-1));
+  assert.deepEqual(pickSpatialTarget(ray,surfaces,[edge]),{id:'front',edge:false});
+  ray.ray.origin.x = 0;
+  assert.deepEqual(pickSpatialTarget(ray,surfaces,[edge]),{id:'front',edge:false});
+  ray.ray.origin.x = 1.3;
+  assert.equal(pickSpatialTarget(ray,surfaces,[edge]),null);
+  ray.ray.origin.x = .8;
+  assert.deepEqual(pickSpatialTarget(ray,[back,board],[edge]),{id:'link',edge:true});
 });
 
 test('三块切面分别以世界坐标中心为转轴，只有遮挡偏移改变锚点',()=>{

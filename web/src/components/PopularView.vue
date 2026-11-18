@@ -131,7 +131,7 @@ watch(
                 ><strong>{{ repo.full_name }}</strong
                 ><small
                   ><AppIcon name="star" :size="13" /> {{ formatStars(repo.star_count) }} ·
-                  {{ repo.analysis_summary?.confirmed ?? repo.finding_count }} 静态 / {{ repo.analysis_summary?.ai_assessed || 0 }} AI · {{ !repo.coverage ? '范围未知' : repo.coverage.partial ? '部分扫描' : repo.coverage.candidate_files == null ? '总数未知' : `${repo.coverage.scanned_files} 个文件` }}</small
+                  {{ repo.analysis_summary?.confirmed ?? repo.finding_count }} 静态 / {{ repo.analysis_summary?.ai_assessed || 0 }} AI / {{ repo.analysis_summary?.pending || 0 }} 证据不足 · {{ !repo.coverage ? '范围未知' : repo.coverage.partial ? '部分扫描' : repo.coverage.candidate_files == null ? '总数未知' : `${repo.coverage.scanned_files} 个文件` }}</small
                 ></span
               ><span class="tag" :aria-label="`迁移评分 ${repo.analysis_summary?.migration_score ?? repo.migration_score}`">{{ repo.analysis_summary?.migration_score ?? repo.migration_score }} 分</span>
             </button>

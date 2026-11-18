@@ -2,18 +2,19 @@ import { Box3, Euler, MathUtils, Matrix4, Vector3 } from 'three';
 
 const cruise = new Vector3(.68, .85, 1).normalize();
 const narrowCruise = new Vector3(.11, 1.12, 1).normalize();
-const atlasCruise = new Vector3(.32, .34, 1).normalize();
+const atlasCruise = new Vector3(.48, .62, 1).normalize();
+const shortAtlasCruise = new Vector3(.56, .20, 1).normalize();
 const straight = new Vector3(0, 0, 1);
 const up = new Vector3(0, 1, 0);
 export const SPATIAL_FOV = 35;
 const maxYaw = 38*Math.PI/180;
 const maxPitch = 26*Math.PI/180;
 
-export function layerAim(out, forward) {
+export function layerAim(out, forward, atlas = false) {
   const horizontal = Math.hypot(forward.x,forward.z);
   // Use the sine of the viewing angle so the aim eases into its limits and crosses the rear seam continuously.
-  const yaw = horizontal ? maxYaw*forward.x/horizontal : 0;
-  return out.set(-maxPitch*forward.y,yaw,0,'YXZ');
+  const yaw = horizontal ? maxYaw*(atlas ? .66 : 1)*forward.x/horizontal : 0;
+  return out.set(-maxPitch*(atlas ? .49 : 1)*forward.y,yaw,0,'YXZ');
 }
 
 export function followLayerAim(current,target,elapsed) {
@@ -51,12 +52,13 @@ export function createViewSettle(delay = 220) {
   };
 }
 
-export function cameraShot(layout, { aspect, variant, review, focus, compact = false }) {
+export function cameraShot(layout, { aspect, variant, review, focus, compact = false, direction }) {
   const layer = layout.layers.find(item => item.index===review);
-  const forward = layer ? straight : compact ? narrowCruise : variant==='atlas' ? atlasCruise : cruise;
+  const home = variant==='atlas' ? (aspect > 2.7 ? shortAtlasCruise : atlasCruise) : cruise;
+  const forward = layer ? straight : direction ?? (compact ? narrowCruise : home);
   const side = up.clone().cross(forward).normalize();
   const rise = forward.clone().cross(side);
-  const aim = layerAim(new Euler(),forward);
+  const aim = layerAim(new Euler(),forward,variant==='atlas');
   const panelRight = new Vector3(1,0,0).applyEuler(aim);
   const panelUp = up.clone().applyEuler(aim);
   const panelNormal = straight.clone().applyEuler(aim);
@@ -66,7 +68,7 @@ export function cameraShot(layout, { aspect, variant, review, focus, compact = f
   const bounds = new Box3().setFromPoints(limits);
   const world = bounds.getCenter(new Vector3());
   const chosen = focus.map(id=>layout.nodes.get(id)).filter(Boolean);
-  const points = chosen.length && review===null ? chosen.flatMap(node => {
+  const points = variant!=='atlas' && chosen.length && review===null ? chosen.flatMap(node => {
     const [width,height,depth] = node.size;
     const center = layout.layers.find(item=>item.index===node.layer).center;
     const p = center.clone().addScaledVector(panelRight,node.position.x-center.x)
@@ -76,7 +78,7 @@ export function cameraShot(layout, { aspect, variant, review, focus, compact = f
   }) : limits;
   const target = new Box3().setFromPoints(points).getCenter(new Vector3());
   const fov = Math.tan(SPATIAL_FOV * Math.PI / 360);
-  const margin = compact ? .81 : .86;
+  const margin = compact || direction ? .79 : .86;
   const fit = (list, center) => list.reduce((max,point)=>{
     const p = point.clone().sub(center);
     const sideways = Math.max(Math.abs(p.dot(side))/aspect, Math.abs(p.dot(rise)));

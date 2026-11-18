@@ -18,23 +18,46 @@ const current=computed(()=>graph.value.nodes.find(n=>n.id===(edgeEvidence.value 
 const algorithms=computed(()=>[{value:'',label:'全部算法'},...[...new Set([...(props.data?.assets || []),...(props.data?.calls || [])].map(a=>a.algorithm))].filter(Boolean).sort().map(value=>({value,label:value}))]);
 const purposes=[{value:'',label:'全部用途'},...Object.entries(purposeLabels).map(([value,label])=>({value,label}))];
 const sources=[{value:'',label:'全部来源'},{value:'rule',label:'规则发现'},{value:'cross_file',label:'跨文件核验'},{value:'ai',label:'AI参与'}];
-let worker,timer,ticket=0,pendingFocus='';
+let worker,timer,ticket=0,pendingFocus='',workerData;
+function disposeLayout() {
+  ticket++;
+  clearTimeout(timer);
+  worker?.terminate();
+  worker = workerData = undefined;
+}
 function layout() {
-  clearTimeout(timer);worker?.terminate();const sequence=++ticket;
+  clearTimeout(timer);
+  const sequence=++ticket;
   if(!props.open)return;
-  busy.value=true;error.value='';
+  busy.value=true;
+  error.value='';
   timer=setTimeout(()=>{
-    worker=new Worker(new URL('../workers/graphLayout.js',import.meta.url),{type:'module'});
-    worker.onmessage=async event=>{
-      if(sequence!==ticket)return;
-      busy.value=false;
-      if(event.data.error) {error.value=event.data.error;return;}
-      graph.value=event.data.graph;layoutMs.value=event.data.duration_ms;await nextTick();if(sequence!==ticket)return;
-      if(pendingFocus && graph.value.nodes.some(n=>n.id===pendingFocus)) {selected.value=pendingFocus;canvas.value?.locate(pendingFocus);}
-      pendingFocus='';
-    };
-    worker.onerror=()=>{if(sequence===ticket){busy.value=false;error.value='图布局未完成，请重试。';}};
-    worker.postMessage({ticket:sequence,data:JSON.parse(JSON.stringify(props.data)),mode:props.mode,filter:{query:query.value,algorithm:algorithm.value,purpose:purpose.value,status:status.value,source:source.value}});
+    if(!worker) {
+      worker=new Worker(new URL('../workers/graphLayout.js',import.meta.url),{type:'module'});
+      worker.onmessage=async ({data})=>{
+        if(data.ticket!==ticket)return;
+        busy.value=false;
+        if(data.error) {error.value=data.error;return;}
+        graph.value=data.graph;
+        layoutMs.value=data.duration_ms;
+        await nextTick();
+        if(data.ticket!==ticket)return;
+        if(pendingFocus && graph.value.nodes.some(n=>n.id===pendingFocus)) {
+          selected.value=pendingFocus;
+          canvas.value?.locate(pendingFocus);
+        }
+        pendingFocus='';
+      };
+      worker.onerror=()=>{
+        disposeLayout();
+        busy.value=false;
+        error.value='图布局未完成，请重试。';
+      };
+    }
+    const data = props.data===workerData ? undefined : JSON.parse(JSON.stringify(props.data ?? {}));
+    worker.postMessage({ticket:sequence,data,mode:props.mode,
+      filter:{query:query.value,algorithm:algorithm.value,purpose:purpose.value,status:status.value,source:source.value}});
+    workerData=props.data;
   },120);
 }
 async function close() {
@@ -73,10 +96,10 @@ function openSpatial() {
 watch(()=>props.open,async open=>{
   await nextTick();
   if(open){pendingFocus=props.focusId;selected.value='';edgeEvidence.value='';query.value='';algorithm.value='';purpose.value='';status.value='';source.value='';dialog.value.showModal();layout();}
-  else {ticket++;worker?.terminate();clearTimeout(timer);dialog.value?.close();}
+  else {disposeLayout();dialog.value?.close();}
 });
 watch([()=>props.mode,()=>props.data,query,algorithm,purpose,status,source],()=>{selected.value='';edgeEvidence.value='';layout();});
-onBeforeUnmount(()=>{ticket++;worker?.terminate();clearTimeout(timer);dialog.value?.close();});
+onBeforeUnmount(()=>{disposeLayout();dialog.value?.close();});
 </script>
 <template>
   <Teleport to="body"><dialog ref="dialog" class="graph-workbench" :class="{maximized}" :data-layout-ms="layoutMs" :data-rendered-cards="renderStats.groups" :data-visible-nodes="renderStats.nodes" aria-labelledby="graph-workbench-title" @cancel.prevent="close" @keydown.tab="trap">
@@ -98,6 +121,7 @@ onBeforeUnmount(()=>{ticket++;worker?.terminate();clearTimeout(timer);dialog.val
     </header>
     <div class="workbench-filters"><label>搜索文件／API<input v-model="query" type="search" placeholder="文件路径、API或算法" /></label><SelectControl v-model="algorithm" label="算法" :options="algorithms" :popup-target="dialog" /><SelectControl v-model="purpose" label="用途" :options="purposes" :popup-target="dialog" /><SelectControl v-model="status" label="状态" :options="statusOptions" :popup-target="dialog" /><SelectControl v-model="source" label="来源" :options="sources" :popup-target="dialog" /></div>
     <div class="workbench-summary"><span role="status">{{ busy?'正在布局…':`${graph.files || 0} 个文件 · ${graph.nodes.length} 个节点 · ${graph.links.length} 条关系` }}</span><InfoTip label="图形操作与状态说明">滚轮缩放，复位返回总览。远景简化标签和关系，搜索覆盖全部记录。实线为静态关系，长虚线为 AI 研判，点线为关联或条件参考。当前显示 {{ renderStats.groups }} 个标签。</InfoTip></div>
+    <p v-if="unavailable3D" class="notice" role="status">当前环境无法显示 3D，已切换到 2D。</p>
     <p v-if="error" class="notice error" role="alert">{{ error }}<button class="button secondary compact" @click="layout">重试布局</button></p>
     <div v-if="open" class="workbench-body" :aria-busy="busy" :inert="busy || undefined">
       <Stage3DCanvas v-if="viewMode==='3d'" ref="canvas" variant="workbench" :graph="graph" :selected="selected"

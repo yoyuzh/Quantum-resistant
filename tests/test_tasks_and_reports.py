@@ -19,7 +19,7 @@ from backend.scanning import build_scan_response
 from backend.html_report import build_html_report
 from backend.insights import build_insights
 from backend.remote_sources import pypi_sources
-from backend.task_store import TaskStore
+from backend.task_store import Job, TaskStore
 from backend.popular import BatchResult
 
 CODE = 'from Crypto.PublicKey import RSA\nRSA.generate(2048)'
@@ -44,6 +44,23 @@ class TaskTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as ctx:
             self.store.submit('pypi', {}, 'request-one', lambda d: result)
         self.assertEqual(ctx.exception.status_code, 409)
+
+    def test_cache_capacity_evicts_unrelated_result_before_ai_source(self):
+        self.store.max_results = 3
+        now = self.store.now()
+        source = Job('origin', 'files', {}, 'request-1', ended=now-4, folder=self.store.storage.folder())
+        path = source.folder / 'source.txt'
+        path.write_text('evidence', encoding='utf-8')
+        source.control.source_paths = {'file-id':path}
+        ai = Job('ai', 'ai', {'source_task_id':source.id}, 'request-2',
+                 state='succeeded', ended=now-2, folder=self.store.storage.folder())
+        ai.control.source_task_id = source.id
+        unrelated = Job('unrelated', 'snippet', {}, 'request-3', ended=now-3, folder=self.store.storage.folder())
+        newest = Job('newest', 'snippet', {}, 'request-4', ended=now-1, folder=self.store.storage.folder())
+        source.state = unrelated.state = newest.state = 'succeeded'
+        self.store.jobs.update((job.id, job) for job in (source, ai, unrelated, newest))
+        self.assertEqual(self.store.source(ai.id, 'file-id')['content'], 'evidence')
+        self.assertNotIn(unrelated.id, self.store.jobs)
 
     def test_queue_limit_cancel_releases_reservation(self):
         store = TaskStore(workers=1, queue=1)

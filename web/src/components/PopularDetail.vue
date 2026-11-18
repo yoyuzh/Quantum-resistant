@@ -17,7 +17,7 @@ defineEmits(['scan-repository', 'back']);
       </button>
       <h2 tabindex="-1">{{ repo.full_name }}</h2>
       <p>
-        <strong>{{ repo.finding_count }} 项发现</strong> · 迁移评分 {{ repo.migration_score }}/100
+        <strong>{{ repo.analysis_summary?.confirmed ?? repo.finding_count }} 项静态确认</strong> · {{ repo.analysis_summary?.ai_assessed || 0 }} 项 AI研判 · {{ repo.analysis_summary?.pending || 0 }} 项证据不足 · 迁移评分 {{ repo.analysis_summary?.migration_score ?? repo.migration_score }}/100
       </p>
     </div>
     <div class="popular-coverage">

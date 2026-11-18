@@ -77,24 +77,50 @@ class TaskStore:
     def _reclaim(self, size):
         with self.lock:
             finished = sorted((j for j in self.jobs.values() if j.ended is not None and not j.readers), key=lambda j: j.ended)
-            for old in finished:
-                if self.storage.bytes + size <= self.storage.max_bytes:
+            while self.storage.bytes + size > self.storage.max_bytes:
+                protected = self._linked_sources()
+                old = next((job for job in finished if job.id not in protected), None)
+                if old is None:
                     break
-                del self.jobs[old.id]
-                if old.expiry:
-                    old.expiry.cancel()
-                self.storage.remove_folder(old.folder)
+                finished.remove(old)
+                self._remove_job(old)
+
+    def _linked_sources(self, *, active_only=False):
+        sources = set()
+        for job in self.jobs.values():
+            if job.kind != 'ai' or active_only and job.ended is not None:
+                continue
+            origin = getattr(job.control, 'source_task_id', None)
+            if origin:
+                sources.add(origin)
+            parent = job.payload.get('source_task_id')
+            if parent and not active_only:
+                sources.add(parent)
+        return sources
+
+    def _remove_job(self, job):
+        del self.jobs[job.id]
+        if job.expiry:
+            job.expiry.cancel()
+        self.storage.remove_folder(job.folder)
 
     def _prune(self):
         finished = sorted((j for j in self.jobs.values() if j.ended is not None and not j.readers), key=lambda j: j.ended)
+        active_sources = self._linked_sources(active_only=True)
+        now = self.now()
+        expired = [job for job in finished if now - job.ended >= self.ttl and job.id not in active_sources]
+        for job in expired:
+            self._remove_job(job)
+            finished.remove(job)
         size = sum(j.size for j in finished)
-        while finished and (len(finished) > self.max_results or size > self.max_bytes or self.now() - finished[0].ended >= self.ttl):
-            old = finished.pop(0)
+        while len(finished) > self.max_results or size > self.max_bytes:
+            protected = self._linked_sources()
+            old = next((job for job in finished if job.id not in protected), None)
+            if old is None:
+                break
+            finished.remove(old)
             size -= old.size
-            del self.jobs[old.id]
-            if old.expiry:
-                old.expiry.cancel()
-            self.storage.remove_folder(old.folder)
+            self._remove_job(old)
 
     def _expire(self, identity=None):
         with self.lock:
@@ -102,7 +128,9 @@ class TaskStore:
             # A timer can wake slightly early; active readers can also defer pruning.
             # Keep one timer for a retained result instead of losing timed cleanup.
             job = self.jobs.get(identity)
-            if job is not None and job.ended is not None and not self.closed:
+            if job is not None and job.ended is not None and not self.closed and (
+                self.now() - job.ended < self.ttl or job.id not in self._linked_sources(active_only=True)
+            ):
                 self._arm_expiry(job)
 
     def _arm_expiry(self, job):

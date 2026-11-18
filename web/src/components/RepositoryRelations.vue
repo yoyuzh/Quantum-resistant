@@ -6,9 +6,10 @@ import { groupedRepositoryGraph } from '../utils/repositoryGraph.js';
 import { repositoryCategories, REPOSITORY_PAGE_SIZE } from '../utils/repositoryCategories.js';
 import { coverageName, label, stageText } from '../utils/repositoryAtlas.js';
 
-const props = defineProps({ rows:Array, rankings:Array, status:String, filter:String, stamp:String, scaleMax:Number });
+const props = defineProps({ rows:Array, rankings:Array, status:String, filter:String, stamp:String, scaleMax:Number, evidenceOpen:Boolean });
 const emit = defineEmits(['select','filter','clear-evidence']);
-const root = ref(null), width = ref(920), pinned = ref('');
+const initialWidth = 920;
+const root = ref(null), inlineWidth = ref(initialWidth), fullWidth = ref(initialWidth), pinned = ref(''), pinnedEdge = ref('');
 const graphDialog = ref(null), fullscreenButton = ref(null), exitButton = ref(null);
 const fullscreen = ref(false);
 let scrollTop = 0;
@@ -17,20 +18,28 @@ const unavailable3D = ref(false), viewMode = ref('2d');
 const expanded = ref(''), page = ref(1);
 let observer;
 onMounted(() => {
-  observer = new ResizeObserver(([entry]) => { width.value = Math.max(220, Math.floor(entry.contentRect.width) - 2); });
+  observer = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const measured = entry.target===root.value ? inlineWidth : fullWidth;
+      if (entry.contentRect.width) measured.value = Math.max(220,Math.floor(entry.contentRect.width)-2);
+    }
+  });
   observer.observe(root.value);
+  observer.observe(graphDialog.value);
 });
 onBeforeUnmount(() => observer?.disconnect());
 const showPickers = ref(false);
 const groups = computed(() => repositoryCategories(props.rows));
 const openGroup = computed(() => groups.value.find(group => group.id === expanded.value));
 const pages = computed(() => Math.ceil((openGroup.value?.rows.length || 0) / REPOSITORY_PAGE_SIZE));
+// The 3D renderer fits its own viewport. Resizing it need not rebuild the relation data.
+const graphWidth = computed(() => viewMode.value === '3d' ? initialWidth : fullscreen.value ? fullWidth.value : inlineWidth.value);
 const graph = computed(() => groupedRepositoryGraph(groups.value, expanded.value, page.value,
-  props.rankings, props.status, width.value, props.filter, props.scaleMax));
+  props.rankings, props.status, graphWidth.value, props.filter, props.scaleMax));
 const active = computed(() => graph.value.nodes.find(n => n.id === pinned.value));
 const location = computed({
   get:()=>pinned.value || expanded.value,
-  set:id=>chooseNode(id || expanded.value),
+  set:id=>chooseNode(id, true),
 });
 const legacy = computed(() => props.status === 'legacy');
 const sum = computed(() => graph.value.links.reduce((total,e) => total + e.value, 0));
@@ -43,10 +52,19 @@ watch([groups, () => props.status], () => {
 function changePage(value) {
   page.value = value;
   pinned.value = '';
+  pinnedEdge.value = '';
   emit('clear-evidence');
 }
-function chooseNode(id) {
+function chooseNode(id, locate = false) {
+  pinnedEdge.value = '';
+  if (locate && !id) {
+    expanded.value = '';
+    changePage(1);
+    return;
+  }
+  if (!id) emit('clear-evidence');
   if (id.startsWith('category:')) {
+    if (locate && expanded.value === id) { pinned.value = ''; return; }
     expanded.value = expanded.value === id ? '' : id;
     changePage(1);
   } else {
@@ -70,6 +88,7 @@ function openEdge(id) {
     chooseNode(source.id);
     pinned.value = edge.target;
   } else {
+    pinnedEdge.value = edge.id;
     emit('select', source.row, edge.algorithm);
   }
 }
@@ -92,9 +111,15 @@ async function toggleFullscreen() {
   (fullscreen.value ? exitButton : fullscreenButton).value?.focus({ preventScroll: true });
 }
 function exitFullscreen(event) {
-  if (!fullscreen.value) return;
+  if (!fullscreen.value || event.defaultPrevented) return;
   event.preventDefault();
   event.stopPropagation();
+  if (props.evidenceOpen || pinned.value || pinnedEdge.value) {
+    if (props.evidenceOpen) emit('clear-evidence');
+    else { pinned.value = ''; pinnedEdge.value = ''; }
+    exitButton.value?.focus({preventScroll:true});
+    return;
+  }
   toggleFullscreen();
 }
 function fallback() {
@@ -104,14 +129,17 @@ function fallback() {
 </script>
 <template>
   <section ref="root" class="relations" aria-label="仓库与算法关系图">
+    <dialog ref="graphDialog" class="graph-fullscreen" aria-label="仓库算法关系图" @cancel="exitFullscreen" @keydown.esc="exitFullscreen"></dialog>
+    <Teleport :to="graphDialog" :disabled="!fullscreen">
     <div class="figure-heading">
-      <div><p v-if="groups.length">{{ groups.length }} 类<span v-if="graph.links.length"> · {{ graph.links.length }} 组关系<span v-if="!legacy"> · {{ sum.toLocaleString('zh-CN') }} 条记录</span></span> · {{ expanded ? '细绿线表示类别归属' : '点击分类展开' }}</p></div>
-      <div class="segmented-group" aria-label="图形视图">
+      <div class="figure-title"><strong v-if="fullscreen">{{ openGroup?.label || '仓库全景' }}</strong><p v-if="groups.length">{{ groups.length }} 类<span v-if="graph.links.length"> · {{ graph.links.length }} 组关系<span v-if="!legacy"> · {{ sum.toLocaleString('zh-CN') }} 条记录</span></span> · {{ expanded ? '细绿线表示类别归属' : '点击分类展开' }}</p></div>
+      <div class="segmented-group" role="group" aria-label="图形视图">
         <button class="button secondary compact" :aria-pressed="viewMode==='2d'" @click="viewMode='2d'">2D</button>
         <button class="button secondary compact" :aria-pressed="viewMode==='3d'" :disabled="unavailable3D"
           :title="unavailable3D ? '3D 不可用，当前使用 2D' : undefined" @click="viewMode='3d'">3D</button>
       </div>
-      <button v-if="rankings.length" class="button secondary compact picker-toggle" :aria-expanded="showPickers" @click="showPickers=!showPickers">筛选与定位</button>
+      <button v-if="fullscreen" ref="exitButton" type="button" class="button secondary compact fullscreen-exit" @click="toggleFullscreen">退出全屏</button>
+      <button v-if="graph.nodes.length" class="button secondary compact picker-toggle" :aria-expanded="showPickers" @click="showPickers=!showPickers">筛选与定位</button>
       <div class="pickers" :class="{expanded:showPickers}"><label v-if="rankings.length">算法
         <select :value="filter" aria-label="算法范围" @change="emit('filter',$event.target.value)">
           <option value="">全部算法</option><option v-for="entry in rankings" :key="entry.algorithm" :disabled="!entry.hits" :value="entry.algorithm">{{ entry.algorithm }} · {{ entry.hits }}/{{ entry.eligible }} 仓</option>
@@ -122,27 +150,26 @@ function fallback() {
         </select></label>
       </div>
     </div>
+    <p v-if="unavailable3D" class="graph-empty" role="status">当前环境无法显示 3D，已切换到 2D。</p>
     <p v-if="!graph.links.length" class="graph-empty" role="status">{{ !rows.length ? '当前范围内没有可用仓库。' : unavailable ? '当前仓库没有可用于此判断来源的数据。' : '当前范围没有形成此来源的检出关系。' }}</p>
     <div v-if="pages > 1" class="category-pages">
       <span>{{ openGroup.label }} · 第 {{ page }} / {{ pages }} 页</span>
       <button class="button secondary compact" :disabled="page === 1" @click="changePage(page - 1)">上一页</button>
       <button class="button secondary compact" :disabled="page === pages" @click="changePage(page + 1)">下一页</button>
     </div>
-    <dialog ref="graphDialog" class="graph-fullscreen" aria-label="仓库算法关系图" @cancel="exitFullscreen" @keydown.esc.capture="exitFullscreen">
-      <button ref="exitButton" type="button" class="button secondary compact fullscreen-exit" @click="toggleFullscreen">退出全屏</button>
-    </dialog>
-    <Teleport :to="graphDialog" :disabled="!fullscreen">
+    <div class="graph-content" :class="{ 'graph-with-evidence': evidenceOpen }">
       <component :is="viewMode==='3d' ? Stage3DCanvas : RepositoryVector" v-if="graph.nodes.length"
-        :graph="graph" :selected="pinned" :status="status"
+        :graph="graph" :selected="pinned" :selected-edge="pinnedEdge" :status="status" :fullscreen="fullscreen"
         v-bind="viewMode==='3d' ? { onUnavailable: fallback } : { stamp }" @select="chooseNode" @select-edge="openEdge">
         <template #fullscreen>
-          <button ref="fullscreenButton" type="button" class="button secondary compact fullscreen-trigger"
+          <button v-if="!fullscreen" ref="fullscreenButton" type="button" class="button secondary compact fullscreen-trigger"
             aria-label="网页全屏" title="网页全屏" @click="toggleFullscreen">
             <AppIcon name="expand" :size="17" />
           </button>
         </template>
       </component>
-    </Teleport>
+      <slot name="evidence" :fullscreen="fullscreen" />
+    </div>
     <section v-if="active" class="node-detail" aria-label="所选节点的检出关系">
       <div><strong>{{ active.label }}</strong><span>{{ active.row ? coverageName(active.row.repo) : '覆盖 ' + active.ranking.hits + ' / ' + active.ranking.eligible + ' 仓，其中部分扫描 ' + active.ranking.partial + ' 仓' }}</span></div>
       <p v-if="active.edges.length">{{ active.row ? '选择一组关系查看' + label(status) + '依据' : '选择类别展开仓库，或选择仓库查看依据' }}</p>
@@ -153,21 +180,22 @@ function fallback() {
       <summary>本页未形成连线的仓库 · {{ graph.unlinked.length }}</summary>
       <ul><li v-for="row in graph.unlinked" :key="row.repo.full_name">{{ row.repo.full_name }} · {{ coverageName(row.repo) }} · {{ stageText(row,status) }}</li></ul>
     </details>
+    </Teleport>
   </section>
 </template>
 <style scoped>
-.relations { min-width:0; margin-top:16px; }
+.relations { min-width:0; margin-top:12px; }
 .graph-fullscreen { position:fixed; inset:0; width:100%; height:100dvh; max-width:none; max-height:none;
-  margin:0; padding:0; border:0; overflow:hidden; background:var(--bg-elevated); color:inherit; }
+  margin:0; padding:12px; border:0; overflow:auto; overscroll-behavior:contain; background:var(--bg-elevated); color:inherit; }
 .fullscreen-trigger { inline-size:34px; padding-inline:0; justify-content:center; }
-.fullscreen-exit { position:absolute; top:12px; right:12px; z-index:2; }
-.graph-fullscreen :deep(.vector-stage),.graph-fullscreen :deep(.spatial-stage) { border:0; border-radius:0; }
-.graph-fullscreen :deep(.vector-stage),.graph-fullscreen :deep(.network),
-.graph-fullscreen :deep(.spatial-stage),.graph-fullscreen :deep(.spatial-field) { height:100%; }
-.graph-fullscreen :deep(.graph-tools),.graph-fullscreen :deep(.spatial-controls),
-.graph-fullscreen :deep(.spatial-layers),.graph-fullscreen :deep(.spatial-footer) { display:none; }
+.fullscreen-exit { margin-inline-start:auto; }
+.graph-fullscreen .figure-heading { position:sticky; top:0; z-index:4; padding-block-end:8px; background:var(--bg-elevated); }
+.graph-fullscreen :deep(.vector-stage),.graph-fullscreen :deep(.spatial-stage) { display:flex; flex-direction:column; min-height:55dvh; }
+.graph-fullscreen :deep(.network-frame),.graph-fullscreen :deep(.spatial-field) { flex:1; min-height:0; }
+.graph-fullscreen :deep(.network) { height:100%; }
+.graph-fullscreen :deep(.vector-stage),.graph-fullscreen :deep(.spatial-stage) { height:calc(100dvh - 112px); }
 .figure-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
-.figure-heading h3 { font-size:clamp(17px,2vw,22px); line-height:1.3; margin:0; }
+.figure-title strong { display:block; font-size:15px; line-height:1.15; }
 .figure-heading p,.node-detail p,.category-pages { margin:4px 0; font-size:13px; color:var(--text-secondary); }
 .category-pages { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
 .picker-toggle { display:none; }
@@ -180,7 +208,16 @@ select { width:auto; min-width:0; max-width:min(180px,33vw); min-height:34px; ba
 .unlinked { margin:10px 0; font-size:13px; color:var(--text-secondary); }
 .unlinked summary { cursor:pointer; }
 .unlinked li { overflow-wrap:anywhere; }
-@media(max-width:600px) { .relations { margin-top:8px; } .picker-toggle { display:inline-flex; } .pickers { gap:8px; width:100%; } .pickers:not(.expanded) { display:none; }
+@media(max-width:600px), (max-height:540px) and (orientation:landscape) { .relations { margin-top:8px; } .picker-toggle { display:inline-flex; } .pickers { gap:8px; width:100%; } .pickers:not(.expanded) { display:none; }
   .figure-heading { flex-wrap:wrap; } .figure-heading > div:first-child { flex:1; min-width:125px; }
   :deep(.spatial-controls > .spatial-buttons:last-child) { margin-inline-start:auto; } }
+@media(min-width:650px) and (orientation:landscape) {
+  .graph-fullscreen .graph-with-evidence { display:grid; grid-template-columns:minmax(0,1fr) minmax(230px,33%); align-items:start; gap:12px; }
+}
+@media(max-height:540px) and (orientation:landscape) {
+  .relations { margin-top:2px; }
+  .graph-fullscreen { padding:6px; }
+  .figure-heading { margin-bottom:3px; }
+  .graph-fullscreen :deep(.vector-stage),.graph-fullscreen :deep(.spatial-stage) { height:calc(100dvh - 66px); }
+}
 </style>

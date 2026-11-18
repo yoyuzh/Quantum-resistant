@@ -138,8 +138,13 @@ def append_repositories(payload: AppendRequest, budget):
     records = batch_records(result)
     result['meta']['library_saved'] = False
     if records and budget.control.begin_commit():
-        merge_library(records)
-        result['meta']['library_saved'] = True
+        try:
+            merge_library(records)
+        except HTTPException as exc:
+            result['meta']['save_error'] = exc.detail
+            result['meta']['incomplete'] = True
+        else:
+            result['meta']['library_saved'] = True
     return result
 
 

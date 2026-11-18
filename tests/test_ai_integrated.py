@@ -146,6 +146,10 @@ class IntegratedAiTests(unittest.TestCase):
             report = self.client.get(f'/api/tasks/{identity}/report/{format}')
             self.assertEqual(report.status_code, 200, report.text)
             self.assertNotIn('test-credential-only', report.text)
+            if format in ('html', 'markdown'):
+                for text in (base['scanned_at'], '北京时间', '代码片段', '迁移评分', '已分析文件', '候选文件', '跳过文件'):
+                    self.assertIn(text, report.text)
+                self.assertNotIn(base['sources'][0]['source_id'], report.text)
             if format == 'json':
                 value = report.json()
                 self.assertEqual(value['findings'], base['findings'])

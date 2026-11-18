@@ -58,6 +58,20 @@ onMounted(async () => {
   if (id) await scan(id);
 });
 
+async function saveScannedBatch() {
+  if (busy.value || !state.result?.task_id) return;
+  transferring.value = true;
+  state.error = '';
+  try {
+    await request('/api/repository-library/batches/' + encodeURIComponent(state.result.task_id), { method: 'POST' });
+    await load();
+    state.result.meta.library_saved = true;
+    state.result.meta.save_error = '';
+    notice.value = '已保存本次扫描结果。';
+  } catch (error) { state.error = error.message; }
+  finally { transferring.value = false; }
+}
+
 async function importFile(event) {
   const file = event.target.files[0];
   event.target.value = '';
@@ -84,7 +98,6 @@ function exportFile() {
 </script>
 <template>
   <section class="library panel" aria-label="仓库扫描资料库">
-    <button class="button secondary compact management-toggle" aria-controls="library-controls" :aria-expanded="toolsOpen" @click="toolsOpen=!toolsOpen">管理资料库</button>
     <div id="library-controls" class="library-tools" :class="{expanded: toolsOpen}">
       <details><summary>添加仓库并扫描</summary>
         <form @submit.prevent="scan()">
@@ -103,9 +116,17 @@ function exportFile() {
     <p v-if="state.busy" role="status">正在追加扫描 · {{ state.progress?.stage || '准备中' }} · {{ state.elapsed }} 秒
       <button class="button text-action compact" @click="remote.cancel">取消</button></p>
     <p v-else-if="notice" role="status">{{ notice }}</p>
+    <p v-if="state.result?.meta?.save_error" class="notice error" role="alert">
+      {{ state.result.meta.save_error }}。本次扫描结果暂时保留。
+      <button v-if="state.result.task_id" class="button text-action compact" :disabled="busy" @click="saveScannedBatch">重试保存</button>
+    </p>
     <details v-if="state.result?.failures?.length"><summary>查看本次失败原因</summary>
       <p v-for="f in state.result.failures" :key="f.full_name">{{ f.full_name }} · {{ f.error }}</p></details>
-    <RepositoryAtlas v-if="batch" :result="batch" inline />
+    <RepositoryAtlas v-if="batch" :result="batch" inline>
+      <template #actions>
+        <button class="button secondary compact management-toggle" aria-controls="library-controls" :aria-expanded="toolsOpen" @click="toolsOpen=!toolsOpen">管理资料库</button>
+      </template>
+    </RepositoryAtlas>
     <p v-else-if="!state.error" role="status">正在读取本机资料库…</p>
   </section>
 </template>
@@ -118,8 +139,9 @@ summary { cursor:pointer; padding:6px; font-weight:600; }
 form { display:grid; gap:8px; padding:8px; width:min(520px,78vw); }
 textarea { display:block; width:100%; margin-top:6px; }
 form button { justify-self:start; }
-@media(max-width:600px) {
-  .management-toggle { display:inline-flex; min-height:36px; }
+@media(max-width:600px), (max-height:540px) and (orientation:landscape) {
+  .library { padding:6px; }
+  .management-toggle { display:inline-flex; min-height:30px; }
   .library-tools:not(.expanded) { display:none; }
 }
 </style>

@@ -7,8 +7,7 @@ const size = 192;
 function categoryEngraving(x, y) {
   const dx = Math.abs(x - .5), dy = Math.abs(y - .5);
   const hex = Math.max(dy, .866 * dx + .5 * dy);
-  return Math.abs(hex - .30) < .013 || Math.abs(hex - .21) < .010 ||
-    (dy < .027 && dx < .13) || (dx < .027 && dy < .13);
+  return Math.abs(hex - .30) < .013 || Math.abs(hex - .21) < .010;
 }
 
 function repositoryEngraving(x, y) {

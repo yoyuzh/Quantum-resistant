@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from backend import main, task_routes
@@ -79,7 +80,9 @@ class LibraryTests(unittest.TestCase):
                     break
                 time.sleep(.02)
             return identity, self.client.get('/api/tasks/'+identity+'/result?include_content=false').json()
-        with patch.object(task_routes, 'store', TaskStore()), self.client:
+        store = TaskStore()
+        self.addCleanup(store.close)
+        with patch.object(task_routes, 'store', store), self.client:
             seed_name = read_library().repos[0].full_name
             with patch('backend.popular.collect_github_sources', side_effect=collect) as fetch:
                 task, result = submit([seed_name, 'https://github.com/owner/new', 'OWNER/NEW'], False, 'append')
@@ -93,3 +96,12 @@ class LibraryTests(unittest.TestCase):
                 _, failed = submit(['owner/new'], True, 'failed')
             self.assertEqual(failed['failures'][0]['full_name'], 'owner/new')
             self.assertEqual(original, self.local.read_bytes())
+            with patch('backend.popular.collect_github_sources', side_effect=collect), \
+                 patch('backend.task_routes.merge_library', side_effect=HTTPException(413, '超过容量')):
+                pending, unsaved = submit(['owner/unsaved'], False, 'unsaved')
+            self.assertEqual(self.client.get('/api/tasks/' + pending).json()['state'], 'partial')
+            self.assertEqual(unsaved['repos'][0]['full_name'], 'owner/unsaved')
+            self.assertFalse(unsaved['meta']['library_saved'])
+            self.assertEqual(unsaved['meta']['save_error'], '超过容量')
+            self.assertEqual(original, self.local.read_bytes())
+            self.assertEqual(self.client.post(self.url + '/batches/' + pending).status_code, 200)
