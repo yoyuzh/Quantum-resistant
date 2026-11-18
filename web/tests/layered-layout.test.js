@@ -27,7 +27,11 @@ test('折叠时只有类别和算法，展开保持原计数与线宽',()=>{
   assert.deepEqual(layout.layers.map(layer=>layer.depth),[300,0,-300]);
   assert.equal(layout.layers[1].data.length,7);
   assert.equal(layout.links.filter(e=>e.branch).length,7);
-  assert.equal(layout.links.reduce((total,e)=>total+(e.value || 0),0),1664);
+  const confirmed = seed.repos.flatMap(repo=>repo.algorithm_inventory.groups)
+    .filter(group=>group.status===status).reduce((total,group)=>total+group.count,0);
+  for (const view of [overview,layout]) {
+    assert.equal(view.links.reduce((total,edge)=>total+(edge.value || 0),0),confirmed);
+  }
   for (const edge of layout.links.filter(e=>!e.branch)) {
     assert.equal(edge.band,expanded.links.find(e=>e.id===edge.id).band);
   }

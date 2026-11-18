@@ -267,14 +267,14 @@
     },
     {
       "full_name": "Legrandin/pycryptodome",
-      "scanned_at": "2026-11-18T10:53:10+08:00",
+      "scanned_at": "2026-11-18T15:19:48+08:00",
       "revision": "61746f3288be64f3aab0e69e7a980d8d198e33cc",
       "rules_version": "crypto-rules-3",
       "coverage": {
-        "scanned_files": 350,
+        "scanned_files": 701,
         "candidate_files": 703,
-        "file_limit": 350,
-        "skipped_files": 353,
+        "file_limit": 5000,
+        "skipped_files": 2,
         "partial": true
       },
       "migration_score": 100,
@@ -289,7 +289,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 52,
+            "count": 60,
             "example": {
               "path": "lib/Crypto/SelfTest/IO/test_PKCS8.py",
               "line": 539,
@@ -302,7 +302,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 589,
+            "count": 623,
             "example": {
               "path": "lib/Crypto/Protocol/DH.py",
               "line": 44,
@@ -328,7 +328,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 111,
+            "count": 201,
             "example": {
               "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
               "line": 53,
@@ -341,15 +341,15 @@
     },
     {
       "full_name": "lepture/authlib",
-      "scanned_at": "2026-11-18T10:52:41+08:00",
+      "scanned_at": "2026-11-18T15:19:37+08:00",
       "revision": "2c7ec262f6fdf530b5f78042c0d3b8d08317cdcf",
       "rules_version": "crypto-rules-3",
       "coverage": {
-        "scanned_files": 350,
+        "scanned_files": 434,
         "candidate_files": 434,
-        "file_limit": 350,
-        "skipped_files": 84,
-        "partial": true
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "partial": false
       },
       "migration_score": 100,
       "algorithm_inventory": {
@@ -363,7 +363,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 4,
+            "count": 5,
             "example": {
               "path": "authlib/jose/rfc7518/ec_key.py",
               "line": 62,
@@ -389,7 +389,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 9,
+            "count": 20,
             "example": {
               "path": "authlib/jose/rfc7518/jws_algs.py",
               "line": 133,
@@ -402,7 +402,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 3,
+            "count": 5,
             "example": {
               "path": "tests/core/test_oauth2/test_rfc9728.py",
               "line": 580,
@@ -411,11 +411,24 @@
             }
           },
           {
+            "algorithm": "EdDSA",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/jose/test_rfc8037.py",
+              "line": 6,
+              "source_id": "src_1b85f5ba14eb",
+              "finding_id": ""
+            }
+          },
+          {
             "algorithm": "RSA",
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 59,
+            "count": 130,
             "example": {
               "path": "authlib/jose/rfc7518/rsa_key.py",
               "line": 54,
@@ -545,14 +558,14 @@
     },
     {
       "full_name": "openssl/openssl",
-      "scanned_at": "2026-11-18T11:38:06+08:00",
+      "scanned_at": "2026-11-18T15:20:13+08:00",
       "revision": "a1bd8501eb5d3d265285f62206742e72c7410895",
       "rules_version": "crypto-rules-3",
       "coverage": {
-        "scanned_files": 350,
-        "file_limit": 350,
+        "scanned_files": 1243,
         "candidate_files": 1251,
-        "skipped_files": 901,
+        "file_limit": 5000,
+        "skipped_files": 8,
         "partial": true
       },
       "migration_score": 100,
@@ -567,7 +580,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 2,
+            "count": 30,
             "example": {
               "path": "apps/dsa-ca.pem",
               "line": 1,
@@ -580,7 +593,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 2,
+            "count": 6,
             "example": {
               "path": "test/certs/ct-server-key.pem",
               "line": 1,
@@ -593,11 +606,37 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 18,
+            "count": 25,
             "example": {
               "path": "apps/client.pem",
               "line": 26,
               "source_id": "src_57515d428b74",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "test/recipes/30-test_evp_data/evppkey_ecx.txt",
+              "line": 1033,
+              "source_id": "src_0a95cd19f8cb",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "test/recipes/30-test_evp_data/evppkey_ecx.txt",
+              "line": 1047,
+              "source_id": "src_0a95cd19f8cb",
               "finding_id": ""
             }
           }
@@ -811,14 +850,14 @@
     },
     {
       "full_name": "pyca/cryptography",
-      "scanned_at": "2026-11-18T10:52:50+08:00",
+      "scanned_at": "2026-11-18T15:20:30+08:00",
       "revision": "758772aa3486a0e2ad7b289dd25a97040f3bdd2d",
       "rules_version": "crypto-rules-3",
       "coverage": {
-        "scanned_files": 350,
+        "scanned_files": 885,
         "candidate_files": 887,
-        "file_limit": 350,
-        "skipped_files": 537,
+        "file_limit": 5000,
+        "skipped_files": 2,
         "partial": true
       },
       "migration_score": 100,
@@ -846,7 +885,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 42,
+            "count": 50,
             "example": {
               "path": "tests/hazmat/primitives/test_dsa.py",
               "line": 113,
@@ -859,7 +898,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 174,
+            "count": 194,
             "example": {
               "path": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
               "line": 26,
@@ -872,7 +911,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 7,
+            "count": 12,
             "example": {
               "path": "tests/hazmat/primitives/test_ec.py",
               "line": 107,
@@ -885,7 +924,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 22,
+            "count": 31,
             "example": {
               "path": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
               "line": 31,
@@ -898,7 +937,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 32,
+            "count": 37,
             "example": {
               "path": "src/cryptography/hazmat/primitives/serialization/ssh.py",
               "line": 548,
@@ -911,7 +950,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 23,
+            "count": 27,
             "example": {
               "path": "tests/hazmat/primitives/test_ed448.py",
               "line": 37,
@@ -924,7 +963,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 85,
+            "count": 102,
             "example": {
               "path": "docs/development/custom-vectors/rsa-oaep-sha2/generate_rsa_oaep_sha2.py",
               "line": 25,
@@ -937,7 +976,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 62,
+            "count": 64,
             "example": {
               "path": "tests/hazmat/primitives/test_hpke.py",
               "line": 39,
@@ -950,7 +989,7 @@
             "purpose": "unknown",
             "origin": "unknown",
             "status": "confirmed",
-            "count": 24,
+            "count": 27,
             "example": {
               "path": "tests/hazmat/primitives/test_serialization.py",
               "line": 1726,
@@ -1236,13 +1275,13 @@
     },
     {
       "full_name": "SecurityInnovation/PGPy",
-      "scanned_at": "2026-11-18T11:38:11+08:00",
+      "scanned_at": "2026-11-18T15:20:22+08:00",
       "revision": "30a757181ab02f918a94f8549f354d93639b95e6",
       "rules_version": "crypto-rules-3",
       "coverage": {
         "scanned_files": 44,
-        "file_limit": 350,
         "candidate_files": 45,
+        "file_limit": 5000,
         "skipped_files": 1,
         "partial": true
       },

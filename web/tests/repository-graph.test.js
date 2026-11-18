@@ -40,8 +40,12 @@ test('六类汇总无重复，展开按仓库拆分并保持全库线宽刻度',
   assert.equal(expanded.nodes.find(n => n.id === 'category:identity').edges.length, 0);
   assert.equal(initial.nodes.find(n => n.id === 'algorithm:RSA').total, expanded.nodes.find(n => n.id === 'algorithm:RSA').total);
   const summary = initial.links.find(e => e.source === 'category:identity' && e.algorithm === 'RSA');
-  assert.equal(summary.value, 117);
-  assert.equal(expanded.links.filter(e => e.source.startsWith('repo:') && e.algorithm === 'RSA').reduce((sum,e) => sum+e.value,0), 117);
+  const expectedRsa = groups.find(group => group.id === 'category:identity').rows
+    .flatMap(row => row.repo.algorithm_inventory.groups)
+    .filter(group => group.algorithm === 'RSA' && group.status === status)
+    .reduce((sum, group) => sum + group.count, 0);
+  assert.equal(summary.value, expectedRsa);
+  assert.equal(expanded.links.filter(e => e.source.startsWith('repo:') && e.algorithm === 'RSA').reduce((sum,e) => sum+e.value,0), expectedRsa);
   for (const edge of [...initial.links, ...expanded.links, ...graph('', 'RSA').links]) {
     assert.equal(edge.band, strokeWidth(edge.value, peak, status));
   }
