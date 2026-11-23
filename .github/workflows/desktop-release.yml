@@ -202,6 +202,8 @@ jobs:
           cat > RELEASE-NOTES.md <<EOF
           抗量子密码风险检测与迁移辅助软件 V$RELEASE_VERSION
 
+          [查看本版本更新记录](https://github.com/$GITHUB_REPOSITORY/blob/$RELEASE_SHA/CHANGELOG.md)
+
           - Windows x64：EXE 安装程序
           - Linux x64：Ubuntu DEB 安装包
           - macOS Intel：x64 DMG
