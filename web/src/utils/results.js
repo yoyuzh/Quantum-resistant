@@ -6,9 +6,6 @@ export function formatTime(value) {
     : date.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
 }
 
-export const formatStars = (value) =>
-  value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value ?? 0);
-export const sortRepos = (repos) => [...repos].sort((a, b) => b.star_count - a.star_count);
 export const findingKey = (f) => f.finding_id || JSON.stringify([f.source_id, f.line, f.algorithm, f.evidence]);
 
 export function filterFindings(findings, { algorithm = '', sourceId = '', query = '' }) {

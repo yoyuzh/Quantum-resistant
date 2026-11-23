@@ -1,4 +1,4 @@
-"""Collect license files of exactly the frozen runtime's installed distributions."""
+"""Collect notices for the frozen runtime."""
 from __future__ import annotations
 
 from importlib import metadata

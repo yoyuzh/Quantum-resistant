@@ -2,7 +2,8 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { graphScene, fitGraph, zoomView, nearestEdge, clamp } from '../utils/workbenchScene.js';
 import { renderScene } from '../utils/workbenchRender.js';
-import { workbenchSvg } from '../utils/workbenchSvg.js';
+import { fullWorkbenchSvg } from '../utils/workbenchSvg.js';
+import { exportGraph } from '../utils/graphExport.js';
 import { createFocusMotion, sceneFocus } from '../utils/workbenchFocus.js';
 import GraphLegend from './GraphLegend.vue';
 const props = defineProps({ graph: Object, selected: String });
@@ -116,10 +117,9 @@ function miniMove(event) {
   view.value = { ...view.value, x: size.value.width / 2 - (event.clientX - rect.left) / 180 * g.width * view.value.scale,
     y: size.value.height / 2 - (event.clientY - rect.top) / 110 * g.height * view.value.scale }; invalidate();
 }
-function exportView() {
-  const value = workbenchSvg(props.graph, view.value, size.value, colors());
-  const url = URL.createObjectURL(new Blob([value], { type: 'image/svg+xml' })), link = document.createElement('a');
-  link.href = url; link.download = 'evidence-view.svg'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+function exportView(format) {
+  return exportGraph(format, fullWorkbenchSvg(props.graph, colors()),
+    props.graph.mode === 'calls' ? '调用与证据关系图' : '迁移证据关系图');
 }
 watch(() => props.graph, () => { hover.value = ''; focusKey = ''; fit(); }, { flush: 'post' });
 watch(() => props.selected, id => { if (id) locate(id); invalidate(); });
@@ -128,7 +128,7 @@ onMounted(() => {
   observer = new ResizeObserver(() => {
     if (!root.value.clientWidth || !root.value.clientHeight) return;
     size.value = { width: root.value.clientWidth, height: root.value.clientHeight,
-      bottomInset: Math.max(88, (footer.value?.offsetHeight || 60) + (root.value.clientWidth < 600 ? 80 : 56)) };
+      bottomInset: (footer.value?.offsetHeight || 32) + 34 };
     if (props.selected) locate(props.selected); else if (automaticFit) fit(); else invalidate();
   });
   observer.observe(root.value);
@@ -152,7 +152,6 @@ defineExpose({ fit, locate, exportView });
       <button class="button secondary compact" @click="fit(true)">适应宽度</button>
       <button class="button secondary compact" @click="fit()">复位</button>
       <button class="button secondary compact" :aria-pressed="miniOpen" @click="miniOpen=!miniOpen">小地图</button>
-      <button class="button secondary compact" @click="exportView">导出当前视图</button>
     </div><GraphLegend :mode="graph.mode" /></div>
     <canvas v-if="miniOpen" ref="mini" class="graph-mini" width="180" height="110" aria-label="关系图小地图" @click="miniMove" />
   </div>

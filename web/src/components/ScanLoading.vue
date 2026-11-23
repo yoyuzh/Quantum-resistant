@@ -2,32 +2,36 @@
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
 import ScanActivityFeed from './ScanActivityFeed.vue';
-import { scanStage, scanStages } from '../utils/scanStages.js';
+import { libraryScanStage, libraryScanStages, scanStage, scanStages } from '../utils/scanStages.js';
 import { elapsedStamp, batchWaiting } from '../utils/activity.js';
 const props = defineProps({ mode: String, progress: Object, state: Object });
 defineEmits(['cancel']);
-const stage = computed(() => scanStage(props.progress, props.state?.aiBusy));
+const libraryMode = computed(() => props.mode === 'library');
+const stages = computed(() => libraryMode.value ? libraryScanStages(props.progress) : scanStages);
+const stage = computed(() => libraryMode.value ? libraryScanStage(props.progress) : scanStage(props.progress, props.state?.aiBusy));
+const activeIcon = computed(() => libraryMode.value ? stage.value.icon : Math.min(2, Math.floor(stage.value.index / 1.5)));
+const icons = computed(() => libraryMode.value ? ['search', 'assist', 'repository'] : ['file', 'graph', 'assist']);
 const elapsed = computed(() => Math.floor(props.progress?.elapsed ?? props.state?.elapsed ?? 0));
 const waiting=computed(()=>batchWaiting(props.progress));
 const stopped = computed(() => props.progress?.cancel_requested || props.progress?.ai_stop_requested || props.state?.cancelling);
 </script>
 <template>
-  <div class="scan-loading" role="region" aria-label="扫描等待状态" aria-busy="true" tabindex="-1">
-    <div class="loading-top"><strong>{{ state?.submittedSource || progress?.target || '本次扫描' }}</strong><span>总用时 {{ elapsedStamp(elapsed) }}<template v-if="waiting >= 3"> · 本批等待 {{ waiting }} 秒</template></span></div>
+  <div class="scan-loading" role="region" aria-label="扫描等待状态" :aria-busy="!libraryMode || undefined" tabindex="-1">
+    <div class="loading-top"><strong v-if="!libraryMode">{{ state?.submittedSource || progress?.target || '本次扫描' }}</strong><span>总用时 {{ elapsedStamp(elapsed) }}<template v-if="waiting >= 3"> · 本批等待 {{ waiting }} 秒</template></span></div>
     <div class="loading-center">
       <div class="scan-network" aria-hidden="true">
-        <span v-for="(icon, i) in ['file', 'graph', 'assist']" :key="icon" class="network-node" :class="{ active: i === Math.min(2, Math.floor(stage.index / 1.5)) }"><AppIcon :name="icon" :size="30" /></span>
+        <span v-for="(icon, i) in icons" :key="icon" class="network-node" :class="{ active: i === activeIcon }"><AppIcon :name="icon" :size="30" /></span>
         <span class="network-stream"></span>
       </div>
       <h2 role="status">{{ stopped ? '正在保留已完成部分' : stage.title }}</h2>
-      <ol class="stage-track" aria-label="扫描阶段"><li v-for="(name, i) in scanStages" :key="name" :class="{ current: i === stage.index, finished: i < stage.index }" :aria-current="i === stage.index ? 'step' : undefined">
+      <ol class="stage-track" aria-label="扫描阶段"><li v-for="(name, i) in stages" :key="name" :class="{ current: i === stage.index, finished: i < stage.index }" :aria-current="i === stage.index ? 'step' : undefined">
         <span class="stage-dot"><span>{{ i < stage.index ? '✓' : i + 1 }}</span></span>{{ name }}</li></ol>
       <div class="progress-block">
         <div class="stage-progress" role="progressbar" :aria-label="stage.title" :aria-valuenow="stage.row?.percent ?? undefined" aria-valuemin="0" aria-valuemax="100"><span :class="{ indeterminate: stage.row?.percent == null }" :style="stage.row?.percent != null ? { transform: `scaleX(${Math.min(100, stage.row.percent) / 100})` } : {}"></span></div>
         <p v-if="stage.row">{{ stage.row.label }} {{ stage.row.value }}<span v-if="stage.row.total != null"> / {{ stage.row.total }}</span><strong v-if="stage.row.percent != null">{{ stage.row.percent }}%</strong><span class="progress-scope">当前步骤</span></p>
-        <p v-else>{{ stage.index === 3 ? '正在核对算法、用途与关联证据' : '完成后统一呈现分析结果' }}</p>
+        <p v-else>{{ stage.detail || (stage.index === 3 ? '正在核对算法、用途与关联证据' : '完成后统一呈现分析结果') }}</p>
       </div>
-      <ScanActivityFeed :progress="progress" :stage="stage.index" />
+      <ScanActivityFeed v-if="!libraryMode || progress?.activity" :progress="progress" :stage="stage.index" />
       <p v-if="state?.connection" class="notice" role="status">{{ state.connection }}</p>
       <button class="button secondary" :disabled="stopped || !progress?.id" @click="$emit('cancel')">{{ stopped ? '正在整理…' : progress?.ai_running || state?.aiBusy ? '停止 AI 并查看结果' : '取消扫描' }}</button>
     </div>

@@ -26,5 +26,6 @@ desktop/validation/
 
 # Generated scan snapshots and private registration materials
 web/data/popular.json
+web/data/repository-library.json
 *软著申请*.docx
 *软著申请*.pdf

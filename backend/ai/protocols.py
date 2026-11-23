@@ -20,10 +20,11 @@ def schema(test=False):
     return {'type':'object','properties':{'opinions':{'type':'array','items':item}},'required':['opinions'],'additionalProperties':False}
 
 
-def encode(config, value):
+def encode(config, value, *, definition=None):
     messages=value['messages']
     test=len(messages)==1
-    definition=schema(test)
+    if definition is None:
+        definition=schema(test)
     limit=value.get(config.output_parameter,8192)
     mode=config.output_mode
     if config.protocol=='chat':

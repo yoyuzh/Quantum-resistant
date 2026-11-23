@@ -35,8 +35,8 @@ export function roundedCommands(points, radius = 10) {
   commands.push(['L', ...points.at(-1)]);
   return commands;
 }
-export function graphScene(graph, view, size) {
-  const visible = visibleGraph(graph, view, size.width, size.height), low = view.scale < .48;
+export function graphScene(graph, view, size, aggregate = true) {
+  const visible = visibleGraph(graph, view, size.width, size.height), low = aggregate && view.scale < .48;
   const screen = point => [point[0] * view.scale + view.x, point[1] * view.scale + view.y];
   const nodes = [], mapping = new Map(), groups = new Map();
   for (const node of visible.nodes) {
@@ -70,7 +70,7 @@ export function graphScene(graph, view, size) {
       const lane = (start[0] + end[0]) / 2;
       points = [start, [lane, start[1]], [lane, end[1]], end];
     }
-    const key = low ? [a.id, b.id, link.color, link.status].join(':') : visible.links.length > 1400
+    const key = low ? [a.id, b.id, link.color, link.status].join(':') : aggregate && visible.links.length > 1400
       ? [Math.round(points[0][1] / 18), Math.round(points.at(-1)[1] / 18), link.color, link.status].join(':') : link.id;
     if (!edges.has(key)) edges.set(key, { ...link, points, members: [], groupKeys: new Set(), count: 0 });
     const edge = edges.get(key);

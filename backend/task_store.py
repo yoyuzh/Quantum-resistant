@@ -77,24 +77,50 @@ class TaskStore:
     def _reclaim(self, size):
         with self.lock:
             finished = sorted((j for j in self.jobs.values() if j.ended is not None and not j.readers), key=lambda j: j.ended)
-            for old in finished:
-                if self.storage.bytes + size <= self.storage.max_bytes:
+            while self.storage.bytes + size > self.storage.max_bytes:
+                protected = self._linked_sources()
+                old = next((job for job in finished if job.id not in protected), None)
+                if old is None:
                     break
-                del self.jobs[old.id]
-                if old.expiry:
-                    old.expiry.cancel()
-                self.storage.remove_folder(old.folder)
+                finished.remove(old)
+                self._remove_job(old)
+
+    def _linked_sources(self, *, active_only=False):
+        sources = set()
+        for job in self.jobs.values():
+            if job.kind != 'ai' or active_only and job.ended is not None:
+                continue
+            origin = getattr(job.control, 'source_task_id', None)
+            if origin:
+                sources.add(origin)
+            parent = job.payload.get('source_task_id')
+            if parent and not active_only:
+                sources.add(parent)
+        return sources
+
+    def _remove_job(self, job):
+        del self.jobs[job.id]
+        if job.expiry:
+            job.expiry.cancel()
+        self.storage.remove_folder(job.folder)
 
     def _prune(self):
         finished = sorted((j for j in self.jobs.values() if j.ended is not None and not j.readers), key=lambda j: j.ended)
+        active_sources = self._linked_sources(active_only=True)
+        now = self.now()
+        expired = [job for job in finished if now - job.ended >= self.ttl and job.id not in active_sources]
+        for job in expired:
+            self._remove_job(job)
+            finished.remove(job)
         size = sum(j.size for j in finished)
-        while finished and (len(finished) > self.max_results or size > self.max_bytes or self.now() - finished[0].ended >= self.ttl):
-            old = finished.pop(0)
+        while len(finished) > self.max_results or size > self.max_bytes:
+            protected = self._linked_sources()
+            old = next((job for job in finished if job.id not in protected), None)
+            if old is None:
+                break
+            finished.remove(old)
             size -= old.size
-            del self.jobs[old.id]
-            if old.expiry:
-                old.expiry.cancel()
-            self.storage.remove_folder(old.folder)
+            self._remove_job(old)
 
     def _expire(self, identity=None):
         with self.lock:
@@ -102,7 +128,9 @@ class TaskStore:
             # A timer can wake slightly early; active readers can also defer pruning.
             # Keep one timer for a retained result instead of losing timed cleanup.
             job = self.jobs.get(identity)
-            if job is not None and job.ended is not None and not self.closed:
+            if job is not None and job.ended is not None and not self.closed and (
+                self.now() - job.ended < self.ttl or job.id not in self._linked_sources(active_only=True)
+            ):
                 self._arm_expiry(job)
 
     def _arm_expiry(self, job):
@@ -236,8 +264,13 @@ class TaskStore:
         try:
             result = work(budget)
             self._save(job, result)
-            if job.kind == 'popular' and job.payload.get('ai_assisted') and not job.control.cancelled.is_set():
-                continuation = self.ai.continue_popular(job,result)
+            if job.kind == 'popular' and job.payload.get('ai_assisted') and result.get('repos') and not job.control.cancelled.is_set():
+                try:
+                    continuation = self.ai.continue_popular(job,result)
+                except CollectionTimeout:
+                    if not getattr(job.control, 'library_commit', None):
+                        raise
+                    result['meta']['incomplete'] = True
                 if continuation:
                     return
                 result['ai_analysis'] = self.ai.skipped()
@@ -271,7 +304,7 @@ class TaskStore:
             result=commit(self,job,result)
         self._save(job, result)
         with self.lock:
-            has_result = bool(result.get('repos') if job.kind == 'popular' else result.get('sources'))
+            has_result = bool((result.get('repos') or result.get('failures')) if job.kind == 'popular' else result.get('sources'))
             if job.kind == 'ai':
                 has_result = 'ai_analysis' in result
             advanced_partial = any(result.get(key, {}).get('status') in {'partial', 'failed', 'cancelled'}
@@ -312,12 +345,22 @@ class TaskStore:
 
     def _snapshot(self, job):
         end = job.ended if job.ended is not None else self.now()
+        target = job.payload.get('repository_url') or job.payload.get('package_name') or job.payload.get('filename')
+        library_job = any(job.payload.get(kind) for kind in ('library_discovery', 'library_refresh', 'library_recheck'))
+        if job.payload.get('library_refresh'):
+            target = '更新已有仓库用途'
+        elif job.payload.get('library_discovery'):
+            target = 'AI 选仓扫描'
+        elif job.payload.get('library_recheck'):
+            target = '复查已入库仓库'
         return {'id': job.id, 'kind': job.kind, 'state': job.state, 'stage': job.stage,
-                'target': job.payload.get('repository_url') or job.payload.get('package_name') or job.payload.get('filename') or ('AI辅助分析' if job.kind == 'ai' else f"本地文件 {job.payload.get('file_count')} 个" if job.kind == 'files' else f"热门仓库 {job.payload.get('top', 8)} 个"),
+                'target': target or ('AI辅助分析' if job.kind == 'ai' else f"本地文件 {job.payload.get('file_count')} 个" if job.kind == 'files' else f"热门仓库 {job.payload.get('top', 8)} 个"),
                 'created_at': job.created_at, 'elapsed': round(max(0, end - job.started), 1) if job.started is not None else 0,
                 'collected_files': job.collected, 'analyzed_files': job.analyzed, 'completed_repos': job.repos,
                 'ai_model':({k:getattr(job.ai_config,k) for k in ('profile_id','profile_name','model')} if job.ai_config else None),
                 'checkpoint_version': job.checkpoint_version, 'ai_running': job.stop_ai is not None and job.ended is None,
+                **({'purpose_review': bool(job.payload.get('ai_assisted')), 'library_refresh': bool(job.payload.get('library_refresh'))} if library_job else {}),
+                **({'library_recheck': True} if job.payload.get('library_recheck') else {}),
                 'cancel_requested': job.control.cancelled.is_set(), 'error': job.error, 'has_result': job.result is not None,
                 **job.progress, 'repositories': [dict(value) for value in job.repo_progress.values()]}
 

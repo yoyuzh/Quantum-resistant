@@ -27,6 +27,12 @@ export async function request(
             : undefined,
       body: body ? (form ? body : JSON.stringify(body)) : undefined,
     });
+    if (response.status === 404 && method === 'POST' && path === '/api/tasks/library/discover') {
+      throw new ApiError('当前后端缺少 AI 选仓接口，请重启项目或更新桌面程序后重试', 404);
+    }
+    if (response.status === 404 && method === 'POST' && path === '/api/tasks/library/recheck') {
+      throw new ApiError('当前后端缺少仓库复查接口，请重启项目或更新桌面程序后重试', 404);
+    }
     const content = await response.text();
     const data = parseResponse(content, response.status, { text });
     if (text) return data;
@@ -35,9 +41,6 @@ export async function request(
       (!data || !Array.isArray(data.sources) || !Array.isArray(data.findings) || !data.summary)
     ) {
       throw new ApiError('扫描结果格式不完整，请重试', response.status);
-    }
-    if (path.startsWith('/api/popular/') && (!data || !Array.isArray(data.repos))) {
-      throw new ApiError('榜单结果格式不完整，请重试', response.status);
     }
     return data;
   } catch (error) {

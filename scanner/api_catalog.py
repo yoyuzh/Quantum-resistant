@@ -1,7 +1,9 @@
 """Shared imported API and JWT algorithm identities; no library execution."""
 from __future__ import annotations
 
-RULES_VERSION = "crypto-rules-3"
+from typing import Mapping
+
+RULES_VERSION = "crypto-rules-5"
 
 # Only exact, imported public targets establish an algorithm.
 _PREFIX = "cryptography.hazmat.primitives.asymmetric."
@@ -34,6 +36,36 @@ for _algorithm, _module, _private, _public in (
 ):
     API_ALGORITHMS[f"{_PREFIX}{_module}.{_private}"] = _algorithm
     API_ALGORITHMS[f"{_PREFIX}{_module}.{_public}"] = _algorithm
+
+_KEY_GENERATION = {'generate', 'generate_private_key', 'derive_private_key', 'generate_parameters'}
+_KEY_IMPORT = {'import_key', 'importKey', 'construct', 'from_private_bytes', 'from_public_bytes', 'from_encoded_point'}
+_CONFIGURATION = {'ECDH', 'ECDSA'}
+API_PURPOSES = {
+    api: 'key_generation' if method in _KEY_GENERATION
+    else 'key_import' if method in _KEY_IMPORT or method.endswith('Numbers')
+    else 'configuration'
+    for api in API_ALGORITHMS
+    for method in [api.rsplit('.', 1)[-1]]
+    if method in _KEY_GENERATION | _KEY_IMPORT | _CONFIGURATION or method.endswith('Numbers')
+}
+
+
+def rule_purpose(finding: Mapping[str, object]) -> str:
+    """Describe the observed syntax or API, without inferring how keys are later used."""
+    method = finding.get('detection_method')
+    if method == 'pem_header':
+        return 'key_material'
+    if method in ('ast_config', 'text_config'):
+        return 'configuration'
+    api = finding.get('resolved_api')
+    if method == 'ast_call' and isinstance(api, str):
+        return API_PURPOSES.get(api, 'unknown')
+    evidence = finding.get('evidence')
+    if method == 'text_call' and isinstance(evidence, str) and evidence.partition('(')[0] in {
+        'node:crypto.generateKeyPair', 'node:crypto.generateKeyPairSync',
+    }:
+        return 'key_generation'
+    return 'unknown'
 
 JWT_ALGORITHMS = {
     **{a: ('RSA', 'quantum_vulnerable') for a in ('RS256', 'RS384', 'RS512', 'PS256', 'PS384', 'PS512')},

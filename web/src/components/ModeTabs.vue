@@ -7,7 +7,7 @@ const modes = [
   ['files', '文件上传', 'upload'],
   ['github', 'GitHub 仓库', 'repository'],
   ['pypi', 'PyPI 包', 'package'],
-  ['popular', '热门榜单', 'chart'],
+  ['atlas', '仓库全景', 'chart'],
 ];
 </script>
 
@@ -59,17 +59,18 @@ const modes = [
 @media (max-width: 600px) {
   .mode-tabs {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
   }
   .button {
-    grid-column: span 2;
     padding-inline: 0.4rem;
   }
-  .button:nth-child(4) { grid-column: 2 / span 2; }
-  .button:nth-child(5) { grid-column: 4 / span 2; }
 }
 @media (max-width: 600px), (pointer: coarse) {
   .button { min-height: 44px; }
+}
+@media(max-height:540px) and (orientation:landscape) {
+  .mode-tabs { flex-wrap:nowrap; }
+  .button { min-height:32px; padding:3px 6px; font-size:12px; gap:4px; }
 }
 </style>

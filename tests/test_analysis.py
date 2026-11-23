@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from backend.analysis import build_analysis
 from backend.main import app
 from backend.report_exports import build_csv_report
+from backend.repository_inventory import algorithm_inventory
 from backend.scanning import build_scan_response
 from scan_quantum_vuln import analyze_source
 
@@ -58,6 +59,14 @@ class EvidenceMetadataTests(unittest.TestCase):
         self.assertEqual(notes[0]["code"], "unknown_pem_algorithm")
         self.assertEqual(build_analysis(findings)["assets"], [])
         self.assertEqual(analyze_source('# algorithm = "RS256"', include_metadata=True)[0], [])
+
+    def test_identified_pem_records_key_material_without_assuming_an_operation(self):
+        pem = '-----BEGIN EC PRIVATE KEY-----\nAAAA\n-----END EC PRIVATE KEY-----'
+        findings, _ = analyze_source(f'material = {pem!r}', 'fixture.py', include_metadata=True)
+        groups = algorithm_inventory(findings)['groups']
+        self.assertEqual([(g['algorithm'], g['purpose'], g['origin'], g['count']) for g in groups],
+                         [('ECC', 'key_material', 'static', 1)])
+        self.assertEqual(analyze_source(repr(pem), 'docs.py', include_metadata=True)[0], [])
 
 
 class AnalysisReportTests(unittest.TestCase):

@@ -1,3 +1,39 @@
+.graph-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 10px;
+  border: 0;
+  border-radius: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  overscroll-behavior: contain;
+}
+.graph-dialog[open] { display: flex; flex-direction: column; }
+.graph-dialog { --graph-detail-width: min(440px, 42%); }
+.graph-detail-overlay {
+  position: absolute;
+  z-index: 3;
+  inset: 12px 12px auto auto;
+  width: var(--graph-detail-width);
+  max-height: calc(100% - 84px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
+}
+@media (max-width: 760px) {
+  .graph-dialog { padding: 8px; }
+  .graph-detail-overlay { inset: 8px 8px auto; width: auto; max-height: min(52%, 390px); }
+}
 .scan-workspace {
   display: flex;
   flex-direction: column;
@@ -19,6 +55,9 @@
 .input-collapsed > .input-panel { display: none !important; }
 .app-main { width: 100%; max-width: 2048px; padding: 8px 12px; }
 .app-main.results-expanded { max-width: none; padding: 0; }
+#app:has(> .atlas-workspace) { height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
+#app:has(> .atlas-workspace) > :is(header,.desktop-navigation) { flex-shrink:0; }
+.app-main.atlas-workspace { display:flex; flex:1; min-height:0; }
 .results-expanded .result-layout, .results-expanded .result-sticky { border-radius: 0; }
 .results { container: results / inline-size; }
 .result-layout { font-size: 15px; }

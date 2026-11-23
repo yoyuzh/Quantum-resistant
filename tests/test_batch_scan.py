@@ -28,6 +28,27 @@ def success(name="a/b"):
 
 
 class PopularServiceTests(unittest.TestCase):
+    @patch('backend.popular.POPULAR_TEXT_BYTES', 100)
+    @patch('backend.popular.MAX_TEXT_BYTES', 80)
+    @patch('backend.popular.scan_single_repo')
+    def test_library_shares_unused_text_capacity_without_exceeding_batch_limit(self, scan):
+        def collect(repo, *, max_files, deadline):
+            control = deadline.control
+            if repo.full_name == 'a/first':
+                self.assertFalse(control.accept(81))
+                self.assertTrue(control.accept(75))
+            else:
+                self.assertFalse(control.accept(26))
+                self.assertTrue(control.accept(25))
+            return success(repo.full_name)
+
+        scan.side_effect = collect
+        budget = Deadline.after()
+        budget.control.library_scan = True
+        batch = run_batch_scan([repo('a/first'), repo('a/second')], max_workers=1, deadline=budget)
+        self.assertEqual(len(batch.repos), 2)
+        self.assertFalse(batch.failures)
+
     def test_popular_search_ignores_environment_token(self):
         authorizations = []
         real_client = httpx.Client
@@ -81,6 +102,16 @@ class PopularServiceTests(unittest.TestCase):
         self.assertEqual(collect.call_args.kwargs["max_files"], 5000)
 
     @patch("backend.popular.collect_github_sources")
+    def test_inventory_precedes_detail_cap(self, collect):
+        collect.return_value = [("origin", "src/config.py", 'algorithm = "RS256"\n' * 21)]
+        result = scan_single_repo(repo())
+        self.assertEqual(len(result.findings), 20)
+        group, = result.algorithm_inventory["groups"]
+        self.assertEqual((group["algorithm"], group["count"]), ("RSA", 21))
+        self.assertEqual((group["example"]["path"], group["example"]["line"]), ("src/config.py", 1))
+        self.assertNotIn("evidence", group["example"])
+
+    @patch("backend.popular.collect_github_sources")
     def test_failed_empty_and_clean_collection(self, collect):
         collect.side_effect = CollectionError("failure")
         self.assertFalse(scan_single_repo(repo()).success)
@@ -91,6 +122,7 @@ class PopularServiceTests(unittest.TestCase):
         result = scan_single_repo(repo())
         self.assertTrue(result.success)
         self.assertEqual(result.migration_score, 0)
+        self.assertEqual(result.algorithm_inventory['groups'], [])
 
     @patch("backend.popular.scan_single_repo")
     def test_batch_preserves_order_and_failures(self, scan):

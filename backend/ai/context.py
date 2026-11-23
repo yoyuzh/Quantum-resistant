@@ -11,7 +11,7 @@ from bisect import bisect_left, bisect_right
 from backend.ai.config import BUDGETS, digest
 from backend.ai.redaction import redact
 from scanner.parsing import parse_python
-from scanner.api_catalog import RULES_VERSION, API_ALGORITHMS
+from scanner.api_catalog import RULES_VERSION, API_ALGORITHMS, rule_purpose
 from scanner.lexing import c_style_channels
 from scanner.control import analysis_control, AnalysisLimit
 
@@ -79,7 +79,7 @@ def catalog(base, control, check):
         descriptors[(identity,row['line'],context)].update(start_col=row.get('col',0), end_col=row.get('end_col',0))
         descriptors[(identity,row['line'],context)]['call_name'] = row['name']
     for finding in base.get('findings', []):
-        add(finding['source_id'], finding['line'], 'review', digest(finding), fact={'algorithm':finding['algorithm'], 'purpose':'unknown', 'api':finding.get('resolved_api'), 'basis':'rule'})
+        add(finding['source_id'], finding['line'], 'review', digest(finding), fact={'algorithm':finding['algorithm'], 'purpose':rule_purpose(finding), 'api':finding.get('resolved_api'), 'basis':'rule'})
     evidence_paths = {p['evidence_id']: p for p in base.get('deep_analysis', {}).get('evidence_paths', [])}
     for operation in base.get('deep_analysis', {}).get('operations', []):
         span = operation['sink_location']

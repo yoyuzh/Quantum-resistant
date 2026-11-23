@@ -139,8 +139,6 @@ input {
   gap: 0.6rem;
 }
 .input-panel,
-.popular-panel,
-.popular-detail,
 .result-layout,
 .input-form {
   display: flex;

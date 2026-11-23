@@ -1,7 +1,10 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, useId } from 'vue';
 import AppIcon from './AppIcon.vue';
-defineProps({ label: { type: String, default: '查看说明' } });
+const props = defineProps({
+  label: { type: String, default: '查看说明' },
+  popupTarget: Object,
+});
 const id = useId();
 const trigger = ref(null), popup = ref(null), opened = ref(false), pinned = ref(false);
 const target = ref('body'), placement = ref({});
@@ -45,7 +48,7 @@ function escape(event) {
 }
 function anotherOpened(event) { if (event.detail !== id) hide(); }
 onMounted(() => {
-  target.value = trigger.value.closest('dialog') || 'body';
+  target.value = props.popupTarget || trigger.value.closest('dialog') || 'body';
   document.addEventListener('pointerdown', outside, true);
   document.addEventListener('keydown', escape, true);
   document.addEventListener('scanner-info-open', anotherOpened);

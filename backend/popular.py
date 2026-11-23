@@ -9,6 +9,7 @@ import httpx
 from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, remote_client_options
 from backend.collectors import collect_github_sources
 from backend.remote_sources import describe_http_error, github_get, github_headers
+from backend.repository_inventory import algorithm_inventory
 from backend.reporting import beijing_now_iso
 from backend.collection_config import MAX_COLLECTED_FILES, POPULAR_TIMEOUT_SECONDS, POPULAR_TEXT_BYTES, MAX_TEXT_BYTES
 from backend.collection_common import CollectionControl, CollectedSources
@@ -49,6 +50,7 @@ class RepoScanResult:
     error_code: str | None = None
     repository_id: str | None = None
     analysis_summary: dict | None = None
+    algorithm_inventory: dict | None = None
 
 
 @dataclass
@@ -63,13 +65,16 @@ class FetchError(CollectionError):
     pass
 
 
-def fetch_popular_repos(top: int = 20, *, deadline: Deadline | None = None) -> list[RepoInfo]:
+def fetch_popular_repos(top: int = 20, *, deadline: Deadline | None = None, page: int = 1) -> list[RepoInfo]:
     budget = deadline or Deadline.after(POPULAR_BATCH_TIMEOUT_SECONDS)
     headers = github_headers()
     try:
+        params = {"q": SEARCH_QUERY, "sort": "stars", "order": "desc", "per_page": str(top)}
+        if page != 1:
+            params["page"] = str(page)
         with httpx.Client(**remote_client_options()) as client:
             response = github_get(client, GITHUB_SEARCH_API, headers=headers,
-                params={"q": SEARCH_QUERY, "sort": "stars", "order": "desc", "per_page": str(top)},
+                params=params,
                 deadline=budget)
             items = response.json()["items"]
             return [RepoInfo(item["full_name"], item["html_url"], item.get("stargazers_count", 0)) for item in items[:top]]
@@ -93,6 +98,14 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
         if not sources:
             raise CollectionError("没有采集到可扫描文件")
         response = build_scan_response(sources, 'github_repository', deadline=budget)
+        if getattr(budget.control.parent, 'library_scan', False):
+            unscanned = {item.source_id for item in response.diagnostics if item.source_id
+                         and item.code in {'analysis_limit', 'config_parse_error'}}
+            if unscanned:
+                response.coverage.partial = True
+                response.coverage.scanned_files -= len(unscanned)
+                response.coverage.skipped_files += len(unscanned)
+                response.coverage.skip_reasons['analysis_failure'] = response.coverage.skip_reasons.get('analysis_failure', 0) + len(unscanned)
         details = None
         if getattr(budget.control.parent, 'assisted_popular', False):
             from backend.popular_analysis import keep_snapshot
@@ -105,7 +118,7 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
         coverage = response.coverage.model_dump()
         return RepoScanResult(repo.full_name, repo.star_count, repo.html_url, int(score["score"]), len(findings),
             algorithms=sorted({f["algorithm"] for f in findings}), findings=ordered[:20],
-            coverage=coverage,
+            coverage=coverage, algorithm_inventory=details[2] if details else algorithm_inventory(findings),
             diagnostics=diagnostics, details_truncated=len(findings) > 20,
             repository_id=details[0] if details else None, analysis_summary=details[1] if details else None)
     except (CollectionError, OSError, ValueError) as exc:
@@ -133,8 +146,11 @@ def run_batch_scan(repos: list[RepoInfo], max_workers: int = POPULAR_SCAN_WORKER
 
 def _run_batch_scan(repos, max_workers, *, max_files, budget, reserve_seconds):
     options = {'reserve_seconds': reserve_seconds} if reserve_seconds else {}
+    library_scan = getattr(budget.control, 'library_scan', False)
+    text_pool = CollectionControl(max_bytes=POPULAR_TEXT_BYTES) if library_scan else None
+    per_repo_bytes = MAX_TEXT_BYTES if library_scan else min(MAX_TEXT_BYTES, POPULAR_TEXT_BYTES // max(1, len(repos)))
     def scan_repo(repo):
-        control = CollectionControl(max_bytes=min(MAX_TEXT_BYTES, POPULAR_TEXT_BYTES // max(1, len(repos))), parent=budget.control, scope=repo.full_name)
+        control = CollectionControl(max_bytes=per_repo_bytes, parent=budget.control, scope=repo.full_name, text_pool=text_pool)
         control.grace_seconds = budget.control.grace_seconds
         return scan_single_repo(repo, max_files=max_files, deadline=Deadline(budget.end, control), **options)
     completed, timed_out = concurrent_collect(repos, scan_repo, max_workers, budget)

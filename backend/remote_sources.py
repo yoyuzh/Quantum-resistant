@@ -98,8 +98,23 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
     api = f"https://api.github.com/repos/{owner}/{repo}"
     headers, branches, last_error = github_headers(), ["main", "master"], None
     api_rate_error = None
+    archive_first = getattr(deadline.control.parent, 'library_scan', False)
     deadline.control.emit(stage="获取仓库信息")
     with httpx.Client(**remote_client_options()) as client:
+        attempts_by_ref = set()
+
+        def from_archive(ref):
+            attempts_by_ref.add(ref)
+            deadline.control.emit(stage='下载仓库归档')
+            archive = github_get(client, f'https://codeload.github.com/{owner}/{repo}/zip/{quote(ref, safe="")}', headers=headers,
+                                 max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
+            archive_path = archive.extensions.get('archive_path')
+            try:
+                return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
+            finally:
+                if archive_path:
+                    deadline.control.storage.remove(archive_path)
+
         try:
             metadata = github_get(client, api, headers=headers, attempts=2, deadline=deadline).json()
             if not isinstance(metadata, dict):
@@ -113,6 +128,16 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
             api_rate_error = last_error = exc
         except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:
             last_error = exc
+        if archive_first:
+            for branch in branches:
+                try:
+                    docs = from_archive(branch)
+                    if docs:
+                        return docs
+                except (CollectionTimeout, GitHubAccessError):
+                    raise
+                except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
+                    last_error = exc
         for branch in branches:
             if api_rate_error:
                 break
@@ -137,17 +162,9 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                         raise
                     except (httpx.HTTPError, ValueError, CollectionError, OSError):
                         pass
-                if len(candidates) > 32 or payload.get('truncated'):
+                if (len(candidates) > 32 or payload.get('truncated')) and (not archive_first or version not in attempts_by_ref):
                     try:
-                        deadline.control.emit(stage='下载仓库归档')
-                        archive = github_get(client, f'https://codeload.github.com/{owner}/{repo}/zip/{quote(version, safe="")}', headers=headers,
-                                             max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
-                        archive_path = archive.extensions.get('archive_path')
-                        try:
-                            return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
-                        finally:
-                            if archive_path:
-                                deadline.control.storage.remove(archive_path)
+                        return from_archive(version)
                     except (CollectionTimeout, GitHubAccessError):
                         raise
                     except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
@@ -218,16 +235,10 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
             except (httpx.HTTPError, ValueError, CollectionError, OSError) as exc:
                 last_error = exc
         for branch in branches:
+            if archive_first and branch in attempts_by_ref:
+                continue
             try:
-                deadline.control.emit(stage="下载仓库归档")
-                archive = github_get(client, f"https://codeload.github.com/{owner}/{repo}/zip/{quote(branch, safe='')}", headers=headers,
-                                     max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
-                archive_path = archive.extensions.get('archive_path')
-                try:
-                    docs = collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
-                finally:
-                    if archive_path:
-                        deadline.control.storage.remove(archive_path)
+                docs = from_archive(branch)
                 if docs:
                     return docs
             except (CollectionTimeout, GitHubAccessError):

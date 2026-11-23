@@ -32,7 +32,7 @@ class CollectionCancelled(CollectionTimeout):
 
 
 class CollectionControl:
-    def __init__(self, report=None, *, max_bytes=MAX_TEXT_BYTES, parent=None, scope=None):
+    def __init__(self, report=None, *, max_bytes=MAX_TEXT_BYTES, parent=None, scope=None, text_pool=None):
         self.cancelled = Event()
         self.report = report
         self.lock = Lock()
@@ -40,6 +40,7 @@ class CollectionControl:
         self.grace_seconds = 0
         self.finalizing = False
         self.max_bytes = max_bytes
+        self.text_pool = text_pool
         self.parent = parent
         self.scope = scope
         self.publisher = None
@@ -65,6 +66,8 @@ class CollectionControl:
     def accept(self, size: int) -> bool:
         with self.lock:
             if self.bytes + size > self.max_bytes:
+                return False
+            if self.text_pool is not None and not self.text_pool.accept(size):
                 return False
             self.bytes += size
         return True

@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse
 
 from backend.collection_config import MAX_COLLECTED_FILE_BYTES, MAX_UPLOAD_BYTES
 from backend import runtime
+from backend.repository_library import MAX_LIBRARY_BYTES, MAX_LIBRARY_REPOS
 
 
 def configured(name: str, default: str = '') -> set[str]:
@@ -61,7 +62,9 @@ class RequestBoundary:
         path = scope['path']
         if scope['method'] in {'POST', 'PUT', 'PATCH'} and path.startswith('/api/') and not path.endswith(('/files', '/files-with-paths')):
             limit = (6 * MAX_COLLECTED_FILE_BYTES + 65536 if path.endswith('/snippet') else
-                     MAX_UPLOAD_BYTES if path.startswith('/api/report/') else 65536)
+                     MAX_UPLOAD_BYTES if path.startswith('/api/report/') else
+                     MAX_LIBRARY_BYTES if path == '/api/repository-library/import' else
+                     MAX_LIBRARY_REPOS * 512 + 1024 if path == '/api/tasks/library/recheck' else 65536)
             body = bytearray()
             end = asyncio.get_running_loop().time() + 600
             while True:

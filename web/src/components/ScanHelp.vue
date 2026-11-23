@@ -9,8 +9,7 @@ defineProps({ mode: String });
     <p>每来源最多 {{ scanLimits.max_files }} 个文件、{{ scanLimits.max_text_bytes / 1048576 }} MiB 文本；单文件 {{ scanLimits.max_file_bytes / 1048576 }} MiB。
       <template v-if="mode === 'files'">上传请求上限 {{ scanLimits.max_upload_bytes / 1048576 }} MiB（含表单开销）。</template>
     </p>
-    <p>任务预算 {{ (mode === 'popular' ? scanLimits.popular_timeout_seconds : scanLimits.scan_timeout_seconds) / 60 }} 分钟。
-      <template v-if="mode === 'popular'">批次文本预算 512 MiB，按仓库均分，每仓库最多 100 MiB。</template>
+    <p>任务预算 {{ scanLimits.scan_timeout_seconds / 60 }} 分钟。
       <template v-if="mode === 'github'">仅支持公开仓库，读取默认分支的固定版本。</template>
       <template v-if="mode === 'pypi'">优先源码发行包，必要时回退 wheel。</template>
     </p>

@@ -1,6 +1,6 @@
 <script setup>
 import AppIcon from './AppIcon.vue';
-defineProps({ data: Object, mode: String });
+defineProps({ data: Object, mode: String, label: { type: String, default: '打开完整图' } });
 defineEmits(['open']);
 // Shared decorative backdrop; actual records are rendered only in the workbench.
 const paths = [
@@ -33,7 +33,7 @@ const paths = [
           <g class="entry-branches"><path d="M64 50C118 50 103 110 150 110M72 170C126 170 103 110 150 110M456 50C402 50 417 110 370 110M448 170C394 170 417 110 370 110"/><path d="M23 110H150M370 110H497"/></g>
           <g class="entry-satellites"><circle cx="64" cy="50" r="6"/><circle cx="448" cy="170" r="6"/><path d="M72 163L79 170L72 177L65 170ZM456 43L463 50L456 57L449 50Z"/><circle cx="23" cy="110" r="3"/><circle cx="497" cy="110" r="3"/></g>
         </svg>
-        <button class="button primary preview-open" @click="$emit('open','')"><AppIcon name="expand" :size="28" /><span>打开完整图</span><AppIcon class="entry-arrow" name="arrow" :size="20" /></button>
+        <button class="button primary preview-open" aria-haspopup="dialog" @click="$emit('open','')"><AppIcon name="expand" :size="28" /><span>{{ label }}</span><AppIcon class="entry-arrow" name="arrow" :size="20" /></button>
       </div>
     </div>
   </div>

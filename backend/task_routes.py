@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import asdict
 from typing import Annotated
 from fastapi import APIRouter, Header, Request, HTTPException
 
@@ -9,8 +10,10 @@ from backend.models import GitHubScanRequest, PyPIScanRequest, PopularScanReques
 from backend.upload_stream import read_upload
 from backend.uploads import normalize_filename
 from backend.collection_config import MAX_COLLECTED_FILE_BYTES
-from backend.popular import fetch_popular_repos, run_batch_scan
+from backend.popular import RepoInfo, batch_incomplete, fetch_popular_repos, run_batch_scan
 from backend.task_store import TaskStore
+from backend.repository_library import AppendRequest, DiscoveryRequest, PurposeRefreshRequest, PurposeReview, RecheckRequest, merge_library, read_library
+from backend.repository_discovery import discover_repositories
 from backend.task_execution import remote_work as execute_remote, local_work, popular_work as execute_popular
 
 store = TaskStore()
@@ -118,6 +121,102 @@ async def files_with_paths(request: Request, request_id: RequestId):
 @router.get('/{identity}/checkpoint')
 def checkpoint(identity: str):
     return store.checkpoint(identity)
+
+
+def append_repositories(payload: AppendRequest, budget):
+    known = {r.full_name.casefold() for r in read_library().repos}
+    targets = [name for name in payload.repositories if payload.refresh_existing or name.casefold() not in known]
+    if not targets:
+        raise HTTPException(409, '这些仓库均已入库，可勾选重新扫描')
+    return scan_library_targets(
+        [RepoInfo(name, 'https://github.com/' + name, 0) for name in targets], budget,
+        query='用户指定的 GitHub 仓库', skipped_existing=len(payload.repositories) - len(targets),
+    )
+
+
+def scan_library_targets(targets, budget, **metadata):
+    budget.remaining()
+    budget.control.assisted_popular = True
+    budget.control.library_scan = True
+    budget.control.emit(stage='采集与分析仓库', total_repos=len(targets))
+    batch = run_batch_scan(targets, deadline=budget)
+    batch.meta.update(**metadata, incomplete=batch_incomplete(batch) or bool(batch.failures)
+                      or any((repo.get('coverage') or {}).get('partial') for repo in batch.repos))
+    budget.control.library_commit = merge_library
+    batch.meta['library_saved'] = False
+    return asdict(batch)
+
+
+@router.post('/library', status_code=202)
+def library_scan(payload: AppendRequest, request_id: RequestId):
+    from backend.main import POPULAR_SCAN_LOCK
+    return store.submit('popular', {'library': payload.model_dump()}, request_id,
+                        lambda budget: append_repositories(payload, budget), POPULAR_SCAN_LOCK)
+
+
+@router.post('/library/recheck', status_code=202)
+def recheck_library(payload: RecheckRequest, request_id: RequestId):
+    from backend.main import POPULAR_SCAN_LOCK
+
+    if payload.ai_assisted:
+        library_model(payload)
+
+    def work(budget):
+        known = {repo.full_name.casefold(): repo.full_name for repo in read_library().repos}
+        if any(name.casefold() not in known for name in payload.repositories):
+            raise HTTPException(409, '所选仓库须已入库，请重新选择')
+        names = [known[name.casefold()] for name in payload.repositories]
+        targets = [RepoInfo(name, 'https://github.com/' + name, 0) for name in names]
+        return scan_library_targets(targets, budget, query='复查已入库仓库')
+
+    return store.submit('popular', {**payload.model_dump(), 'library_recheck': True}, request_id, work, POPULAR_SCAN_LOCK)
+
+
+def library_model(payload: PurposeReview):
+    service = store.ai
+    config = service.profiles.bind(payload.model_dump())
+    if not config.ready or not service.profiles.valid(config):
+        raise HTTPException(409, '请先启用已授权的模型配置')
+    if config.version != payload.ai_profile_version:
+        raise HTTPException(409, '模型配置已变化，请重新确认后提交')
+    if service.client is None or service.loop is None:
+        raise HTTPException(503, '模型服务正在初始化，请稍后重试')
+    return service, config
+
+
+@router.post('/library/discover', status_code=202)
+def library_discovery(payload: DiscoveryRequest, request_id: RequestId):
+    from backend.main import POPULAR_SCAN_LOCK
+
+    service, config = library_model(payload)
+
+    def work(budget):
+        targets, count, skipped = discover_repositories(service, config, payload.max_repositories, budget)
+        return scan_library_targets(targets, budget, query='AI 筛选的 GitHub 仓库',
+                                    discovery_candidates=count, skipped_existing=skipped)
+
+    return store.submit('popular', {**payload.model_dump(), 'library_discovery': True}, request_id, work, POPULAR_SCAN_LOCK)
+
+
+@router.post('/library/purposes', status_code=202)
+def refresh_library_purposes(payload: PurposeRefreshRequest, request_id: RequestId):
+    from backend.main import POPULAR_SCAN_LOCK
+
+    if payload.ai_assisted:
+        library_model(payload)
+
+    def work(budget):
+        def unknown(repo):
+            return sum(group.count for group in repo.algorithm_inventory.groups if group.purpose == 'unknown')
+
+        ranked = sorted(read_library().repos, key=lambda repo: (-unknown(repo), repo.full_name.casefold()))
+        targets = [RepoInfo(r.full_name, 'https://github.com/' + r.full_name, 0)
+                   for r in ranked[:payload.max_repositories or 100] if unknown(r) > 0]
+        if not targets:
+            raise HTTPException(409, '资料库没有待确认用途的仓库')
+        return scan_library_targets(targets, budget, query='更新已有仓库用途')
+
+    return store.submit('popular', {**payload.model_dump(), 'library_refresh': True}, request_id, work, POPULAR_SCAN_LOCK)
 
 
 @router.post('/popular', status_code=202)

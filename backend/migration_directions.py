@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 PURPOSES = {'sign': '数字签名', 'verify': '验签', 'key_exchange': '密钥建立',
-            'key_generation': '密钥生成', 'key_import': '密钥导入', 'configuration': '算法配置',
+            'key_generation': '密钥生成', 'key_import': '密钥导入', 'key_material': '密钥材料', 'configuration': '算法配置',
             'encrypt': '加密', 'decrypt': '解密', 'unknown': '用途待确认'}
 
 

@@ -4,6 +4,7 @@ from pathlib import Path
 root = Path(SPECPATH).parent
 datas = [(str(root / 'web' / 'index.html'), 'web'),
          (str(root / 'desktop' / 'package.json'), 'desktop'),
+         (str(root / 'web' / 'repository-seed.json'), 'web'),
          (str(root / 'web' / 'assets'), 'web/assets')]
 datas += [(str(file), 'sample_inputs') for file in (root / 'sample_inputs').glob('*.py')]
 a = Analysis([str(root / 'desktop' / 'backend_entry.py')], pathex=[str(root)],

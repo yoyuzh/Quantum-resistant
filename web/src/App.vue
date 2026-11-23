@@ -14,19 +14,17 @@ import ScanActivity from './components/ScanActivity.vue';
 import ScanHelp from './components/ScanHelp.vue';
 import ResultsWorkspace from './components/ResultsWorkspace.vue';
 import AppIcon from './components/AppIcon.vue';
-import PopularView from './components/PopularView.vue';
+import RepositoryLibrary from './components/RepositoryLibrary.vue';
 import { useScan } from './composables/useScan.js';
-import { usePopular } from './composables/usePopular.js';
 import { useTheme } from './composables/useTheme.js';
 import { useInputLayout } from './composables/useInputLayout.js';
 import { DEFAULT_RSA_CODE } from './utils/defaults.js';
-import { focusDestination } from './utils/navigation.js';
 
 function initialMode() {
   try {
     const saved = sessionStorage.getItem('quantum-active-source');
-    return ['snippet', 'files', 'github', 'pypi'].includes(saved) ? saved : 'snippet';
-  } catch { return 'snippet'; }
+    return ['atlas', 'snippet', 'files', 'github', 'pypi'].includes(saved) ? saved : 'atlas';
+  } catch { return 'atlas'; }
 }
 const mode = ref(initialMode());
 const drafts = reactive({
@@ -36,7 +34,6 @@ const drafts = reactive({
   pypi: { value: 'cryptography' },
 });
 const { states, start, cancel } = useScan();
-const { state: popular, run: runPopular, cancel: cancelPopular } = usePopular();
 const { theme, toggle } = useTheme();
 const inputs = useInputLayout(states);
 const current = computed(() => states[mode.value]);
@@ -64,8 +61,7 @@ const titles = {
   pypi: '扫描 PyPI 包',
 };
 watch(mode, (value) => {
-  try { if (value !== 'popular') sessionStorage.setItem('quantum-active-source', value); } catch { /* Optional preference. */ }
-  if (value === 'popular' && !popular.loaded) runPopular();
+  try { sessionStorage.setItem('quantum-active-source', value); } catch { /* Optional preference. */ }
 });
 function submit() {
   if (current.value.restored && inputLayout.value.collapsed) {
@@ -86,29 +82,12 @@ function toggleInput() {
   if (inputLayout.value.collapsed) editInput();
   else inputLayout.value.collapsed = true;
 }
-async function prepareRepository(value) {
-  mode.value = 'github';
-  drafts.github.value = value;
-  inputs.github.collapsed = false;
-  await nextTick();
-  focusDestination(inputBody.value?.closest('.input-panel')?.querySelector('h2'),
-    inputBody.value, undefined, { focus: false });
-  inputBody.value?.querySelector('input')?.focus({ preventScroll: true });
-}
 </script>
 
 <template>
   <AppHeader :theme="theme" @toggle-theme="toggle"><ModeTabs v-model="mode" /></AppHeader>
-  <main class="app-main" :class="{ 'results-expanded': mode !== 'popular' && inputLayout.collapsed }">
-    <PopularView
-      v-if="mode === 'popular'"
-      :state="popular"
-      @update:top="popular.top = $event"
-      @refresh="runPopular(true)"
-      @reload="runPopular(false)"
-      @cancel="cancelPopular"
-      @scan-repository="prepareRepository"
-    />
+  <main class="app-main" :class="{ 'results-expanded': inputLayout?.collapsed, 'atlas-workspace': mode === 'atlas' }">
+    <RepositoryLibrary v-if="mode === 'atlas'" />
     <div v-else class="scan-workspace">
       <div class="workspace-grid" :class="{ 'input-collapsed': inputLayout.collapsed }">
         <section id="scan-input" v-show="!inputLayout.collapsed" class="panel input-panel" aria-label="扫描输入区域">

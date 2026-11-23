@@ -55,6 +55,11 @@ def check_application(client: httpx.Client) -> None:
     config = client.get("/api/config")
     config.raise_for_status()
     require(isinstance(config.json(), dict), "配置接口未返回对象")
+    discovery = client.post("/api/tasks/library/discover", json={},
+                            headers={"X-Request-ID": "ci-library-route-check"})
+    require(discovery.status_code == 422, "AI 选仓接口缺失或未校验模型配置版本")
+    recheck = client.post("/api/tasks/library/recheck", json={}, headers={"X-Request-ID": "ci-recheck-route-check"})
+    require(recheck.status_code == 422, "仓库复查接口缺失或未校验选择")
     # This is a static string sent to the scanner, never imported or executed.
     response = client.post("/api/scan/snippet", json={
         "filename": "ci-smoke.py",

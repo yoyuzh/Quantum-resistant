@@ -5,9 +5,7 @@ import {
   codeLines,
   coverageText,
   filterFindings,
-  formatStars,
   paginate,
-  sortRepos,
 } from '../src/utils/results.js';
 
 test('files: duplicate identity, same names and limits', () => {
@@ -86,12 +84,7 @@ test('pagination clamps pages and supports 50-item chunks', () => {
   assert.equal(paginate([], 3).current, 1);
 });
 
-test('popular display uses stars and explicit unknown coverage', () => {
-  assert.equal(formatStars(999), '999');
-  assert.equal(formatStars(52300), '52.3k');
-  const repos = [{ star_count: 1 }, { star_count: 3 }];
-  assert.equal(sortRepos(repos)[0].star_count, 3);
-  assert.equal(repos[0].star_count, 1);
+test('coverage distinguishes absent statistics from an unknown candidate count', () => {
   assert.match(coverageText(null), /未知/);
   assert.match(coverageText({ scanned_files: 6, candidate_files: null }), /候选总数未知/);
 });

@@ -1,0 +1,2395 @@
+{
+  "schema_version": 1,
+  "repos": [
+    {
+      "full_name": "certifi/python-certifi",
+      "scanned_at": "2026-11-18T10:52:39+08:00",
+      "revision": "ca446ca404ff3b962a0193f36e03d1eabb231968",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 14,
+        "candidate_files": 14,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "encode/httpx",
+      "scanned_at": "2026-11-18T11:37:31+08:00",
+      "revision": "7cff5f79bc78649bbcd3fd9aa7a74c86e0f63016",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 98,
+        "file_limit": 350,
+        "candidate_files": 98,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "googleapis/google-auth-library-python",
+      "scanned_at": "2026-11-18T11:38:16+08:00",
+      "revision": "2ea24b03436765fa3cf279ce148482ff6332136b",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 302,
+        "file_limit": 350,
+        "candidate_files": 302,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "tests/data/es256_privatekey.pem",
+              "line": 1,
+              "source_id": "src_e936b3641b4b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "google/auth/crypt/es.py",
+              "line": 98,
+              "source_id": "src_ededbccd818a",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "google/auth/jwt.py",
+              "line": 101,
+              "source_id": "src_b38fe5e35628",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "tests/data/impersonated_service_account_service_account_source.json",
+              "line": 10,
+              "source_id": "src_0ee8f684a38a",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "hynek/pem",
+      "scanned_at": "2026-11-18T10:53:08+08:00",
+      "revision": "19c12d91fb0f1931e9a50b23c59522fd5b54b962",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 33,
+        "candidate_files": 33,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/data.py",
+              "line": 294,
+              "source_id": "src_7a538c09fea1",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/data.py",
+              "line": 270,
+              "source_id": "src_7a538c09fea1",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "tests/data.py",
+              "line": 58,
+              "source_id": "src_7a538c09fea1",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "jpadilla/pyjwt",
+      "scanned_at": "2026-11-18T10:52:30+08:00",
+      "revision": "16231abfd1d8eab4953e8779b3017b859c88565e",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 68,
+        "candidate_files": 68,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "jwt/algorithms.py",
+              "line": 889,
+              "source_id": "src_f72e1105f92d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/test_advisory.py",
+              "line": 17,
+              "source_id": "src_4c01c565f6d9",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 19,
+            "example": {
+              "path": "jwt/algorithms.py",
+              "line": 761,
+              "source_id": "src_f72e1105f92d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "jwt/algorithms.py",
+              "line": 1104,
+              "source_id": "src_f72e1105f92d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "jwt/algorithms.py",
+              "line": 1105,
+              "source_id": "src_f72e1105f92d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "EdDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "jwt/api_jwk.py",
+              "line": 62,
+              "source_id": "src_af7163b469b9",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 13,
+            "example": {
+              "path": "jwt/api_jwk.py",
+              "line": 55,
+              "source_id": "src_af7163b469b9",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "tests/test_algorithms.py",
+              "line": 1755,
+              "source_id": "src_1bca51fcdcff",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "jwt/algorithms.py",
+              "line": 641,
+              "source_id": "src_f72e1105f92d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/keys/testkey_pkcs1.pub.pem",
+              "line": 1,
+              "source_id": "src_ec36b73b198f",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "Legrandin/pycryptodome",
+      "scanned_at": "2026-11-18T15:19:48+08:00",
+      "revision": "61746f3288be64f3aab0e69e7a980d8d198e33cc",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 701,
+        "candidate_files": 703,
+        "file_limit": 5000,
+        "skipped_files": 2,
+        "partial": true
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 9,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_DSA.py",
+              "line": 238,
+              "source_id": "src_da4c849b224c",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "lib/Crypto/SelfTest/IO/test_PKCS8.py",
+              "line": 539,
+              "source_id": "src_d86545a038e5",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 37,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_DSA.py",
+              "line": 68,
+              "source_id": "src_da4c849b224c",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_DSA.py",
+              "line": 145,
+              "source_id": "src_da4c849b224c",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 11,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_passphrase.py",
+              "line": 49,
+              "source_id": "src_b6c651008d5f",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 98,
+            "example": {
+              "path": "lib/Crypto/Protocol/HPKE.py",
+              "line": 183,
+              "source_id": "src_78b052bfd977",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 442,
+            "example": {
+              "path": "lib/Crypto/Protocol/DH.py",
+              "line": 44,
+              "source_id": "src_07825a596d05",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 44,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_ECC.py",
+              "line": 1116,
+              "source_id": "src_0817536a2664",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 39,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_passphrase.py",
+              "line": 50,
+              "source_id": "src_b6c651008d5f",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "lib/Crypto/PublicKey/ECC.py",
+              "line": 1125,
+              "source_id": "src_952b7b967349",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 63,
+            "example": {
+              "path": "test_vectors/pycryptodome_test_vectors/Signature/wycheproof/rsa_pkcs1_1024_sig_gen_test.json",
+              "line": 243,
+              "source_id": "src_d64423858aa4",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 15,
+            "example": {
+              "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
+              "line": 53,
+              "source_id": "src_485e12d2beca",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 86,
+            "example": {
+              "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
+              "line": 108,
+              "source_id": "src_485e12d2beca",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 32,
+            "example": {
+              "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
+              "line": 68,
+              "source_id": "src_485e12d2beca",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "lib/Crypto/SelfTest/PublicKey/test_import_passphrase.py",
+              "line": 48,
+              "source_id": "src_b6c651008d5f",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "lepture/authlib",
+      "scanned_at": "2026-11-18T15:19:37+08:00",
+      "revision": "2c7ec262f6fdf530b5f78042c0d3b8d08317cdcf",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 434,
+        "candidate_files": 434,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "authlib/jose/rfc7518/ec_key.py",
+              "line": 102,
+              "source_id": "src_b00932247681",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "authlib/jose/rfc7518/ec_key.py",
+              "line": 62,
+              "source_id": "src_b00932247681",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "authlib/jose/rfc7518/ec_key.py",
+              "line": 50,
+              "source_id": "src_b00932247681",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 20,
+            "example": {
+              "path": "authlib/jose/rfc7518/jws_algs.py",
+              "line": 133,
+              "source_id": "src_db32938f49a6",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/core/test_oauth2/test_rfc9728.py",
+              "line": 580,
+              "source_id": "src_8e5b77f37354",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/jose/test_jwt.py",
+              "line": 61,
+              "source_id": "src_2017813810ad",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "EdDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/jose/test_rfc8037.py",
+              "line": 6,
+              "source_id": "src_3e2b6bb54737",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 122,
+            "example": {
+              "path": "authlib/oauth2/rfc7523/auth.py",
+              "line": 117,
+              "source_id": "src_bfd519bad1c0",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "authlib/jose/rfc7518/rsa_key.py",
+              "line": 95,
+              "source_id": "src_ebbefe5579a7",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "authlib/jose/rfc7518/rsa_key.py",
+              "line": 54,
+              "source_id": "src_ebbefe5579a7",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/clients/keys/rsa_private.pem",
+              "line": 1,
+              "source_id": "src_67ecfcd216b3",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "mpdavis/python-jose",
+      "scanned_at": "2026-11-18T10:53:06+08:00",
+      "revision": "018b310ddb8b50dcfd09a0c152117835a21dd656",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 50,
+        "candidate_files": 50,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "jose/backends/cryptography_backend.py",
+              "line": 98,
+              "source_id": "src_22c75274501b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/algorithms/test_EC.py",
+              "line": 29,
+              "source_id": "src_e5ebc4df0655",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "jose/backends/cryptography_backend.py",
+              "line": 139,
+              "source_id": "src_22c75274501b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 11,
+            "example": {
+              "path": "tests/algorithms/test_HMAC.py",
+              "line": 28,
+              "source_id": "src_c072edc537ed",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "jose/backends/cryptography_backend.py",
+              "line": 265,
+              "source_id": "src_22c75274501b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "tests/algorithms/test_RSA.py",
+              "line": 29,
+              "source_id": "src_ef8b6d85b1a5",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "oauthlib/oauthlib",
+      "scanned_at": "2026-11-18T11:38:15+08:00",
+      "revision": "179287a5f9067aac7b1c0d71c4c5e083ccbf58f2",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 176,
+        "file_limit": 350,
+        "candidate_files": 176,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "oauthlib/common.py",
+              "line": 286,
+              "source_id": "src_5944f0109f10",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "tests/oauth1/rfc5849/test_client.py",
+              "line": 109,
+              "source_id": "src_0db96d99b459",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "open-quantum-safe/liboqs-python",
+      "scanned_at": "2026-11-18T11:37:36+08:00",
+      "revision": "7bda58456fc155ab5b7a1dc62d204035345de9ba",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 24,
+        "file_limit": 350,
+        "candidate_files": 24,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "openssl/openssl",
+      "scanned_at": "2026-11-18T15:20:13+08:00",
+      "revision": "a1bd8501eb5d3d265285f62206742e72c7410895",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 1243,
+        "candidate_files": 1251,
+        "file_limit": 5000,
+        "skipped_files": 8,
+        "partial": true
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "test/recipes/30-test_evp_data/evppkey_dsa.txt",
+              "line": 465,
+              "source_id": "src_d122819af5a3",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 28,
+            "example": {
+              "path": "apps/dsa-ca.pem",
+              "line": 1,
+              "source_id": "src_4c31124939ed",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "test/certs/ct-server-key.pem",
+              "line": 1,
+              "source_id": "src_cb3f2023164b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 25,
+            "example": {
+              "path": "apps/client.pem",
+              "line": 26,
+              "source_id": "src_5dae8c1c7cc5",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "test/recipes/30-test_evp_data/evppkey_ecx.txt",
+              "line": 1033,
+              "source_id": "src_b099d6b56089",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "test/recipes/30-test_evp_data/evppkey_ecx.txt",
+              "line": 1047,
+              "source_id": "src_b099d6b56089",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "pallets/itsdangerous",
+      "scanned_at": "2026-11-18T11:37:26+08:00",
+      "revision": "672971d66a2ef9f85151e53283113f33d642dabd",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 29,
+        "file_limit": 350,
+        "candidate_files": 29,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "paramiko/paramiko",
+      "scanned_at": "2026-11-18T10:52:30+08:00",
+      "revision": "0e9ccb91e0f9a68f2587233d523ad7fe46e730fe",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 84,
+        "candidate_files": 84,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "paramiko/ecdsakey.py",
+              "line": 268,
+              "source_id": "src_172d8d66924d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "paramiko/ecdsakey.py",
+              "line": 167,
+              "source_id": "src_172d8d66924d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/test_pkey.py",
+              "line": 87,
+              "source_id": "src_41102f08f3ff",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "paramiko/kex_ecdh_nist.py",
+              "line": 71,
+              "source_id": "src_d4a8439d829f",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "paramiko/ecdsakey.py",
+              "line": 224,
+              "source_id": "src_172d8d66924d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "paramiko/ed25519key.py",
+              "line": 55,
+              "source_id": "src_754c61480727",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 15,
+            "example": {
+              "path": "paramiko/rsakey.py",
+              "line": 76,
+              "source_id": "src_e3624de40a78",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "paramiko/rsakey.py",
+              "line": 188,
+              "source_id": "src_e3624de40a78",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "paramiko/rsakey.py",
+              "line": 78,
+              "source_id": "src_e3624de40a78",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/test_pkey.py",
+              "line": 69,
+              "source_id": "src_41102f08f3ff",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "paramiko/kex_curve25519.py",
+              "line": 30,
+              "source_id": "src_98510282e182",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "paramiko/kex_curve25519.py",
+              "line": 71,
+              "source_id": "src_98510282e182",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "psf/requests",
+      "scanned_at": "2026-11-18T11:37:26+08:00",
+      "revision": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 69,
+        "file_limit": 350,
+        "candidate_files": 69,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "pyasn1/pyasn1",
+      "scanned_at": "2026-11-18T11:37:17+08:00",
+      "revision": "e24fa719428229db5efeb8aee74ce6d03329df5d",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 89,
+        "file_limit": 350,
+        "candidate_files": 89,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "pyauth/pyotp",
+      "scanned_at": "2026-11-18T11:37:21+08:00",
+      "revision": "98c44b5b3294d7a24fe883622ad9d1e76c0687a1",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 16,
+        "file_limit": 350,
+        "candidate_files": 16,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "pyca/bcrypt",
+      "scanned_at": "2026-11-18T10:52:34+08:00",
+      "revision": "340958f3da9f168fa62ef50a73670efb8eb1727f",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 14,
+        "candidate_files": 14,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "pyca/cryptography",
+      "scanned_at": "2026-11-18T15:20:30+08:00",
+      "revision": "758772aa3486a0e2ad7b289dd25a97040f3bdd2d",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 885,
+        "candidate_files": 887,
+        "file_limit": 5000,
+        "skipped_files": 2,
+        "partial": true
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DH",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "tests/hazmat/primitives/test_dh.py",
+              "line": 169,
+              "source_id": "src_a86fddd9e5f3",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DH",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 33,
+            "example": {
+              "path": "tests/hazmat/primitives/test_dh.py",
+              "line": 97,
+              "source_id": "src_a86fddd9e5f3",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/hazmat/primitives/test_ssh.py",
+              "line": 1051,
+              "source_id": "src_a8b4d02e5bda",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 8,
+            "example": {
+              "path": "vectors/cryptography_vectors/asymmetric/DSA/custom/nilpotent.pem",
+              "line": 1,
+              "source_id": "src_400c67d2e96e",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 41,
+            "example": {
+              "path": "tests/hazmat/primitives/test_dsa.py",
+              "line": 113,
+              "source_id": "src_d9bb3808f8ce",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 100,
+            "example": {
+              "path": "src/cryptography/hazmat/primitives/serialization/ssh.py",
+              "line": 495,
+              "source_id": "src_15be39afe339",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 86,
+            "example": {
+              "path": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
+              "line": 26,
+              "source_id": "src_2685c4e3b777",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "vectors/cryptography_vectors/asymmetric/EC/ec-missing-curve.pem",
+              "line": 1,
+              "source_id": "src_4cc68cd7aa24",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/x509/test_x509_ext.py",
+              "line": 2053,
+              "source_id": "src_28cd124a7975",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 12,
+            "example": {
+              "path": "tests/hazmat/primitives/test_ec.py",
+              "line": 107,
+              "source_id": "src_8df3df499c71",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 31,
+            "example": {
+              "path": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
+              "line": 31,
+              "source_id": "src_2685c4e3b777",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 20,
+            "example": {
+              "path": "tests/hazmat/primitives/test_ed25519.py",
+              "line": 93,
+              "source_id": "src_ccf8aad9f1e9",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 17,
+            "example": {
+              "path": "src/cryptography/hazmat/primitives/serialization/ssh.py",
+              "line": 548,
+              "source_id": "src_15be39afe339",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 13,
+            "example": {
+              "path": "tests/hazmat/primitives/test_ed448.py",
+              "line": 47,
+              "source_id": "src_57e699ecc95d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 14,
+            "example": {
+              "path": "tests/hazmat/primitives/test_ed448.py",
+              "line": 37,
+              "source_id": "src_57e699ecc95d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "docs/development/custom-vectors/rsa-oaep-sha2/generate_rsa_oaep_sha2.py",
+              "line": 25,
+              "source_id": "src_731d3622c55e",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 37,
+            "example": {
+              "path": "docs/development/custom-vectors/rsa-oaep-sha2/generate_rsa_oaep_sha2.py",
+              "line": 53,
+              "source_id": "src_731d3622c55e",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 20,
+            "example": {
+              "path": "tests/hazmat/primitives/fixtures_rsa.py",
+              "line": 713,
+              "source_id": "src_c694cb44cd37",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 44,
+            "example": {
+              "path": "tests/hazmat/primitives/test_rsa.py",
+              "line": 184,
+              "source_id": "src_7f1deb3fe0ed",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 43,
+            "example": {
+              "path": "tests/hazmat/primitives/test_hpke.py",
+              "line": 170,
+              "source_id": "src_0241b9805c87",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 21,
+            "example": {
+              "path": "tests/hazmat/primitives/test_hpke.py",
+              "line": 39,
+              "source_id": "src_0241b9805c87",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 9,
+            "example": {
+              "path": "tests/hazmat/primitives/test_serialization.py",
+              "line": 1726,
+              "source_id": "src_79519ce6eef6",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 18,
+            "example": {
+              "path": "tests/hazmat/primitives/test_x448.py",
+              "line": 35,
+              "source_id": "src_b2f5a1be563a",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "pyca/pynacl",
+      "scanned_at": "2026-11-18T10:52:39+08:00",
+      "revision": "ca15a18eeb4d1e954b1f08066ffa3b7ebe3b71a9",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 108,
+        "candidate_files": 108,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "pyca/pyopenssl",
+      "scanned_at": "2026-11-18T10:52:30+08:00",
+      "revision": "1487da3773b0db3977353c9e379ad74124002c43",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 27,
+        "candidate_files": 27,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/test_crypto.py",
+              "line": 652,
+              "source_id": "src_1ccf2aa33bbc",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "tests/test_ssl.py",
+              "line": 236,
+              "source_id": "src_90f54b88a019",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 9,
+            "example": {
+              "path": "tests/test_crypto.py",
+              "line": 128,
+              "source_id": "src_1ccf2aa33bbc",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "pyca/service-identity",
+      "scanned_at": "2026-11-18T10:52:46+08:00",
+      "revision": "a25f0c1b531fe6f3dea82fb8791b5ba3a368e804",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 40,
+        "candidate_files": 40,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "python-otr/pure-python-otr",
+      "scanned_at": "2026-11-18T11:37:36+08:00",
+      "revision": "b2ab769482ac9f6a321d2cb540837b37b7f633f8",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 19,
+        "file_limit": 350,
+        "candidate_files": 19,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 95,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "src/potr/compatcrypto/pycrypto.py",
+              "line": 130,
+              "source_id": "src_6e3c1a9f2779",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "src/potr/compatcrypto/pycrypto.py",
+              "line": 89,
+              "source_id": "src_6e3c1a9f2779",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "python-trio/trustme",
+      "scanned_at": "2026-11-18T10:52:34+08:00",
+      "revision": "351ba93a36fbf9fb50604a14501ffa24dcf377a6",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 20,
+        "candidate_files": 20,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 80,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "src/trustme/__init__.py",
+              "line": 225,
+              "source_id": "src_3ec6e036d4e8",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "src/trustme/__init__.py",
+              "line": 223,
+              "source_id": "src_3ec6e036d4e8",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "rthalley/dnspython",
+      "scanned_at": "2026-11-18T11:38:10+08:00",
+      "revision": "aaf79b283345d169c692b5659609093c5a6f45b1",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 286,
+        "file_limit": 350,
+        "candidate_files": 286,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "dns/dnssecalgs/dsa.py",
+              "line": 108,
+              "source_id": "src_98c1612f76f6",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "dns/dnssecalgs/dsa.py",
+              "line": 66,
+              "source_id": "src_98c1612f76f6",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "dns/dnssecalgs/ecdsa.py",
+              "line": 95,
+              "source_id": "src_5c0d57a4a2bc",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "dns/dnssecalgs/ecdsa.py",
+              "line": 52,
+              "source_id": "src_5c0d57a4a2bc",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "dns/dnssecalgs/ecdsa.py",
+              "line": 37,
+              "source_id": "src_5c0d57a4a2bc",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 11,
+            "example": {
+              "path": "tests/test_dnssec.py",
+              "line": 1093,
+              "source_id": "src_4f36d54b0c01",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "dns/dnssecalgs/serialization.py",
+              "line": 467,
+              "source_id": "src_14eac3b16d93",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "tests/test_dnssec.py",
+              "line": 1568,
+              "source_id": "src_4f36d54b0c01",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "dns/dnssecalgs/serialization.py",
+              "line": 475,
+              "source_id": "src_14eac3b16d93",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "dns/dnssecalgs/rsa.py",
+              "line": 83,
+              "source_id": "src_38200b27a654",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "dns/dnssecalgs/rsa.py",
+              "line": 54,
+              "source_id": "src_38200b27a654",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/tls/private.pem",
+              "line": 1,
+              "source_id": "src_c27f3d3bfc37",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "SecurityInnovation/PGPy",
+      "scanned_at": "2026-11-18T15:20:22+08:00",
+      "revision": "30a757181ab02f918a94f8549f354d93639b95e6",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 44,
+        "candidate_files": 45,
+        "file_limit": 5000,
+        "skipped_files": 1,
+        "partial": true
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 1386,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 460,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 1486,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 563,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 1745,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 578,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 1535,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 615,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 1314,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 439,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 1606,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "pgpy/packet/fields.py",
+              "line": 662,
+              "source_id": "src_5176c1ae592b",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "sybrenstuvel/python-rsa",
+      "scanned_at": "2026-11-18T10:53:17+08:00",
+      "revision": "42b0e14ffbeeb9d99d1037e6440a2cc61780e4ea",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 40,
+        "candidate_files": 40,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "tests/private.pem",
+              "line": 1,
+              "source_id": "src_09d54a0a0967",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "tlsfuzzer/python-ecdsa",
+      "scanned_at": "2026-11-18T10:53:13+08:00",
+      "revision": "71e3fc7240cf31584fb0e10bd58e2830f2fc5afc",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 50,
+        "candidate_files": 50,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "src/ecdsa/test_keys.py",
+              "line": 144,
+              "source_id": "src_bdbf508f405f",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "unknown",
+            "origin": "unknown",
+            "status": "confirmed",
+            "count": 13,
+            "example": {
+              "path": "README.md",
+              "line": 301,
+              "source_id": "src_7cf25e54463d",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "tlsfuzzer/tlslite-ng",
+      "scanned_at": "2026-11-18T11:37:33+08:00",
+      "revision": "7e95ea1a86c0d42d8d931ff14134d31f01ce1d76",
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 234,
+        "file_limit": 350,
+        "candidate_files": 234,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "tests/serverDSAKey.pem",
+              "line": 1,
+              "source_id": "src_bc32f4d8b780",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 8,
+            "example": {
+              "path": "tests/serverBrainpoolP256r1ECKey.pem",
+              "line": 1,
+              "source_id": "src_5c73e327a44f",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tlslite/utils/python_key.py",
+              "line": 118,
+              "source_id": "src_2f996f513133",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tlslite/utils/python_key.py",
+              "line": 120,
+              "source_id": "src_2f996f513133",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tlslite/utils/pycrypto_rsakey.py",
+              "line": 69,
+              "source_id": "src_cd163d6dc9c4",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tlslite/utils/pycrypto_rsakey.py",
+              "line": 24,
+              "source_id": "src_cd163d6dc9c4",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "tests/clientX509Key.pem",
+              "line": 1,
+              "source_id": "src_a4f6258a665d",
+              "finding_id": ""
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "unit_tests/test_tlslite_handshakesettings.py",
+              "line": 316,
+              "source_id": "src_beadca480dd6",
+              "finding_id": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "urllib3/urllib3",
+      "scanned_at": "2026-11-18T11:37:24+08:00",
+      "revision": "d9f9b0ad5b99247e06aa9a50b7a5747aa5c2e35d",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 113,
+        "file_limit": 350,
+        "candidate_files": 113,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "wbond/asn1crypto",
+      "scanned_at": "2026-11-18T10:53:14+08:00",
+      "revision": "a767d2daa8ef4549d497b67a0304561c2eb4b858",
+      "rules_version": "crypto-rules-4",
+      "coverage": {
+        "scanned_files": 100,
+        "candidate_files": 100,
+        "file_limit": 350,
+        "skipped_files": 0,
+        "partial": false
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "base",
+        "stages": {
+          "confirmed": "completed"
+        },
+        "groups": []
+      }
+    }
+  ]
+}

@@ -130,10 +130,11 @@ async function start() {
     }
     const filename = path.basename(item.getFilename());
     const extension = path.extname(filename).slice(1).toLowerCase();
-    if (!['html', 'md', 'json', 'csv', 'svg'].includes(extension)) { event.preventDefault(); return; }
+    if (!['html', 'md', 'json', 'csv', 'svg', 'png'].includes(extension)) { event.preventDefault(); return; }
     downloads++;
-    item.setSaveDialogOptions({ title: extension === 'svg' ? '保存关系图' : '保存扫描报告', defaultPath: path.join(app.getPath('downloads'), filename),
-      filters: [{ name: '扫描报告', extensions: [extension] }] });
+    const graphImage = ['svg', 'png'].includes(extension);
+    item.setSaveDialogOptions({ title: graphImage ? '保存关系图' : '保存导出文件', defaultPath: path.join(app.getPath('downloads'), filename),
+      filters: [{ name: graphImage ? '关系图' : '导出文件', extensions: [extension] }] });
     item.once('done', async (_event, state) => {
       downloads--;
       if (!window || window.isDestroyed() || quitting) return;

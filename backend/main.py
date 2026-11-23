@@ -59,6 +59,8 @@ app.include_router(ai_router)
 from backend.ai.profile_routes import router as profile_router
 app.include_router(profile_router)
 app.include_router(task_router)
+from backend.repository_library import router as library_router
+app.include_router(library_router)
 app.include_router(report_router)
 app.include_router(integrated_report_router)
 app.include_router(scan_router)

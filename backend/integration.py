@@ -8,6 +8,7 @@ from backend.ai.config import digest
 from backend.analysis import build_analysis, STANDARD_URL
 from backend.reporting import build_summary
 from scanner.rules import VULNERABLE_ALGOS
+from scanner.api_catalog import rule_purpose
 from backend.ai.assessment import assess, scope_check
 from backend.migration_directions import PURPOSES, direction, effective_purpose
 
@@ -27,7 +28,7 @@ def integrate(base: dict) -> dict:
     for raw in base.get('findings', []):
         row = deepcopy(raw)
         row.update(finding_id='rule-' + digest(raw)[:24], verification_status='confirmed',
-                   origins=['rule'], purpose_code='unknown', opinions=[], operation_ids=[])
+                   origins=['rule'], purpose_code=rule_purpose(raw), opinions=[], operation_ids=[])
         confirmed.append(row)
         refs[digest(raw)] = row
         positions[(row['source_id'], row['line'], canonical(row['algorithm']))].append(row)
@@ -73,7 +74,10 @@ def integrate(base: dict) -> dict:
             if proven:
                 added += 1
         row['operation_ids'].append(identity)
-        row['purpose_code'] = operation['operation_type'] if claims.get('OPERATION_TYPE', {}).get('level') == 'E3' else 'unknown'
+        if claims.get('OPERATION_TYPE', {}).get('level') == 'E3' and operation['operation_type'] != 'unknown':
+            row['purpose_code'] = operation['operation_type']
+        else:
+            row.setdefault('purpose_code', 'unknown')
         if operation.get('evidence_scope') == 'algorithm_policy':
             row['purpose_code'] = 'configuration'
             row['evidence'] = '验签允许算法策略：' + operation['api']

@@ -13,7 +13,7 @@ from unittest.mock import patch
 import httpx
 
 from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes, safe_archive_member_name
-from backend.collection_common import CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries, remote_client_options
+from backend.collection_common import CollectionControl, CollectionError, CollectionTimeout, Deadline, concurrent_collect, get_with_retries, remote_client_options
 from backend.remote_sources import decode_github_blob, github_get, github_headers, github_sources, pypi_sources
 
 
@@ -57,6 +57,34 @@ class ArchiveTests(unittest.TestCase):
 
 
 class HttpCollectionTests(unittest.TestCase):
+    def test_library_prefers_archive_and_falls_back_to_tree(self):
+        archive = zip_bytes([('a-release/main.py', 'value = 1'), ('a-release/config.json', '{}')])
+        real_client = httpx.Client
+        for archive_status in (200, 404):
+            calls = []
+
+            def handle(request):
+                calls.append(request.url.path)
+                if request.url.path == '/repos/a/b':
+                    return httpx.Response(200, json={'default_branch': 'release'})
+                if request.url.path == '/a/b/zip/release':
+                    return httpx.Response(archive_status, content=archive)
+                if request.url.path == '/repos/a/b/git/trees/release':
+                    return httpx.Response(200, json={'tree': [{'type': 'blob', 'path': 'main.py', 'size': 9}]})
+                if request.url.path == '/repos/a/b/contents/main.py':
+                    return httpx.Response(200, json={'encoding': 'base64', 'content': 'dmFsdWUgPSAx'})
+                self.fail(f'Unexpected request: {request.url}')
+
+            parent = CollectionControl()
+            parent.library_scan = True
+            deadline = Deadline(Deadline.after().end, CollectionControl(parent=parent))
+            with patch('backend.remote_sources.httpx.Client', side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
+                docs = github_sources('https://github.com/a/b', 5000, deadline)
+            self.assertFalse(docs.coverage['partial'])
+            self.assertEqual(calls[:2], ['/repos/a/b', '/a/b/zip/release'])
+            self.assertEqual(len(docs), 2 if archive_status == 200 else 1)
+            self.assertEqual(len(calls), 2 if archive_status == 200 else 4)
+
     def test_windows_proxy_and_explicit_environment_priority(self):
         registry = {"https": "http://127.0.0.1:7890"}
         with patch.dict(os.environ, {"NO_PROXY": "localhost"}, clear=True), \

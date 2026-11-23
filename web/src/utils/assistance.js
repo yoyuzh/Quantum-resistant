@@ -1,5 +1,5 @@
 export const purposeLabels = {
-  unknown: '用途待确认', configuration: '算法配置', key_generation: '密钥生成', key_import: '密钥导入',
+  unknown: '用途待确认', configuration: '算法配置', key_generation: '密钥生成', key_import: '密钥导入', key_material: '密钥材料',
   sign: '签名', verify: '验签', encrypt: '加密', decrypt: '解密', key_exchange: '密钥建立',
 };
 export const opinionLabels = { supports_static: '复核依据', questions_static: '存在冲突', new_candidate: 'AI分析依据', abstain: '信息不足' };
