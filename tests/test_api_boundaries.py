@@ -10,6 +10,22 @@ from backend.main import app
 
 
 class ApiBoundaryTests(unittest.TestCase):
+    def test_coverage_distinguishes_failed_configs_and_python_fallback(self):
+        response = self.client.post('/api/scan/files', files=[
+            ('files', ('broken.py', 'from Crypto.PublicKey import RSA\nRSA.generate(2048)\nif (\n')),
+            ('files', ('broken.json', '{"algorithm":')),
+            ('files', ('clean.py', 'a = 1\n')),
+        ])
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        coverage = result['coverage']
+        self.assertEqual(coverage['candidate_files'], 3)
+        self.assertEqual(coverage['scanned_files'], 2)
+        self.assertEqual(coverage['skipped_files'], 1)
+        self.assertEqual(coverage['degraded_files'], 1)
+        self.assertEqual(coverage['skip_reasons'], {'analysis_failure': 1})
+        self.assertTrue(coverage['partial'])
+
     def setUp(self):
         self.client = TestClient(app)
 

@@ -71,14 +71,15 @@ function canLocate(location) {
 </script>
 <template>
   <section class="atlas-evidence" aria-label="选中分组证据">
-    <h3>{{ row.repo.full_name }} · {{ algorithm }}<template v-if="purpose"> · {{ purposeName({ purpose }) }}</template> · {{ label(status) }}<template v-if="status !== 'legacy'"> · {{ count }} 项</template></h3>
-    <p v-if="row.repo.scanned_at">扫描于 {{ formatTime(row.repo.scanned_at) }}（北京时间） · {{ row.repo.rules_version }} · 提交 {{ row.repo.revision || '未记录' }}</p>
+    <h3>{{ row.repo.full_name }} / {{ algorithm }}<template v-if="purpose">（{{ purposeName({ purpose }) }}）</template></h3>
+    <p>{{ label(status) }}<template v-if="status !== 'legacy'"> {{ count }} 项</template></p>
+    <p v-if="row.repo.scanned_at">{{ formatTime(row.repo.scanned_at) }}（北京时间），规则 {{ row.repo.rules_version }}，提交 {{ row.repo.revision || '未记录' }}</p>
     <p v-if="message" role="status">{{ message }}</p>
-    <p v-if="status === 'legacy' && row.historicalPositions.has(algorithm)">历史明细示例 · {{ row.historicalPositions.get(algorithm) }}</p>
+    <p v-if="status === 'legacy' && row.historicalPositions.has(algorithm)">历史位置 {{ row.historicalPositions.get(algorithm) }}</p>
     <section v-if="locations.length" class="evidence-locations" aria-label="证据定位">
       <h4>{{ view ? '证据定位' : '代表位置' }}</h4>
       <ul><li v-for="{ group, location } in locations" :key="group.purpose + group.origin">
-        <span class="small muted">{{ purposeName(group) }}（{{ originName(group) }}） · {{ group.count }} 项</span>
+        <span class="small muted">{{ purposeName(group) }}（{{ originName(group) }}） {{ group.count }} 项</span>
         <button v-if="canLocate(location)" class="button text-action compact" @click="selectedLocation = location">{{ location.label }}</button>
         <a v-else-if="location?.url" :href="location.url" target="_blank" rel="noopener noreferrer" :title="'打开固定提交的源码行'">{{ location.label }}</a>
         <code v-else-if="location">{{ location.label }}</code>
@@ -87,7 +88,7 @@ function canLocate(location) {
     </section>
     <template v-if="view">
       <div v-if="preview" class="located-source">
-        <p>{{ preview.file_name }} · 第 {{ preview.line }} 行</p>
+        <p>{{ preview.file_name }} 第 {{ preview.line }} 行</p>
         <CodePreview :sources="view.sources" :finding="preview" :load-source="loadSource" />
       </div>
       <EvidenceGraph v-if="view.assets.length" :result="view" :assets="view.assets" :load-source="loadSource" active />

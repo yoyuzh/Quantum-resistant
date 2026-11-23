@@ -34,9 +34,9 @@ const operations = computed(() => (assistedResult?.value?.deep_analysis?.operati
     <section class="detail-section recommendation"><h4>迁移参考</h4><p>{{ finding.recommendation }}</p></section>
     <p v-if="finding.suggested_purpose && !finding.effective_purpose_code && finding.purpose_code === 'unknown' && finding.suggested_purpose !== '用途待确认'">用途建议：{{ finding.suggested_purpose }}（待核验）</p>
     <section v-for="opinion in finding.opinions || []" :key="opinion.candidate_id" class="detail-section recommendation">
-      <h4>{{ opinionLabels[opinion.opinion_kind] }}<InfoTip v-if="opinion.model_origin" label="研判模型来源">{{ opinion.model_origin.profile_name || opinion.model_origin.model }} · {{ opinion.model_origin.model }}</InfoTip></h4><p>{{ opinion.rationale }}</p>
+      <h4>{{ opinionLabels[opinion.opinion_kind] }}<InfoTip v-if="opinion.model_origin" label="研判模型来源">{{ opinion.model_origin.profile_name && opinion.model_origin.profile_name !== opinion.model_origin.model ? `${opinion.model_origin.profile_name}（${opinion.model_origin.model}）` : opinion.model_origin.model }}</InfoTip></h4><p>{{ opinion.rationale }}</p>
       <p v-if="opinion.missing_information?.length" class="small muted">待补充：{{ opinion.missing_information.join('；') }}</p>
-      <details v-for="citation in opinion.citations || []" :key="citation.evidence_id"><summary>{{ citation.file_name }} · 第 {{ citation.start_line }} 行</summary><pre class="full-evidence">{{ citation.text }}</pre></details>
+      <details v-for="citation in opinion.citations || []" :key="citation.evidence_id"><summary>{{ citation.file_name }} 第 {{ citation.start_line }} 行</summary><pre class="full-evidence">{{ citation.text }}</pre></details>
     </section>
     <DisclosurePanel v-for="operation in operations" :key="operation.operation_id" title="跨文件证据">
       <AssistedEvidence :result="assistedResult" :operation="operation" :load-source="loadSource" />

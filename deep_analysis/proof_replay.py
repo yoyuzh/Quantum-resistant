@@ -50,23 +50,26 @@ class Replay:
     def __init__(self, index: Index, budgets: Budgets, checkpoint: Callable[[], object]):
         self.index, self.budgets, self.checkpoint = index, budgets, checkpoint
         self.modules = {m.source_id: m for m in index.modules}
-        self.calls = {c.location: (m, c) for m in index.modules for c in m.calls}
+        self.calls = index.calls
         from deep_analysis.lazy_ast import SpanNodes, Functions
         self.nodes = SpanNodes(index.modules)
         self.functions = Functions(index.modules)
-        self.cross = all(m.name is not None for m in index.modules)
+        self.cross = index.cross_module
         self.active = 0
         self.visits = 0
+        self.limited = False
 
     def expr(self, node: ast.AST, scope: Scope) -> Witness:
         self.checkpoint()
         self.visits += 1
         if self.active >= self.budgets.ast_depth or self.visits > self.budgets.index_nodes:
+            self.limited = True
             return unknown('replay_limit')
         self.active += 1
         try:
             witness = self._expr(node, scope)
             if len(witness.nodes) > self.budgets.slice_nodes or len(witness.edges) > self.budgets.slice_nodes:
+                self.limited = True
                 return unknown('replay_slice_limit')
             return witness
         finally:
@@ -75,7 +78,7 @@ class Replay:
     def _expr(self, node: ast.AST, scope: Scope) -> Witness:
         module = scope.module
         span = location(module.source_id, node)
-        if scope.blocked or any(s.kind == 'dynamic_namespace' for s in module.symbols):
+        if scope.blocked or module.dynamic_namespace:
             return unknown('unsupported_scope')
         if isinstance(node, ast.Constant) and type(node.value) in (str, int, float, bool, type(None)):
             try:
@@ -86,7 +89,7 @@ class Replay:
             value = self.lookup(node.id, node, scope)
             return value.edge('ASSIGN_FLOW', value.last or span, span)
         if isinstance(node, ast.Attribute):
-            target, _ = resolve(dotted(node), scope.name, module, list(self.modules.values()), self.cross)
+            target, _ = resolve(dotted(node), scope.name, module, self.index.names, self.cross)
             if target and ':' not in target:
                 return unknown('module_is_not_scalar')
             name = dotted(node)
@@ -173,14 +176,14 @@ class Replay:
         return value
 
     def imported(self, target: str, node: ast.AST, scope: Scope) -> Witness:
-        choices = [m for m in self.modules.values() if m.name and target.startswith(m.name + '.')]
+        choices, name = self.index.names.longest(target, allow_exact=False)
         if not choices:
             return unknown('missing_module')
-        length = max(len(m.name) for m in choices)
-        choices = [m for m in choices if len(m.name) == length]
-        if len(choices) != 1 or '.' in target[length + 1:]:
+        if len(choices) != 1 or '.' in name:
             return unknown('ambiguous_module')
-        value = self.lookup(target[length + 1:], None, Scope(choices[0]))
+        if choices[0].package_root != scope.module.package_root:
+            return unknown('cross_root_import')
+        value = self.lookup(name, None, Scope(choices[0]))
         return value.edge('IMPORT_BINDING', value.last, location(scope.module.source_id, node)) if value.last else value
 
     def merge(self, values: tuple[Witness, ...]) -> Witness:

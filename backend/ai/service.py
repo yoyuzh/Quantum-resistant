@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from backend.ai.config import BUDGETS, ConfigStore, digest
 from backend.ai.context import catalog, packets, select
 from backend.ai.runner import analyze
-from backend.ai.provider import reusable, continuable
+from backend.ai.provider import continuable
 
 
 class AiService:
@@ -140,7 +140,7 @@ class AiService:
         if not config.ready or self.loop is None:
             return False
         budget=Deadline(min(time.monotonic()+BUDGETS['seconds'],job.accepted+2100),job.control)
-        job.control.emit(stage='模型上下文准备',activity={'action':'按仓库准备独立证据与共享分析队列','files':[]})
+        job.control.emit(stage='模型上下文准备',activity={'action':'准备仓库证据','files':[]})
         prepared=prepare(self,job,budget)
         return self.schedule(job,base,prepared,config,budget.end)
 
@@ -158,13 +158,15 @@ class AiService:
             job.state, job.stage = 'running', 'AI辅助分析'
         try:
             result = await analyze(self, job, base, prepared, config, end)
-            job.control.emit(stage='结果整理', activity={'action':'整合确认发现、待复核意见与迁移待办', 'files':[]})
+            ai = result['ai_analysis']
+            job.control.emit(stage='结果整理', recovery=None, activity={'action':'汇总分析结果', 'files':[]},
+                             ai_progress={**ai['coverage'], 'status':ai['status'], 'calls':ai['calls'], 'active_groups':0})
             await asyncio.get_running_loop().run_in_executor(self.store.executor, self.store._finish, job, result)
         except asyncio.CancelledError:
             self.store._fail(job, RuntimeError('AI已停止，已保存结果保留'))
         except Exception:
             # Never put upstream exceptions, response bodies or credentials into diagnostics.
-            self.store._fail(job, RuntimeError('AI阶段未完成，静态结果和已保存意见已保留'))
+            self.store._fail(job, RuntimeError('AI 复核失败'))
         finally:
             self.store._end(job)
 

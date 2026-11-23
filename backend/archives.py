@@ -65,7 +65,7 @@ def _collect(entries, read, origin, limit, root, deadline):
         except CollectionTimeout:
             if not documents:
                 raise
-            diagnostics.append({"code": "collection_interrupted", "message": "归档采集中断，已保留读完的文件。"})
+            diagnostics.append({"code": "collection_interrupted", "message": "归档读取中断。"})
             break
         if len(documents) >= limit:
             reasons['file_limit'] += len(candidates) - len(documents) - sum(reasons.values())
@@ -89,11 +89,11 @@ def _collect(entries, read, origin, limit, root, deadline):
         except CollectionTimeout:
             if not documents:
                 raise
-            diagnostics.append({'code': 'collection_interrupted', 'message': '归档读取中断，已保留读完的文件。'})
+            diagnostics.append({'code': 'collection_interrupted', 'message': '归档读取中断。'})
             reasons['cancelled' if deadline.control.cancelled.is_set() else 'timeout'] += len(candidates) - len(documents) - sum(reasons.values())
             break
         except ArchiveLimit:
-            diagnostics.append({"code": "archive_budget", "message": "归档展开数据达到安全上限，已保留完成部分。"})
+            diagnostics.append({"code": "archive_budget", "message": "归档解压数据达到上限。"})
             reasons["archive_budget"] += len(candidates) - len(documents) - sum(reasons.values())
             break
         except (OSError, RuntimeError, zipfile.BadZipFile):
@@ -101,9 +101,9 @@ def _collect(entries, read, origin, limit, root, deadline):
             deadline.control.emit(processed_delta=1, skipped_delta=1)
             continue
         if not deadline.control.accept(len(data)):
-            diagnostics.append({"code": "text_budget", "message": "采集文本达到来源总量上限。"})
-            reasons['text_budget'] += len(candidates) - len(documents) - sum(reasons.values())
-            break
+            reasons['text_budget'] += 1
+            deadline.control.emit(processed_delta=1, skipped_delta=1)
+            continue
         try:
             documents.append(deadline.control.publish((origin, name, content)))
         except (CollectionTimeout, RuntimeError, OSError) as exc:
@@ -188,9 +188,7 @@ class BoundedTarInfo(tarfile.TarInfo):
 def collect_from_tar_bytes(data: bytes, origin: str, *, max_files: int = MAX_COLLECTED_FILES, deadline: Deadline | None = None) -> CollectedSources:
     budget = deadline or Deadline.after()
     entries, limited = [], False
-    # Index without retaining file bodies, then stream selected files using the
-    # same expanded-byte allowance. This preserves root stripping and memory bounds.
-    expanded_bytes = 0
+    # Bound each traversal so indexing does not spend the extraction allowance.
     def open_raw():
         return data.open('rb') if isinstance(data, Path) else io.BytesIO(data)
     with open_raw() as raw:
@@ -205,7 +203,6 @@ def collect_from_tar_bytes(data: bytes, origin: str, *, max_files: int = MAX_COL
                             entries.append((member, member.name, member.size))
                 except ArchiveLimit:
                     limited = True
-            expanded_bytes = reader.bytes
         finally:
             if expanded is not raw:
                 expanded.close()
@@ -213,7 +210,6 @@ def collect_from_tar_bytes(data: bytes, origin: str, *, max_files: int = MAX_COL
     with open_raw() as raw:
         expanded = tar_stream(raw, budget)
         reader = ExpandedReader(expanded, budget)
-        reader.bytes = expanded_bytes
         try:
             with tarfile.open(fileobj=reader, mode='r|', tarinfo=BoundedTarInfo) as archive:
                 def read(member):

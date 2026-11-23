@@ -50,7 +50,7 @@ export async function followTask({
     } catch (error) {
       if (signal.aborted || (error.status >= 400 && error.status < 500) || ++retries >= 3)
         throw error;
-      onConnection('提交连接中断，正在用同一请求标识恢复…');
+      onConnection('提交连接中断，正在重试…');
       await delay(Math.min(1000 * retries, 5000), signal);
     }
   }
@@ -75,7 +75,7 @@ export async function followTask({
       retries = 0;
     } catch (error) {
       if (signal.aborted || (error.status >= 400 && error.status < 500)) throw error;
-      onConnection('查询连接暂时中断，后台任务仍在运行，正在重连…');
+      onConnection('正在重连任务查询…');
       await delay(Math.min(1000 * 2 ** retries++, 5000), signal);
       continue;
     }
@@ -84,8 +84,8 @@ export async function followTask({
       throw new Error(
         status.error ||
           (status.state === 'cancelled'
-            ? '任务已取消；上次结果已保留'
-            : '任务失败；上次结果已保留'),
+            ? '任务已取消'
+            : '任务失败'),
       );
     }
     await delay(1000, signal);

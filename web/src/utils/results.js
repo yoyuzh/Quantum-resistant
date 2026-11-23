@@ -51,5 +51,5 @@ export function coverageText(coverage) {
   if (!coverage) return '扫描范围未知（历史结果）';
   const candidate =
     coverage.candidate_files == null ? '候选总数未知' : `候选 ${coverage.candidate_files} 个`;
-  return `已扫描 ${coverage.scanned_files} 个文件 · ${candidate}${coverage.file_limit ? ` · 上限 ${coverage.file_limit} 个` : ''} · 跳过 ${coverage.skipped_files || 0} 个`;
+  return `已扫描 ${coverage.scanned_files} 个文件，${candidate}${coverage.file_limit ? `，上限 ${coverage.file_limit} 个` : ''}${coverage.skipped_files ? `，跳过 ${coverage.skipped_files} 个` : ''}${coverage.degraded_files ? `，${coverage.degraded_files} 个降级分析` : ''}`;
 }

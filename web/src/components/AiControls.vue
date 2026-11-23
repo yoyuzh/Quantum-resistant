@@ -1,16 +1,15 @@
 <script setup>
 import AppIcon from './AppIcon.vue';
-import { modelStatus } from '../utils/modelProfiles.js';
 import { aiEnabled, aiSettings, aiSettingsOpen, setAiEnabled } from '../composables/useAiSettings.js';
 defineProps({ disabled: Boolean });
 </script>
 <template>
   <div class="ai-controls">
-    <label class="ai-toggle" title="仅影响下一次扫描；关闭后仍执行跨文件静态分析">
+    <label class="ai-toggle">
       <input type="checkbox" role="switch" :checked="aiEnabled" :disabled="disabled" @change="setAiEnabled($event.target.checked)" />
       <span class="switch-track" aria-hidden="true"></span><span>AI 辅助</span>
     </label>
-    <span class="model-state">{{ aiSettings.profile_name || aiSettings.model || 'AI' }} · {{ modelStatus(aiSettings) }}</span>
+    <span v-if="aiEnabled && aiSettings.ready" class="model-state">{{ aiSettings.profile_name || aiSettings.model }}</span>
     <button type="button" class="button text-action compact" @click="aiSettingsOpen = true">
       <AppIcon name="settings" :size="16" />{{ aiSettings.ready ? '模型设置' : '配置模型' }}
     </button>

@@ -41,7 +41,7 @@ export function stageText(row, status) {
   const inventory = row.repo.algorithm_inventory;
   if (!inventory) return '分组数量未知';
   const stage = inventory.stages[status];
-  return (inventory.basis === 'base' ? '基础扫描' : '融合分析') + ' · ' + (analysisLabels[stage] || '未评估');
+  return (inventory.basis === 'base' ? '基础扫描' : '融合分析') + '（' + (analysisLabels[stage] || '未评估') + '）';
 }
 
 export function repositoryAtlas(batch) {
@@ -66,6 +66,6 @@ export function repositoryAtlas(batch) {
 }
 
 export function batchScope(atlas) {
-  if (atlas.batch.schema_version === 1) return `已收录 ${atlas.rows.length} 个仓库 · 其中部分扫描 ${atlas.partial} 个`;
-  return `请求 ${atlas.requested} · 可用 ${atlas.rows.length}（其中部分扫描 ${atlas.partial}）· 失败或未完成 ${atlas.failed}`;
+  if (atlas.batch.schema_version === 1) return `收录 ${atlas.rows.length} 个仓库${atlas.partial ? `（${atlas.partial} 个部分扫描）` : ''}`;
+  return `请求 ${atlas.requested} 个仓库，可用 ${atlas.rows.length} 个（部分扫描 ${atlas.partial} 个），未完成 ${atlas.failed} 个`;
 }

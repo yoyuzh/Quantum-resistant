@@ -24,12 +24,12 @@ watch([()=>props.analysis,()=>props.active],()=>{ selected.value=null; });
       </div>
     </template>
     <template #empty>
-      <p class="notice">{{ !analysis ? '此历史结果未记录迁移清单，请重新扫描。' : '本次没有需要生成迁移待办的算法证据。' }}</p>
+      <p class="notice">{{ !analysis ? '重新扫描可生成迁移待办。' : '本次没有迁移待办。' }}</p>
     </template>
     <template #default="{ item }">
       <article class="migration-record">
-        <div class="migration-identity"><strong>{{ item.algorithm }}</strong><span class="migration-count">{{ item.affected_files }} 个文件 · {{ item.finding_count }} 项</span><span class="tag">{{ statusLabel(item.verification_status) }}</span></div>
-        <div class="migration-direction"><b>{{ item.purpose }}<span v-if="item.purpose_origin==='ai'"> · AI用途研判</span></b>
+        <div class="migration-identity"><strong>{{ item.algorithm }}</strong><span class="migration-count">{{ item.affected_files }} 个文件，{{ item.finding_count }} 项</span><span class="tag">{{ statusLabel(item.verification_status) }}</span></div>
+        <div class="migration-direction"><b>{{ item.purpose }}<span v-if="item.purpose_origin==='ai'">（AI 研判）</span></b>
           <span v-if="item.targets.length" class="migration-targets">{{ item.targets.join(' / ') }}</span>
           <span v-else-if="item.migration_references?.length">{{ item.migration_references.map(r=>r.label).join('；') }}</span>
           <span v-else>确认用途与实现后选择迁移方向</span></div>

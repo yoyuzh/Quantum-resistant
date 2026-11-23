@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import ast
+import sys
 from collections import OrderedDict
 from collections.abc import Mapping
 
 
 class AstCache:
-    def __init__(self, sources, checkpoint=lambda: None):
+    def __init__(self, sources, checkpoint=lambda: None, *, target_minor=sys.version_info.minor):
         self.sources = {s.identity.source_id: s for s in sources}
         self.checkpoint = checkpoint
+        self.target_minor = target_minor
         self.entries = OrderedDict()
         self.peak = 0
         self.parses = 0
@@ -19,7 +21,7 @@ class AstCache:
         if identity not in self.entries:
             source = self.sources[identity]
             from scanner.parsing import parse_python
-            tree = parse_python(source.content, source.identity.relative_path, self.checkpoint)
+            tree = parse_python(source.content, source.identity.relative_path, self.checkpoint, target_minor=self.target_minor)
             nodes = {(n.lineno, n.col_offset, n.end_lineno, n.end_col_offset): n for n in ast.walk(tree)
                      if getattr(n, 'end_lineno', None) is not None}
             while len(self.entries) >= 2:

@@ -4,8 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from scanner.api_catalog import RULES_VERSION, JWT_ALGORITHMS, api_algorithm
-ENGINE_VERSION = 'deep-ast-2'
-VERIFIER_VERSION = 'ast-witness-2'
+ENGINE_VERSION = 'deep-ast-3'
+VERIFIER_VERSION = 'ast-witness-3'
 LIBRARY_PROFILES = ('PyJWT 2.10.1', 'cryptography 45 API subset', 'PyCryptodome 3.23.0', 'python-ecdsa default-curve subset')
 PYCA = 'cryptography.hazmat.primitives.'
 

@@ -13,7 +13,7 @@ const distribution=computed(()=>fileTiles(props.files,props.width,props.height,p
       @click="tile.data.members?$emit('expand'):$emit('select',{sourceId:tile.data.id})"
       @keydown.enter="tile.data.members?$emit('expand'):$emit('select',{sourceId:tile.data.id})"
       @keydown.space.prevent="tile.data.members?$emit('expand'):$emit('select',{sourceId:tile.data.id})">
-      <title>{{ tile.data.name }} · {{ tile.data.count }} 项 · AI研判 {{ tile.data.ai || 0 }} 项 · 证据不足 {{ tile.data.pending || 0 }} 项</title>
+      <title>{{ tile.data.name }} 共 {{ tile.data.count }} 项，AI 研判 {{ tile.data.ai || 0 }} 项，证据不足 {{ tile.data.pending || 0 }} 项</title>
       <rect :x="tile.x0" :y="tile.y0" :width="tile.x1-tile.x0" :height="tile.y1-tile.y0" rx="5" :class="{other:tile.data.members}" />
       <text :clip-path="`url(#${clipId}-${tile.number})`" text-anchor="middle" :style="{fontSize:tile.font+'px'}">
         <tspan v-for="(line,i) in tile.lines" :key="i" :x="(tile.x0+tile.x1)/2" :y="tile.labelY+i*tile.font*1.2">{{ line }}</tspan>

@@ -1,7 +1,6 @@
 """Recognize a small set of imported ecdsa curves without evaluating them."""
 from __future__ import annotations
 
-import ast
 from deep_analysis.symbol_index import dotted, resolve
 
 CURVES = frozenset({'NIST192p', 'NIST224p', 'NIST256p', 'NIST384p', 'NIST521p',

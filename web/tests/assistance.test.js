@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { assistanceAction, confirmedOperations, migrationTasks, readAiPreference, saveAiPreference } from '../src/utils/assistance.js';
+import { assistanceAction, confirmedOperations, readAiPreference, saveAiPreference } from '../src/utils/assistance.js';
 import { followTask } from '../src/utils/remoteTasks.js';
 import { fileKey } from '../src/utils/files.js';
 
@@ -15,9 +15,9 @@ test('supplement and continue actions reflect actual completion', () => {
   assert.equal(assistanceAction({ ai_analysis: { status: 'partial', coverage: { remaining: 5 } } }), '继续 AI 分析');
   assert.equal(assistanceAction({ ai_analysis: { status: 'cancelled', coverage: { remaining: 5 } } }), '重试未完成项');
 });
-test('AI opinions do not become confirmed operations or migration tasks', () => {
+test('AI opinions do not become confirmed operations', () => {
   const result = { ai_analysis: { opinions: [{ algorithm: 'RSA' }] }, deep_analysis: { operations: [] } };
-  assert.deepEqual(confirmedOperations(result), []); assert.deepEqual(migrationTasks(result), []);
+  assert.deepEqual(confirmedOperations(result), []);
 });
 test('directory paths distinguish same-named files', () => {
   const a = { name: 'crypto.py', size: 10, lastModified: 1, webkitRelativePath: 'a/crypto.py' };

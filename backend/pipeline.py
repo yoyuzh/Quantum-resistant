@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from hashlib import sha256
 from queue import Empty, Queue
 from threading import BoundedSemaphore, Condition, Thread
 
@@ -37,6 +38,7 @@ class ScanPipeline:
         self.published_objects = set()
         budget.control.publisher = self.publish
         budget.control.pipeline = self
+        budget.control.source_digests = {}
         self.thread = Thread(target=self.consume, name="scan-analysis", daemon=True)
         self.thread.start()
 
@@ -91,7 +93,7 @@ class ScanPipeline:
                     acquired = ANALYSIS_SLOTS.acquire(timeout=.1)
                     self.budget.remaining()
                 origin, name, content = document if len(document) == 3 else (None, *document)
-                self.budget.control.emit(activity={'action':'检查密码 API、算法配置与导入绑定', 'files':[name], 'completed':len(self.records), 'total':None})
+                self.budget.control.emit(activity={'action':'规则分析', 'files':[name], 'completed':len(self.records), 'total':None})
                 with analysis_control(self.budget.remaining):
                     findings, notes = self.analyzer(content, name, self.source_type, identity, include_metadata=True)
                 findings = [dict(item, source_id=identity, file_name=name, source_type=self.source_type,
@@ -102,6 +104,7 @@ class ScanPipeline:
                               line_count=len(content.splitlines()), char_count=len(content), origin=origin)
                 if isinstance(document, StoredDocument):
                     record['content_available'] = True
+                    self.budget.control.source_digests[identity] = sha256(content.encode('utf-8')).hexdigest()
                     paths = getattr(self.budget.control, 'source_paths', None)
                     if paths is None:
                         paths = self.budget.control.source_paths = {}

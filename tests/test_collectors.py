@@ -26,6 +26,27 @@ def zip_bytes(files):
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_zip_fills_remaining_text_budget_after_a_larger_file(self):
+        deadline = Deadline(Deadline.after().end, CollectionControl(max_bytes=10))
+        data = zip_bytes([('a.py', 'x = 1'), ('b.py', 'long = 2'), ('c.py', 'y = 3')])
+        result = collect_from_zip_bytes(data, 'origin', deadline=deadline)
+        self.assertEqual([doc[1] for doc in result], ['a.py', 'c.py'])
+        self.assertEqual(result.coverage['skip_reasons'], {'text_budget': 1})
+
+    def test_tar_index_and_extraction_each_have_an_expansion_limit(self):
+        stream = io.BytesIO()
+        with tarfile.open(fileobj=stream, mode='w') as archive:
+            for index in range(10):
+                content = b'x = 1\n' * 200
+                item = tarfile.TarInfo(f'package-1/package/{index}.py')
+                item.size = len(content)
+                archive.addfile(item, io.BytesIO(content))
+        data = stream.getvalue()
+        with patch('backend.archive_limits.MAX_ARCHIVE_EXPANDED_BYTES', len(data) + 1024):
+            docs = collect_from_tar_bytes(data, 'origin')
+        self.assertEqual(len(docs), 10)
+        self.assertFalse(docs.coverage['partial'])
+
     def test_zip_keeps_wheel_package_paths(self):
         docs = collect_from_zip_bytes(zip_bytes([("package/a.py", "x=1"), ("package/sub/a.py", "x=2")]), "wheel", strip_root=False)
         self.assertEqual([d[1] for d in docs], ["package/a.py", "package/sub/a.py"])
@@ -308,6 +329,41 @@ class HttpCollectionTests(unittest.TestCase):
         self.assertIsNone(result.coverage["candidate_files"])
         self.assertEqual(result.coverage["skipped_files"], 1)
         self.assertTrue(result.coverage["partial"])
+
+    def test_truncated_github_tree_recovers_from_subtrees_when_archive_is_unavailable(self):
+        api = 'https://api.github.com/repos/a/b'
+        root, child, commit = 'a' * 40, 'b' * 40, 'c' * 40
+
+        def handle(request):
+            path = request.url.path
+            if str(request.url) == api:
+                return httpx.Response(200, json={'default_branch': 'main'})
+            if path.endswith('/commits/main'):
+                return httpx.Response(200, json={'sha': commit})
+            if path.endswith('/git/trees/main'):
+                return httpx.Response(200, json={'truncated': True, 'sha': root, 'tree': [
+                    {'type': 'blob', 'path': 'main.py', 'url': api + '/git/blobs/main'},
+                ]})
+            if path.endswith('/git/trees/' + root):
+                self.assertNotIn('recursive', request.url.params)
+                return httpx.Response(200, json={'tree': [
+                    {'type': 'blob', 'path': 'main.py', 'url': api + '/git/blobs/main'},
+                    {'type': 'tree', 'path': 'pkg', 'sha': child},
+                ]})
+            if path.endswith('/git/trees/' + child):
+                return httpx.Response(200, json={'tree': [
+                    {'type': 'blob', 'path': 'extra.py', 'url': api + '/git/blobs/extra'},
+                ]})
+            if '/git/blobs/' in path:
+                return httpx.Response(200, json={'encoding': 'base64', 'content': 'eCA9IDE='})
+            return httpx.Response(404)
+
+        real_client = httpx.Client
+        with patch('backend.remote_sources.httpx.Client', side_effect=lambda **kw: real_client(transport=httpx.MockTransport(handle))):
+            docs = github_sources('https://github.com/a/b', 5000, Deadline.after(4))
+        self.assertEqual({doc[1] for doc in docs}, {'main.py', 'pkg/extra.py'})
+        self.assertEqual(docs.coverage['candidate_files'], 2)
+        self.assertFalse(docs.coverage['partial'])
 
     def test_pypi_wheel_fallback_and_paths(self):
         archive = zip_bytes([("package/a.py", "x=1")])

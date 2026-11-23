@@ -18,17 +18,18 @@ const rows = computed(() => props.result.repos.map(repo => ({
   <section class="batch-result" aria-label="本轮仓库扫描结果">
     <p role="status">{{ libraryScanSummary(result) }}</p>
     <div v-if="result.repos.length && !result.meta?.library_saved" class="save-row">
-      <span>{{ result.meta?.save_error || '本轮结果待入库。' }}</span>
+      <span>{{ result.meta?.save_error || '待入库' }}</span>
       <button type="button" class="button secondary compact" :disabled="blocked" @click="$emit('save')">保存扫描结果</button>
     </div>
     <ul class="batch-rows" aria-label="本轮扫描的仓库" tabindex="0">
       <li v-for="{ repo, state, reasons } in rows" :key="repo.full_name">
         <div class="row-heading"><strong>{{ repo.full_name }}</strong><span class="small" :class="state">{{ coverageLabels[state] }}</span></div>
         <p v-if="repo.coverage" class="small muted">
-          已扫描 {{ repo.coverage.scanned_files }}<template v-if="repo.coverage.candidate_files != null"> / {{ repo.coverage.candidate_files }}</template> 个候选文件
-          <template v-if="repo.coverage.skipped_files"> · 跳过 {{ repo.coverage.skipped_files }} 个</template>
-          <template v-if="saved.has(repo.full_name)"> · 已入库</template>
-          <template v-else-if="retained.has(repo.full_name)"> · 保留原入库记录</template>
+          已扫描 {{ repo.coverage.scanned_files }}<template v-if="repo.coverage.candidate_files != null"> / {{ repo.coverage.candidate_files }}</template> 个文件
+          <template v-if="repo.coverage.skipped_files">，跳过 {{ repo.coverage.skipped_files }} 个</template>
+          <template v-if="repo.coverage.degraded_files">，{{ repo.coverage.degraded_files }} 个降级分析</template>
+          <template v-if="saved.has(repo.full_name)">，已入库</template>
+          <template v-else-if="retained.has(repo.full_name)">，沿用原记录</template>
         </p>
         <p v-if="reasons" class="small muted">{{ reasons }}</p>
         <p v-if="['partial', 'failed', 'cancelled'].includes(repo.analysis_summary?.deep_status)" class="small muted">跨文件分析未完成</p>

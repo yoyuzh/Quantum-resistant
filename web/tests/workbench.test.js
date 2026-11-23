@@ -36,7 +36,7 @@ test('call graph does not invent calls for definitions or turn AI associations i
 });
 test('profile availability never equates saved settings with tested connectivity',()=>{
   assert.equal(modelStatus({}),'未启用模型');
-  assert.equal(modelStatus({id:'a',has_key:true,consent:true,ready:true}),'已配置 · 未测试');
+  assert.equal(modelStatus({id:'a',has_key:true,consent:true,ready:true}),'已配置（未测试）');
   assert.equal(modelStatus({id:'a',credential_unavailable:true}),'凭据未恢复');
   assert.equal(modelStatus({id:'a',has_key:true,consent:true,connection:{status:'tested'}}),'连接测试通过');
 });
@@ -48,7 +48,7 @@ test('当前视图导出保留状态线型、说明并转义标签', async () =>
   const svg=workbenchSvg(graph,{x:0,y:0,scale:1},{width:800,height:500},{surface:'#fff',background:'#eee',text:'#111',secondary:'#555',border:'#ddd'});
   assert.ok(svg.includes('stroke-dasharray="8 4"'));
   assert.ok(svg.includes('&lt;unsafe&gt;'));
-  assert.ok(svg.includes('AI研判 · AI用途'));
+  assert.ok(svg.includes('AI 研判：AI用途'));
   assert.ok(!svg.includes('<unsafe>'));
 });
 

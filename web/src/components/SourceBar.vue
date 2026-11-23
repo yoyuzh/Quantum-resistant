@@ -8,7 +8,7 @@ defineEmits(['toggle', 'rescan']);
     <AppIcon name="repository" :size="16" />
     <span class="source-caption">本次来源</span>
     <span class="source-name" :title="source">{{ source }}</span>
-    <span v-if="note?.includes('取消')" class="source-note">已取消 · 保留部分结果</span>
+    <span v-if="note?.includes('取消')" class="source-note">已取消，保留部分结果</span>
     <button data-edit-input class="button secondary compact" @click="$emit('toggle')" :aria-expanded="!collapsed"
       aria-controls="scan-input">{{ collapsed ? '编辑输入' : '收起输入' }}</button>
     <button class="button primary compact" :disabled="busy" @click="$emit('rescan')">

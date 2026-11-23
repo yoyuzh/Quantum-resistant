@@ -9,7 +9,10 @@ from deep_analysis.dataflow import SEMANTICS_VERSION
 from deep_analysis.engine import analyze
 from deep_analysis.evidence import project
 from deep_analysis.key_flow import CryptoEvaluator
-from deep_analysis.models import Budgets, Claim, CryptoOperation, DeepAnalysisResult, Diagnostic, Known, Versions
+from deep_analysis.lazy_ast import SpanNodes
+from deep_analysis.models import (
+    MAX_CRYPTO_OPERATIONS, Budgets, Claim, CryptoOperation, DeepAnalysisResult, Diagnostic, Known, Versions,
+)
 from deep_analysis.snapshot import Snapshot
 from deep_analysis.symbol_index import build_index
 from deep_analysis.verifier import Verifier, grade_claims
@@ -19,7 +22,8 @@ CRYPTO_SEMANTICS_VERSION = SEMANTICS_VERSION + '+keys-1'
 
 def analyze_crypto(snapshot: Snapshot, *, budgets: Budgets | None = None,
                    checkpoint: Callable[[], object] = lambda: None,
-                   on_result: Callable[[DeepAnalysisResult], object] = lambda result: None) -> DeepAnalysisResult:
+                   on_operation: Callable[[CryptoOperation, int, int], object] = lambda operation, checked, total: None,
+                   on_interrupted: Callable[[DeepAnalysisResult], object] | None = None) -> DeepAnalysisResult:
     budgets = budgets or Budgets()
     index = build_index(snapshot, budgets=budgets, checkpoint=checkpoint)
     versions = Versions(rules=RULES_VERSION, semantics=CRYPTO_SEMANTICS_VERSION, engine=ENGINE_VERSION,
@@ -35,66 +39,100 @@ def analyze_crypto(snapshot: Snapshot, *, budgets: Budgets | None = None,
     })
     verifier = Verifier(snapshot, versions, remaining, checkpoint)
     operations, paths, diagnostics = [], {}, list(semantic.diagnostics)
-    diagnostics.append(Diagnostic(code='library_version_assumption', message='结论以记录的API规则版本为前提，目标依赖实际安装版本未核实；不证明运行或部署事实'))
+    diagnostics.append(Diagnostic(code='library_version_assumption', message='静态核验依据当前 API 规则。依赖安装版本与部署状态待确认。'))
     used_bytes = semantic.structure_bytes + verifier.index.structure_bytes
     used_nodes = semantic.nodes_used + verifier.index.nodes_used
     used_edges = semantic.edges_used + verifier.index.edges_used
-    limited = verifier.index.coverage.partial and not semantic.coverage.partial
+    limited = (verifier.index.coverage.analyzed.count < index.coverage.analyzed.count
+               or 'index_limit' in verifier.index.coverage.gaps)
+    # File-level input exclusions are tracked in coverage. Resource limits can
+    # also leave work unfinished inside the files that were successfully parsed.
+    semantic_limited = ('index_limit' in index.coverage.gaps or
+                        bool(set(semantic.coverage.gaps) - set(index.coverage.gaps)))
     diagnostics.extend(d for d in verifier.index.diagnostics if d not in diagnostics)
-    for candidate in semantic.candidates:
-        checkpoint()
-        call = next((c for m in index.modules for c in m.calls if c.location == candidate.sink), None)
-        method = call.expression.split('.')[-1] if call else None
-        proposal = propose(candidate, method)
-        if proposal is None:
-            if candidate.api is None:
-                diagnostics.append(Diagnostic(code='unproven_receiver', message='方法接收者无受支持的密钥类型证明，未认定密码操作', location=candidate.sink))
-            continue
-        try:
-            projected = {name: project(snapshot, index, proposal, name, versions, slice_nodes=budgets.slice_nodes) for name, _ in proposal.facts}
-        except OverflowError:
-            diagnostics.append(Diagnostic(code='evidence_slice_limit', message='单条证据达到上限，不提交不完整路径', location=candidate.sink))
-            limited = True
-            continue
-        claims = tuple(Claim(claim_type=name, value=fact.value, resolution_status={'known': 'resolved', 'ambiguous': 'ambiguous', 'unknown': 'unknown'}[fact.value.kind],
-                             level='E1', evidence_ids=(projected[name].evidence_id,)) for name, fact in proposal.facts)
-        operation = CryptoOperation(operation_id=candidate.operation_id, template_id=candidate.template_id,
-                                    evidence_scope='algorithm_policy' if proposal.api == 'jwt.decode' else 'static_call',
-                                    api=proposal.api, library=proposal.library, operation_type=proposal.operation,
-                                    algorithm=claims[0].value, algorithm_family=proposal.family,
-                                    resolution_status=claims[0].resolution_status,
-                                    call_site=candidate.context.call_chain[0] if candidate.context.call_chain else candidate.sink if candidate.context.kind == 'invocation' else None,
-                                    sink_location=candidate.sink, context=candidate.context,
-                                    evidence_ids=tuple(dict.fromkeys(p.evidence_id for p in projected.values())), claims=claims, risk_category=proposal.risk)
-        checked = {claim.claim_type: verifier.check(projected[claim.claim_type], operation, claim) for claim in claims}
-        graded = grade_claims(claims, checked)
-        algorithm = graded[0]
-        quantum = graded[3]
-        operation = operation.model_copy(update={'claims': graded, 'algorithm': algorithm.value,
-                                                 'resolution_status': algorithm.resolution_status,
-                                                 'algorithm_family': proposal.family if isinstance(algorithm.value, Known) else None,
-                                                 'risk_category': quantum.value.value if isinstance(quantum.value, Known) and quantum.level == 'E3' else 'unknown'})
-        new_paths = {p.evidence_id: p for p in checked.values() if p.evidence_id not in paths}
-        size = len(operation.model_dump_json().encode('utf-8')) + sum(len(p.model_dump_json().encode('utf-8')) for p in new_paths.values())
-        nodes = sum(len(p.nodes) for p in new_paths.values()) + 1
-        edges = sum(len(p.edges) for p in new_paths.values())
-        if used_bytes + size > budgets.structure_bytes or used_nodes + nodes > budgets.index_nodes or used_edges + edges > budgets.index_edges:
-            diagnostics.append(Diagnostic(code='evidence_structure_limit', message='证据与语义共享结构预算耗尽，保留已核验完整操作'))
-            limited = True
-            break
-        used_bytes, used_nodes, used_edges = used_bytes + size, used_nodes + nodes, used_edges + edges
-        paths.update(new_paths)
-        operations.append(operation)
-        on_result(DeepAnalysisResult(status='partial', snapshot=snapshot.identity, operations=tuple(operations),
-                                     evidence_paths=tuple(paths.values()), coverage=semantic.coverage,
-                                     diagnostics=tuple(diagnostics[:1000]), budgets=budgets.model_copy(update={
-                                         'used_nodes': used_nodes, 'used_edges': used_edges, 'used_structure_bytes': used_bytes}), versions=versions))
-    coverage = semantic.coverage.model_copy(update={'partial': semantic.coverage.partial or limited,
-                                                    'gaps': tuple(sorted(set(semantic.coverage.gaps) | ({'evidence_limit'} if limited else set())))[:200]})
-    return DeepAnalysisResult(status='partial' if coverage.partial else 'completed' if snapshot.logical.sources else 'skipped',
-                              snapshot=snapshot.identity, operations=tuple(operations), evidence_paths=tuple(paths.values()),
-                              coverage=coverage, diagnostics=tuple(diagnostics[:1000]), budgets=budgets.model_copy(update={
-                                         'used_nodes': used_nodes, 'used_edges': used_edges, 'used_structure_bytes': used_bytes}), versions=versions)
+    ast_nodes = SpanNodes(index.modules)
+    identities = {s.source_id: s for s in snapshot.identity.sources}
+    total = len(semantic.candidates)
+    replay_limited = False
+
+    def result(interrupted: bool = False):
+        gaps = set(semantic.coverage.gaps)
+        if limited:
+            gaps.add('evidence_limit')
+        if interrupted:
+            gaps.add('deep_interrupted')
+        coverage = semantic.coverage.model_copy(update={
+            'partial': semantic.coverage.partial or limited or interrupted,
+            'gaps': tuple(sorted(gaps))[:200],
+        })
+        return DeepAnalysisResult(
+            status='partial' if coverage.partial else 'completed' if snapshot.logical.sources else 'skipped',
+            work_completed=not (semantic_limited or limited or interrupted),
+            snapshot=snapshot.identity, operations=tuple(operations), evidence_paths=tuple(paths.values()),
+            coverage=coverage, diagnostics=tuple(diagnostics[:1000]), budgets=budgets.model_copy(update={
+                'used_nodes': used_nodes, 'used_edges': used_edges, 'used_structure_bytes': used_bytes,
+            }), versions=versions,
+        )
+
+    try:
+        for checked_count, candidate in enumerate(semantic.candidates, 1):
+            checkpoint()
+            if len(operations) >= MAX_CRYPTO_OPERATIONS:
+                diagnostics.append(Diagnostic(code='operation_limit', message='密码操作数量达到核验上限'))
+                limited = True
+                break
+            _, call = index.calls[candidate.sink]
+            method = call.expression.rsplit('.', 1)[-1]
+            proposal = propose(candidate, method)
+            if proposal is None:
+                if candidate.api is None:
+                    diagnostics.append(Diagnostic(code='unproven_receiver', message='方法接收者无受支持的密钥类型证明，未认定密码操作', location=candidate.sink))
+                continue
+            try:
+                projected = {name: project(snapshot.identity.snapshot_id, identities, ast_nodes, index, proposal, name,
+                                           versions, slice_nodes=budgets.slice_nodes) for name, _ in proposal.facts}
+            except OverflowError:
+                diagnostics.append(Diagnostic(code='evidence_slice_limit', message='单条证据达到上限，不提交不完整路径', location=candidate.sink))
+                limited = True
+                continue
+            claims = tuple(Claim(claim_type=name, value=fact.value, resolution_status={'known': 'resolved', 'ambiguous': 'ambiguous', 'unknown': 'unknown'}[fact.value.kind],
+                                 level='E1', evidence_ids=(projected[name].evidence_id,)) for name, fact in proposal.facts)
+            operation = CryptoOperation(operation_id=candidate.operation_id, template_id=candidate.template_id,
+                                        evidence_scope='algorithm_policy' if proposal.api == 'jwt.decode' else 'static_call',
+                                        api=proposal.api, library=proposal.library, operation_type=proposal.operation,
+                                        algorithm=claims[0].value, algorithm_family=proposal.family,
+                                        resolution_status=claims[0].resolution_status,
+                                        call_site=candidate.context.call_chain[0] if candidate.context.call_chain else candidate.sink if candidate.context.kind == 'invocation' else None,
+                                        sink_location=candidate.sink, context=candidate.context,
+                                        evidence_ids=tuple(dict.fromkeys(p.evidence_id for p in projected.values())), claims=claims, risk_category=proposal.risk)
+            checked = {claim.claim_type: verifier.check(projected[claim.claim_type], operation, claim) for claim in claims}
+            if not replay_limited and any('replay_limit' in path.gaps for path in checked.values()):
+                diagnostics.append(Diagnostic(code='replay_limit', message='部分操作达到单条证据回放上限'))
+                limited = replay_limited = True
+            graded = grade_claims(claims, checked)
+            algorithm = graded[0]
+            quantum = graded[3]
+            operation = operation.model_copy(update={'claims': graded, 'algorithm': algorithm.value,
+                                                     'resolution_status': algorithm.resolution_status,
+                                                     'algorithm_family': proposal.family if isinstance(algorithm.value, Known) else None,
+                                                     'risk_category': quantum.value.value if isinstance(quantum.value, Known) and quantum.level == 'E3' else 'unknown'})
+            new_paths = {p.evidence_id: p for p in checked.values() if p.evidence_id not in paths}
+            size = len(operation.model_dump_json().encode('utf-8')) + sum(len(p.model_dump_json().encode('utf-8')) for p in new_paths.values())
+            nodes = sum(len(p.nodes) for p in new_paths.values()) + 1
+            edges = sum(len(p.edges) for p in new_paths.values())
+            if used_bytes + size > budgets.structure_bytes or used_nodes + nodes > budgets.index_nodes or used_edges + edges > budgets.index_edges:
+                diagnostics.append(Diagnostic(code='evidence_structure_limit', message='证据与语义共享结构预算耗尽，保留已核验完整操作'))
+                limited = True
+                break
+            used_bytes, used_nodes, used_edges = used_bytes + size, used_nodes + nodes, used_edges + edges
+            paths.update(new_paths)
+            operations.append(operation)
+            on_operation(operation, checked_count, total)
+    except Exception:
+        if on_interrupted is not None:
+            on_interrupted(result(interrupted=True))
+        raise
+    return result()
 
 
 def revalidate(result: DeepAnalysisResult, snapshot: Snapshot | None, *, versions: Versions | None = None,

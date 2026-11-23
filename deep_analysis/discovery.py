@@ -1,14 +1,13 @@
 """Independent structural discovery: library names are not verified crypto semantics."""
 from __future__ import annotations
 
-import ast
 from dataclasses import dataclass
 from typing import Callable
 
 from scanner.python_analysis import KNOWN_CALLS
 from deep_analysis.crypto_rules import RULES
 from deep_analysis.models import Span
-from deep_analysis.symbol_index import Call, Index, Module, location
+from deep_analysis.symbol_index import Call, Index, Module
 
 DISCOVERY_VERSION = 'api-candidates-1'
 # Reuse only exact public target names, never the old algorithm guesses or findings.

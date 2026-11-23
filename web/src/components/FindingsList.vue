@@ -80,13 +80,13 @@ watch(wide, value => { if (value) opened.value = false; });
         </div>
         <div ref="viewport" class="findings-viewport" @keydown="moveSelection">
           <p v-if="!filtered.length" class="notice">
-            {{ findings.length ? '没有符合筛选条件的发现。' : '当前没有确认风险或待复核线索。请核对扫描范围；零发现不代表安全。' }}
+            {{ findings.length ? '没有符合筛选条件的发现。' : '本次扫描未检出。' }}
           </p>
           <FindingRow v-for="finding in pagination.items" :key="findingKey(finding)" :finding="finding"
             :peers="identityPeers || sources" :selected="findingKey(finding) === activeKey" @select="select" />
         </div>
         <div class="findings-pagination" aria-label="发现分页">
-          <span>{{ pagination.current }} / {{ pagination.pages }} 页 · 每页 {{ size }} 项</span>
+          <span>第 {{ pagination.current }} / {{ pagination.pages }} 页</span>
           <div class="toolbar">
             <button class="button secondary compact" :disabled="pagination.current <= 1" @click="changePage(-1)">上一页</button>
             <button class="button secondary compact" :disabled="pagination.current >= pagination.pages" @click="changePage(1)">下一页</button>

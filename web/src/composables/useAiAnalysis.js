@@ -3,6 +3,7 @@ import { request } from '../api/client.js';
 import { followTask } from '../utils/remoteTasks.js';
 import { createRequestId } from '../utils/requestId.js';
 import { ensureAiReady } from './useAiSettings.js';
+import { presentScanCompletion } from './useTaskRunner.js';
 
 export function useAiAnalysis(mode, state) {
   const key = `quantum-task-${mode}`;
@@ -16,10 +17,11 @@ export function useAiAnalysis(mode, state) {
   async function start(resume = '') {
     if (state.aiBusy || state.busy) return;
     const selection=resume?{}:await ensureAiReady(true);
-    if(!selection || selection.assisted===false)return;
+    if (!selection || selection.assisted === false || disposed || state.aiBusy || state.busy) return;
     if (!resume && !state.result?.task_id) return;
     const current = new AbortController(); controller = current;
-    state.aiBusy = true; state.aiError = ''; state.aiProgress = null;
+    state.aiBusy = true; state.aiError = ''; state.aiProgress = null; state.presentationComplete = false;
+    state.modelPresentation = null;
     const active = () => !disposed && controller === current && !current.signal.aborted;
     try {
       const { result, status } = await followTask({ request, kind: 'ai', body: { source_task_id: state.result?.task_id,...Object.fromEntries(Object.entries(selection).filter(([key,value])=>key.startsWith('ai_profile_') && value)) },
@@ -28,6 +30,7 @@ export function useAiAnalysis(mode, state) {
         onProgress: value => { if (active()) state.aiProgress = value; },
         onCheckpoint: value => { if (active()) state.checkpoint = value; },
       });
+      if (active()) await presentScanCompletion(state, status, result, current.signal);
       if (active()) { state.result = { ...result, task_id: status.id }; state.aiError = status.error || ''; }
     } catch (e) {
       if (active()) { state.aiError = e.message; if (e.status === 404) saved(''); }

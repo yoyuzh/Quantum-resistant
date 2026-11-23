@@ -23,7 +23,7 @@ const conclusions = computed(() => conciseInsights(props.result));
     <AnalysisVisualization :class="{'short-hidden':view!=='algorithms'}" :result="result" @select="$emit('select',$event)" />
     <div class="overview-secondary" :class="{'short-hidden':view!=='files'}"><FileTreemap :result="result" @select="$emit('select',$event)" /><AnalysisPriorities :result="result" @select="$emit('select',$event)" /></div>
     <p v-if="!result.analysis" class="notice">
-      此历史结果未记录资产分析，仍可查看原始发现；重新扫描可生成完整概览。
+      历史结果缺少资产分析。重新扫描可生成概览。
     </p>
   </div>
 </template>

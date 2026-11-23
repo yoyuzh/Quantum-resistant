@@ -1,13 +1,15 @@
 """Independent source/AST/context/edge validation and per-claim grades."""
 from __future__ import annotations
 
+from collections import OrderedDict
 from dataclasses import replace
+from hashlib import sha256
 from typing import Callable
 
 from deep_analysis.crypto_rules import RULES, RULES_VERSION, ENGINE_VERSION, VERIFIER_VERSION, LIBRARY_PROFILES, classification, method_rule, method_parameters
 from deep_analysis.dataflow import SEMANTICS_VERSION
 from deep_analysis.evidence import edge_identity, path_identity, proof_edges
-from deep_analysis.identity import content_digest, extract_span, stable_id, operation_id, template_id, snapshot_id
+from deep_analysis.identity import extract_span_lines, stable_id, operation_id, template_id, snapshot_id
 from deep_analysis.models import Budgets, Claim, CryptoOperation, EvidencePath, Known, Unknown, Versions
 from deep_analysis.proof_replay import Replay, Witness, unknown
 from deep_analysis.snapshot import Snapshot
@@ -30,14 +32,30 @@ class Verifier:
         self.replay = Replay(self.index, self.budgets, checkpoint)
         self.sources = {s.identity.source_id: s for s in snapshot.logical.sources}
         self.identities = {s.source_id: s for s in snapshot.identity.sources}
-        self.cache = {}
+        self.valid_snapshot = snapshot_id(snapshot.identity) == snapshot.identity.snapshot_id
+        self.source_lines = OrderedDict()
+        self.assertion_key = self.assertion_result = None
+
+    def lines(self, source_id):
+        if source_id not in self.source_lines:
+            source = self.sources.get(source_id)
+            if source is None:
+                return None, []
+            data = source.content.encode('utf-8')
+            if len(self.source_lines) == 2:
+                self.source_lines.popitem(last=False)
+            self.source_lines[source_id] = sha256(data).hexdigest(), data.split(b'\n')
+        self.source_lines.move_to_end(source_id)
+        return self.source_lines[source_id]
 
     def assertions(self, operation: CryptoOperation) -> tuple[dict, set, str | None]:
         key = (operation.operation_id, operation.api, operation.library, operation.operation_type,
                operation.context.model_dump_json(), operation.sink_location.model_dump_json())
-        if key in self.cache:
-            return self.cache[key]
+        if key == self.assertion_key:
+            return self.assertion_result
         replay = self.replay
+        replay.visits = 0
+        replay.limited = False
         scope = replay.context(operation.sink_location, operation.context.call_chain)
         if scope is None:
             return {}, set(), 'context_mismatch'
@@ -111,8 +129,8 @@ class Verifier:
         family, risk = classification(algorithm.value.value) if isinstance(algorithm.value, Known) and type(algorithm.value.value) is str else (None, 'unknown')
         quantum = replace(algorithm, value=Known(value=risk)) if risk != 'unknown' else replace(algorithm, value=Unknown(reason='unverified_algorithm_class'))
         result = {'ALGORITHM': algorithm, 'OPERATION_TYPE': role_fact, 'KEY_SOURCE': source, 'QUANTUM_CLASS': quantum}
-        answer = result, required, None
-        self.cache[key] = answer
+        answer = result, required, 'replay_limit' if replay.limited else None
+        self.assertion_key, self.assertion_result = key, answer
         return answer
 
     def check(self, path: EvidencePath, operation: CryptoOperation, claim: Claim) -> EvidencePath:
@@ -129,7 +147,7 @@ class Verifier:
             gaps.append('context_or_snapshot_mismatch')
         if path.evidence_id != path_identity(path):
             gaps.append('path_identity_mismatch')
-        if snapshot_id(self.snapshot.identity) != self.snapshot.identity.snapshot_id:
+        if not self.valid_snapshot:
             gaps.append('snapshot_identity_mismatch')
         if (operation.operation_id != operation_id(path.snapshot_id, operation.sink_location, operation.context, path.versions.rules, path.versions.semantics)
                 or operation.template_id != template_id(path.snapshot_id, operation.sink_location, path.versions.rules)):
@@ -141,19 +159,19 @@ class Verifier:
         if indexed_sink and not operation.context.call_chain and (operation.context.kind == 'invocation') != (indexed_sink[1].scope == '<module>'):
             gaps.append('context_kind_mismatch')
         for node in path.nodes:
-            source = self.sources.get(node.location.source_id)
             identity = self.identities.get(node.location.source_id)
-            if source is None or identity is None or content_digest(source.content) != node.source_sha256 or identity.sha256 != node.source_sha256:
-                gaps.append('source_digest_mismatch')
-                continue
             try:
-                extract_span(source.content, node.location)
+                digest, lines = self.lines(node.location.source_id)
+                if identity is None or digest != node.source_sha256 or identity.sha256 != node.source_sha256:
+                    gaps.append('source_digest_mismatch')
+                    continue
+                extract_span_lines(lines, node.location)
                 syntax = self.replay.nodes.get(node.location)
                 expression = '<' + type(syntax).__name__ + '>'
                 expected_id = stable_id('evidence-node', [node.location.model_dump(mode='json'), node.source_sha256, expression])
                 if syntax is None or not node.redacted or node.expression != expression or node.node_id != expected_id:
                     gaps.append('ast_or_redaction_mismatch')
-            except (ValueError, UnicodeError):
+            except (OSError, ValueError, UnicodeError):
                 gaps.append('span_mismatch')
         for edge in path.edges:
             if edge.conditions != path.context.conditions or edge.edge_id != edge_identity(edge.edge_type, edge.source_node, edge.target_node, edge.conditions):

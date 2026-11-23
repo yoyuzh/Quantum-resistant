@@ -43,7 +43,7 @@ onBeforeUnmount(()=>dialog.value?.close());
         <header><div><h2 id="migration-plan-title">{{ item.algorithm }} 迁移方案</h2><span class="tag">{{ statusLabel(item.verification_status) }}</span></div>
           <button class="button secondary" autofocus aria-label="关闭迁移方案" @click="close()"><AppIcon name="close" :size="18" />关闭</button></header>
         <div ref="body" class="migration-dialog-body">
-          <div class="plan-purpose"><strong>{{ item.purpose }}</strong><span v-if="item.purpose_origin==='ai'" class="tag">AI用途研判</span><span>{{ item.affected_files }} 个文件 · {{ item.finding_count }} 项发现</span></div>
+          <div class="plan-purpose"><strong>{{ item.purpose }}</strong><span v-if="item.purpose_origin==='ai'" class="tag">AI 用途研判</span><span>{{ item.affected_files }} 个文件，{{ item.finding_count }} 项发现</span></div>
           <section v-if="item.migration_references?.length" class="plan-references"><h3>迁移参考</h3>
             <div v-for="reference in item.migration_references" :key="reference.label"><strong>{{ reference.label }}</strong><p>{{ reference.condition }}</p></div>
           </section>

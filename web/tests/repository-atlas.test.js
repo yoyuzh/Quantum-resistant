@@ -34,7 +34,7 @@ test('UTF-8 inventory covers all repos and uses findings counts, portable eviden
   assert.match(doc, /### 待分类（3 仓）\n\n#### \[org\/first\]/);
   assert.ok(doc.includes('| RSA | 签名 | 静态 | 21 | 未知 | 0 | 静态确认 auth/cfg\\|sign.py:3 |'));
   assert.ok(doc.includes('src/main.py:7'));
-  assert.match(doc, /本批次未完整结束/);
+  assert.match(doc, /批次部分完成/);
   assert.doesNotMatch(doc, /secret|api_key|\/tmp\/|\/api\/tasks/);
   assert.equal(inventoryFilename(batch.scanned_at), '多仓库密码算法清单-20261119-040506.md');
   assert.equal(inventoryFilename(null), '多仓库密码算法清单-时间未知.md');

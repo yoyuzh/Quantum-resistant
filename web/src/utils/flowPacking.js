@@ -18,7 +18,7 @@ export function flowRecords(assets) {
       kind: 'file', label: asset.file_name || asset.source_id, sourceId: asset.source_id, status,
     });
     const algorithm = node(JSON.stringify(['algorithm', asset.algorithm, asset.purpose, status]), {
-      kind: 'algorithm', label: asset.algorithm, detail: (asset.purpose || '用途待确认')+(asset.purpose_origin==='ai'?' · AI用途':''),
+      kind: 'algorithm', label: asset.algorithm, detail: (asset.purpose || '用途待确认')+(asset.purpose_origin==='ai'?'（AI 用途）':''),
       algorithm: asset.algorithm, status,
     });
     const refs = status === 'pending' ? [] : asset.migration_references || [];

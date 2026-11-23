@@ -13,7 +13,7 @@ from backend import task_routes
 from backend.integration import project
 from backend.report_exports import csv_cell
 from backend.migration_directions import PURPOSES, effective_purpose
-from backend.report_presentation import scope_status
+from backend.report_presentation import scope_status, scope_columns
 from backend.reporting import SOURCE_LABELS
 
 router = APIRouter()
@@ -65,10 +65,12 @@ def export(identity: str, format: str, repository_id: str | None = None):
             f"来源：{SOURCE_LABELS.get(source_type, source_type) or '未知'}",
             f"扫描时间：{scanned_at}（北京时间）" if scanned_at else '扫描时间未知。',
             f"静态确认 {summary.get('finding_count', 0)} 项，AI研判 {changes.get('ai_assessed', 0)} 项，证据不足 {changes.get('pending', 0)} 项。",
-            f"迁移评分：{migration['score']}/100 · 迁移优先级：{migration.get('priority', '未知')}" if 'score' in migration else '迁移评分未知。',
+            f"迁移评分：{migration['score']}/100（{migration.get('priority', '未知')}）" if 'score' in migration else '迁移评分未知。',
             scope_status(coverage),
         ]
-        boundary = '本报告只覆盖本次输入和完整完成的分析。静态关联不证明实际运行，模型引用有效不代表语义正确。'
+        intro = [line for line in intro if line]
+        if migration:
+            intro.append('迁移评分按静态确认项计算。')
         analysis = value.get('analysis', {})
         sections = [('发现明细', headers, [cells(row) for row in rows]),
                     ('资产清单', ['文件','算法','状态','发现数','迁移方向'],
@@ -78,10 +80,17 @@ def export(identity: str, format: str, repository_id: str | None = None):
                     ('跨文件调用', ['来源','行号','算法','用途','状态'],
                      [[filenames.get(a['source_id'], a['source_id']),a['line'],a['algorithm'],a['purpose'],status(a)] for a in value.get('integrated_analysis',{}).get('calls',[])])]
         if coverage:
-            sections.insert(0, ('扫描范围', ['已分析文件', '候选文件', '跳过文件'], [[
-                coverage.get('scanned_files', len(sources)),
-                coverage['candidate_files'] if coverage.get('candidate_files') is not None else '未知',
-                coverage.get('skipped_files', '未知'),
+            labels, scope = scope_columns(coverage, len(sources))
+            sections.insert(0, ('扫描范围', labels, [scope]))
+        deep = value.get('deep_analysis', {})
+        if deep and deep.get('status') != 'skipped':
+            deep_coverage = deep.get('coverage', {})
+            deep_labels = {'completed': '完成', 'partial': '部分完成', 'failed': '失败', 'cancelled': '已取消'}
+            if deep.get('work_completed') and deep_coverage.get('parsed', {}).get('count'):
+                deep_labels['partial'] = '可解析文件已核验'
+            sections.insert(1 if coverage else 0, ('跨文件核验', ['状态', '已解析 Python 文件', 'Python 候选文件', '产出证据的操作'], [[
+                deep_labels.get(deep.get('status'), '未知'), deep_coverage.get('parsed', {}).get('count', '未知'),
+                deep_coverage.get('selected', {}).get('total', '未知'), len(deep.get('operations', [])),
             ]]))
         if value.get('diagnostics'):
             sections.append(('扫描诊断', ['提示'], [[item['message']] for item in value['diagnostics']]))
@@ -95,13 +104,13 @@ def export(identity: str, format: str, repository_id: str | None = None):
             def table(title, labels, records):
                 return '<h2>'+escape(title)+'</h2><table><thead><tr>'+''.join('<th>'+escape(h)+'</th>' for h in labels)+'</tr></thead><tbody>'+''.join('<tr>'+''.join('<td>'+escape(str(v))+'</td>' for v in record)+'</tr>' for record in records)+'</tbody></table>'
             body = ''.join(table(*section) for section in sections)
-            context = ''.join('<p>' + escape(line) + '</p>' for line in [*intro, boundary])
-            content = '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>扫描报告</title><style>body{font:14px/1.6 system-ui;margin:24px;color:#18302d}table{border-collapse:collapse;width:100%}td,th{border:1px solid #c9d8d5;padding:8px;text-align:left;overflow-wrap:anywhere}thead{display:table-header-group}tr{break-inside:avoid}@media print{body{margin:0}}</style><h1>抗量子密码风险检测与迁移辅助软件</h1>' + context + body + '</html>'
+            context = ''.join('<p>' + escape(line) + '</p>' for line in intro)
+            content = '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>扫描报告</title><style>body{font:14px/1.6 system-ui;margin:24px;color:#18302d}table{border-collapse:collapse;width:100%}td,th{border:1px solid #c9d8d5;padding:8px;text-align:left;overflow-wrap:anywhere}thead{display:table-header-group}tr{break-inside:avoid}@media print{body{margin:0}}</style><h1>抗量子密码风险检测与迁移辅助软件 扫描报告</h1>' + context + body + '</html>'
             mime = 'text/html'
         else:
             def cell(v):
                 return escape(str(v)).replace('|', '\\|').replace('\n', ' ↵ ')
-            content = '# 抗量子密码风险检测与迁移辅助软件 扫描报告\n\n' + '\n\n'.join(cell(line) for line in [*intro, boundary]) + '\n\n'
+            content = '# 抗量子密码风险检测与迁移辅助软件 扫描报告\n\n' + '\n\n'.join(cell(line) for line in intro) + '\n\n'
             for title, labels, records in sections:
                 content += '## '+title+'\n\n| ' + ' | '.join(labels) + ' |\n|' + '---|' * len(labels) + '\n'
                 content += '\n'.join('| ' + ' | '.join(cell(v) for v in record) + ' |' for record in records)+'\n\n'

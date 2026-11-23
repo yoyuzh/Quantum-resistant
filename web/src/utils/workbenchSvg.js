@@ -21,7 +21,7 @@ export function workbenchSvg(graph, view, size, colors, aggregate = true) {
     const end=edge.points.at(-1),previous=edge.points.at(-2),direction=Math.sign(end[0]-previous[0]) || 1;
     const arrow=`<path d="M${end[0]} ${end[1]}L${end[0]-direction*6} ${end[1]-3}L${end[0]-direction*6} ${end[1]+3}Z" fill="${escape(edge.color)}"/>`;
     const label=edge.label && !scene.aggregated && scene.edges.length<35?`<text x="${edge.points[1][0]+5}" y="${(edge.points[1][1]+edge.points[2][1])/2-5}" fill="${escape(edge.color)}" font-size="12">${escape(edge.label)}</text>`:'';
-    const detail = `${labels.get(edge.source) || ''} → ${labels.get(edge.target) || ''}${edge.label ? ' · ' + edge.label : ''}`;
+    const detail = `${labels.get(edge.source) || ''} → ${labels.get(edge.target) || ''}${edge.label ? '（' + edge.label + '）' : ''}`;
     return `<g data-graph-detail="${escape(detail)}" data-graph-key="${escape(edge.id)}" data-graph-from="${escape(edge.source)}" data-graph-to="${escape(edge.target)}"><path d="${d}" stroke="${escape(edge.color)}" stroke-dasharray="${dash}" stroke-width="1.5" fill="none"/><path d="${d}" fill="none" stroke="transparent" stroke-width="9"/>${arrow}${label}</g>`;
   }).join('');
   const nodes = scene.nodes.map((node, i) => {

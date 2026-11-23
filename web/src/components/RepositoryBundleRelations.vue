@@ -38,7 +38,7 @@ const format = new Intl.NumberFormat('zh-CN');
 const algorithmOptions = computed(() => [
   { value: '', label: '全部算法' },
   ...props.rankings.filter(entry => entry.hits).map(entry => ({
-    value: entry.algorithm, label: `${entry.algorithm} · ${entry.hits}/${entry.eligible} 仓`,
+    value: entry.algorithm, label: `${entry.algorithm}（${entry.hits}/${entry.eligible} 仓）`,
   })),
 ]);
 const locationOptions = computed(() => [
@@ -127,7 +127,7 @@ defineExpose({ dismissDetails, download: format => canvas.value?.download(format
         :disabled="purposeOptions.length === 1" />
     </div>
     <div class="summary">
-      <p role="status"><slot name="scope" /> · 当前 {{ linkedCount }} 仓 · {{ format.format(count) }} {{ legacy ? '条历史关联' : '条检出记录' }}</p>
+      <p role="status"><slot name="scope" />，图中 {{ linkedCount }} 仓、{{ format.format(count) }} {{ legacy ? '条历史关联' : '条检出记录' }}</p>
       <slot name="help" />
     </div>
     <p v-if="!flows.length" class="notice" role="status">{{ emptyReason }}</p>
@@ -137,14 +137,14 @@ defineExpose({ dismissDetails, download: format => canvas.value?.download(format
       <aside v-if="focusLabel" v-show="!evidenceOpen" ref="details" class="graph-detail-overlay bundle-node-detail"
         aria-label="图节点详情" tabindex="-1" @keydown.esc.stop.prevent="dismissDetails">
         <header class="detail-heading"><strong>{{ focusLabel }}</strong><button class="button text-action compact" @click="dismissDetails">收起</button></header>
-        <p class="small muted"><template v-if="focus.repo && repoOptions[0]">{{ coverageName(repoOptions[0].row.repo) }} · </template>
-          <template v-else>{{ repoOptions.length }} 个关联仓库 · </template>{{ format.format(focusedCount) }} {{ legacy ? '条关联' : '项检出' }}</p>
+        <p class="small muted"><template v-if="focus.repo && repoOptions[0]">{{ coverageName(repoOptions[0].row.repo) }}，</template>
+          <template v-else>{{ repoOptions.length }} 个关联仓库，</template>{{ format.format(focusedCount) }} {{ legacy ? '条关联' : '项检出' }}</p>
         <ul class="detail-list">
           <li v-for="entry in visibleRepos" :key="entry.name">
             <h3 v-if="!focus.repo">{{ entry.name }}</h3>
             <button v-for="flow in entry.flows" :key="JSON.stringify([flow.algorithm, flow.purpose])" class="button secondary compact"
               @click="openBundleLink(flow, $event.currentTarget)">
-              {{ focus.repo ? flow.algorithm + ' · ' : '' }}{{ bundlePurposeLabel(flow.purpose) }}<template v-if="!legacy"> · {{ format.format(flow.count) }} 项</template>
+              {{ focus.repo ? flow.algorithm + ' / ' : '' }}{{ bundlePurposeLabel(flow.purpose) }}<template v-if="!legacy">（{{ format.format(flow.count) }} 项）</template>
             </button>
           </li>
         </ul>

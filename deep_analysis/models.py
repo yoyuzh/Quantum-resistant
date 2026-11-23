@@ -104,7 +104,8 @@ class SnapshotIdentity(Contract):
     source_type: SourceType
     path_fidelity: Literal["relative_paths", "flat_basename", "snippet"]
     sources: Annotated[tuple[SourceIdentity, ...], Field(max_length=5000)]
-    package_roots: Annotated[tuple[Text, ...], Field(max_length=200)] = ()
+    package_roots: Annotated[tuple[Text, ...], Field(max_length=5000)] = ()
+    unavailable_imports: tuple[Text, ...] = ()
     commit: Text | None = None
     collection_version: Text
     coverage: Coverage
@@ -241,8 +242,8 @@ class Budgets(Contract):
     call_depth: Annotated[int, Field(strict=True, ge=0, le=5)] = 5
     contexts_per_function: Annotated[int, Field(strict=True, ge=0, le=64)] = 64
     value_candidates: Annotated[int, Field(strict=True, ge=0, le=4)] = 4
-    seconds: Annotated[float, Field(ge=0, le=180)] = 180
-    effective_seconds: Annotated[float, Field(ge=0, le=180)] = 180
+    seconds: Annotated[float, Field(ge=0, le=600)] = 600
+    effective_seconds: Annotated[float, Field(ge=0, le=600)] = 600
     queue_seconds: Annotated[float, Field(ge=0)] = 0
     cpu_wait_seconds: Annotated[float, Field(ge=0)] = 0
     analysis_seconds: Annotated[float, Field(ge=0)] = 0
@@ -259,12 +260,17 @@ class Diagnostic(Contract):
     location: Span | None = None
 
 
+MAX_CRYPTO_OPERATIONS = 10000
+MAX_EVIDENCE_PATHS = 4 * MAX_CRYPTO_OPERATIONS
+
+
 class DeepAnalysisResult(Contract):
     schema_version: Literal["deep-static-1"] = "deep-static-1"
     status: Literal["completed", "partial", "failed", "cancelled", "skipped"]
+    work_completed: bool | None = None
     snapshot: SnapshotIdentity
-    operations: Annotated[tuple[CryptoOperation, ...], Field(max_length=10000)] = ()
-    evidence_paths: Annotated[tuple[EvidencePath, ...], Field(max_length=10000)] = ()
+    operations: Annotated[tuple[CryptoOperation, ...], Field(max_length=MAX_CRYPTO_OPERATIONS)] = ()
+    evidence_paths: Annotated[tuple[EvidencePath, ...], Field(max_length=MAX_EVIDENCE_PATHS)] = ()
     coverage: Coverage
     diagnostics: Annotated[tuple[Diagnostic, ...], Field(max_length=1000)] = ()
     budgets: Budgets = Field(default_factory=Budgets)

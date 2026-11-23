@@ -1,3 +1,5 @@
+export const PROGRESS_FILL_MS = 440;
+
 export function elapsedSeconds(value) {
   const seconds = Number(value);
   return Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;

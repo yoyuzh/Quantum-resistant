@@ -92,12 +92,11 @@ async def test(request: Request, profile_id: str | None = None):
             raise ProviderError('config_changed', '连接测试已停止或模型配置已变化')
         if time.monotonic() >= end:
             raise ProviderError('provider_timeout', '连接测试超时')
-    value = {'model': config.model, 'stream': False, config.output_parameter: 64,
+    limit = 2048 if config.preset == 'deepseek' else 64
+    value = {'model': config.model, 'stream': False, config.output_parameter: limit,
              'messages': [{'role': 'user', 'content': 'Return only the JSON object {"ok":true}.'}]}
     if config.json_mode:
         value['response_format'] = {'type': 'json_object'}
-    if config.preset == 'deepseek' and config.reasoning_disabled:
-        value['thinking'] = {'type': 'disabled'}
     from backend.ai.protocols import encode
     async def exchange():
         check()

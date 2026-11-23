@@ -30,7 +30,7 @@ const batch = computed(() => {
   }));
   return { ...library.value, repos, task_id: live?.task_id,
     scanned_at: repos.reduce((latest,r) => !latest || Date.parse(r.scanned_at) > Date.parse(latest) ? r.scanned_at : latest, null),
-    meta: { query: '内置公开仓库、追加扫描与导入记录，每仓保留最新一次结果' } };
+    meta: { query: '内置、扫描和导入的仓库记录' } };
 });
 
 async function load() {
@@ -83,7 +83,7 @@ async function importFile(event) {
     library.value = await request('/api/repository-library/import', { method: 'POST', body: incoming });
     notice.value = '导入完成，资料库共 ' + library.value.repos.length + ' 个仓库。';
   } catch (error) {
-    libraryError.value = error instanceof SyntaxError ? '文件不是有效的 JSON 资料库' : error.message;
+    libraryError.value = error instanceof SyntaxError ? 'JSON 资料库格式无效' : error.message;
   } finally { transferring.value = false; }
 }
 
@@ -109,7 +109,7 @@ function exportFile() {
     </div>
     <p v-if="libraryError" class="notice error" role="alert">{{ libraryError }} <button class="button text-action compact" @click="load">重新读取</button></p>
     <p v-else-if="notice || scanNotice" class="small" role="status">{{ notice || scanNotice }}</p>
-    <p v-if="state.error && !state.busy" class="small scan-error" role="status">扫描未完成，可打开扫描窗口查看原因。</p>
+    <p v-if="state.error && !state.busy" class="small scan-error" role="status">{{ state.error }}</p>
     <RepositoryAtlas v-if="batch" :result="batch" />
     <p v-else-if="!libraryError" role="status">正在读取本机资料库…</p>
   </section>

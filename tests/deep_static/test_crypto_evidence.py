@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import socket
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -22,6 +23,56 @@ def claim(operation, name='ALGORITHM'):
 
 
 class CryptoRulesTests(unittest.TestCase):
+    def test_syntax_failure_keeps_completed_work_and_names_the_excluded_file(self):
+        source = snapshot({'app.py': 'import jwt\njwt.encode({},key,algorithm="RS256")',
+                           'incomplete.py': 'value = call(\n'})
+        result = analyze_crypto(source)
+        self.assertEqual(result.status, 'partial')
+        self.assertTrue(result.work_completed)
+        self.assertEqual(result.coverage.parsed.count, 1)
+        self.assertEqual(claim(result.operations[0]).level, 'E3')
+        self.assertTrue(any(note.code == 'parse_failed' and 'incomplete.py' in note.message for note in result.diagnostics))
+
+    def test_src_package_is_verified_alongside_other_roots_and_bad_filenames(self):
+        result = analyze_crypto(snapshot({
+            'build.py': 'value = 1',
+            'build-tools/check.py': 'value = 2',
+            'src/pkg/__init__.py': '',
+            'src/pkg/settings.py': 'ALGORITHM = "RS256"',
+            'src/pkg/adapter.py': 'import jwt\nfrom .settings import ALGORITHM\njwt.encode({}, key, algorithm=ALGORITHM)',
+        }))
+        self.assertEqual(result.status, 'completed')
+        self.assertEqual(result.coverage.parsed.count, 5)
+        self.assertEqual(claim(result.operations[0]).level, 'E3')
+        self.assertEqual(result.operations[0].algorithm, Known(value='RS256'))
+
+    @unittest.skipUnless(sys.version_info >= (3, 12), 'host requires Python 3.12 grammar')
+    def test_python_host_grammar_and_pyw_are_indexed(self):
+        result = analyze_crypto(snapshot({'app.pyw': 'import jwt\ntype Payload = dict[str, str]\njwt.encode({},key,algorithm="RS256")'}))
+        self.assertEqual(result.coverage.parsed.count, 1)
+        self.assertEqual(claim(result.operations[0]).level, 'E3')
+
+    def test_interrupted_replay_preserves_the_completed_operation(self):
+        stopped = False
+        partials = []
+
+        def on_operation(*_):
+            nonlocal stopped
+            stopped = True
+
+        def checkpoint():
+            if stopped:
+                raise TimeoutError
+
+        with self.assertRaises(TimeoutError):
+            run('import jwt\njwt.encode({},key,algorithm="RS256")\njwt.encode({},key,algorithm="HS256")',
+                checkpoint=checkpoint, on_operation=on_operation, on_interrupted=partials.append)
+        self.assertEqual(len(partials), 1)
+        self.assertEqual(partials[0].status, 'partial')
+        self.assertFalse(partials[0].work_completed)
+        self.assertEqual(len(partials[0].operations), 1)
+        self.assertEqual(claim(partials[0].operations[0]).level, 'E3')
+
     def test_ecdsa_default_curve_cross_file_sign_verify_and_unknown_custom_curve(self):
         result = analyze_crypto(snapshot({
             'keys.py': 'from ecdsa import SigningKey\ndef make_key():\n return SigningKey.generate()\n',

@@ -2,17 +2,21 @@
 from __future__ import annotations
 
 import ast
+import sys
 import tokenize
-from scanner.control import MAX_NODES, MAX_DEPTH
+from scanner.control import AnalysisLimit, MAX_NODES, MAX_DEPTH, analysis_control
 
 
-def parse_python(text, filename='<source>', check=lambda: None):
+def parse_python(text, filename='<source>', check=lambda: None, *, target_minor=sys.version_info.minor):
     from scanner.python_analysis import validate_parser_input
     try:
-        validate_parser_input(text)
+        with analysis_control(check):
+            validate_parser_input(text)
     except tokenize.TokenError as exc:
         raise SyntaxError('Python词法无法解析') from exc
-    tree = ast.parse(text, filename=filename, feature_version=(3, 10))
+    except AnalysisLimit as exc:
+        raise OverflowError('ast_limit') from exc
+    tree = ast.parse(text, filename=filename, feature_version=(3, target_minor))
     pending, count = [(tree, 0)], 0
     while pending:
         node, depth = pending.pop()

@@ -212,7 +212,7 @@ jobs:
           源码提交：${RELEASE_SHA}。
           四个平台均原生构建，通过锁定运行依赖回归及冻结后端冒烟检查。
           SHA256SUMS.txt 覆盖全部安装包，BUILD-INFO.json 记录各平台构建身份。
-          安装包尚未正式代码签名，macOS 尚未 Apple 公证。自动检查不代表安装后 GUI 实机验收。
+          安装包未正式签名，macOS 安装包未公证。安装后界面待实机验收。
           EOF
           if [ "$RELEASE_PRERELEASE" = true ]; then
             publish_flags=(--prerelease --latest=false)

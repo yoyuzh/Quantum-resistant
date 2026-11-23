@@ -10,7 +10,6 @@ import SnippetInput from './components/SnippetInput.vue';
 import FileUpload from './components/FileUpload.vue';
 import RemoteInput from './components/RemoteInput.vue';
 import ScanStatus from './components/ScanStatus.vue';
-import ScanActivity from './components/ScanActivity.vue';
 import ScanHelp from './components/ScanHelp.vue';
 import ResultsWorkspace from './components/ResultsWorkspace.vue';
 import AppIcon from './components/AppIcon.vue';
@@ -104,7 +103,7 @@ function toggleInput() {
               aria-label="扫描输入内容"
             >
               <p v-if="current.restored" class="notice">
-                {{ current.busy ? '已恢复后台任务，输入草稿未保存。' : '已恢复结果，请确认输入后再扫描。' }}
+                {{ current.busy ? '已恢复后台任务。' : '已恢复结果。重新扫描前请确认输入。' }}
               </p>
               <SnippetInput
                 v-if="mode === 'snippet' && !(current.restored && current.busy)"
@@ -124,13 +123,7 @@ function toggleInput() {
                 :mode="mode"
                 :disabled="current.busy"
               />
-              <ScanStatus
-                :busy="false"
-                :error="current.error"
-                :elapsed="current.progress?.elapsed ?? current.elapsed"
-                :has-result="!!current.result"
-                @retry="submit"
-              />
+              <ScanStatus :error="current.error" @retry="submit" />
               <p v-if="!current.busy && current.taskNote && !current.result" class="notice">{{ current.taskNote }}</p>
               <ScanHelp :mode="mode" />
             </div>

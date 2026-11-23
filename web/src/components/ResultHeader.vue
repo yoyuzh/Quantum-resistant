@@ -12,17 +12,17 @@ defineEmits(['back', 'reset', 'toggle-input', 'rescan']);
 const originLabel = computed(() => resultViews.find(([value]) => value === props.origin?.tab)?.[1]);
 const hasFilters = computed(() => ['assets', 'findings'].includes(props.tab) && Object.values(props.filters).some(Boolean));
 const context = computed(() => {
-  if (props.announcement) return props.announcement.replace(/^发现明细 · /, '');
+  if (props.announcement) return props.announcement;
   if (!hasFilters.value) return '';
   const f = props.filters;
   return [f.algorithm, f.sourceId && fileLabel(props.result.sources.find(s => s.source_id === f.sourceId) ||
     { file_name: f.sourceId }, props.result.sources), f.target, f.method && methodLabel(f.method), f.query]
-    .filter(Boolean).join(' · ');
+    .filter(Boolean).join('，');
 });
 </script>
 <template>
   <div class="result-header">
-    <div class="result-title" :title="`${formatTime(result.scanned_at)} · 北京时间`">
+    <div class="result-title" :title="`${formatTime(result.scanned_at)}（北京时间）`">
       <h2>扫描结果</h2>
       <span>{{ formatTime(result.scanned_at) }}</span>
     </div>

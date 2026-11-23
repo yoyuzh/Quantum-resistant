@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 BUDGETS = dict(search_files=5000, search_bytes=100 * 1024 * 1024, groups=1024, calls=384,
                seconds=900, request_seconds=45, request_bytes=128 * 1024, output_tokens=8192,
+               thinking_request_seconds=150, thinking_output_tokens=24576, thinking_response_bytes=1024 * 1024,
                total_request_bytes=32 * 1024 * 1024, response_bytes=512 * 1024, batch=12, repair_batch=4, concurrency=2)
 POLICY = 'redacted-evidence-3'
 
@@ -47,7 +48,7 @@ class Settings(BaseModel):
     consent: bool = False
     json_mode: bool = True
     output_parameter: str = Field(default='max_tokens', pattern='^(max_tokens|max_completion_tokens)$')
-    reasoning_disabled: bool = True
+    reasoning_disabled: bool = False
     remember: bool = False
     protocol: str = Field(default='', pattern='^(|chat|responses|anthropic|gemini)$')
     auth_mode: str = Field(default='', pattern='^(|bearer|api-key|x-api-key|x-goog-api-key|none)$')
@@ -64,7 +65,7 @@ class Config:
     preset: str = 'deepseek'
     json_mode: bool = True
     output_parameter: str = 'max_tokens'
-    reasoning_disabled: bool = True
+    reasoning_disabled: bool = False
     version: str = field(default_factory=lambda: secrets.token_hex(16))
     protocol: str = 'chat'
     auth_mode: str = 'bearer'
@@ -117,7 +118,7 @@ class ConfigStore:
             old = self.value
             key = request.api_key or (old.api_key if url == old.base_url else '')
             updated = Config(url, request.model, key, request.consent, request.preset, request.json_mode,
-                             request.output_parameter, request.reasoning_disabled, version=old.version,
+                             request.output_parameter, request.reasoning_disabled and request.preset != 'deepseek', version=old.version,
                              protocol=request.protocol or provider['protocol'], auth_mode=request.auth_mode or provider['auth_mode'],
                              output_mode=request.output_mode or (provider['output_mode'] if request.json_mode else 'prompt'), region=request.region,
                              profile_id=old.profile_id, profile_name=old.profile_name)

@@ -1,26 +1,23 @@
 """Bounded, source-free evidence projection from proposed semantic facts."""
 from __future__ import annotations
 
-import ast
-
 from deep_analysis.crypto_rules import RULES
 from deep_analysis.crypto_semantics import Proposal
 from deep_analysis.identity import stable_id
-from deep_analysis.models import EvidenceEdge, EvidenceNode, EvidencePath, Span, Versions
+from deep_analysis.models import EvidenceEdge, EvidenceNode, EvidencePath, SourceIdentity, Span, Versions
 from deep_analysis.proof_replay import Edge
-from deep_analysis.snapshot import Snapshot
-from deep_analysis.symbol_index import Index, location
+from deep_analysis.symbol_index import Index
 
 
 def api_bindings(index: Index, span: Span) -> set[Edge]:
     """Only the unique lexical binding, not all imports in a file."""
-    module = next(m for m in index.modules if m.source_id == span.source_id)
-    call = next((c for c in module.calls if c.location == span), None)
-    if call is None or call.target not in RULES:
+    indexed = index.calls.get(span)
+    if indexed is None or indexed[1].target not in RULES:
         return set()
+    module, call = indexed
     name, scope = call.expression.split('.')[0], call.scope
     while True:
-        bindings = [s for s in module.symbols if s.name == name and s.scope == scope]
+        bindings = module.bindings.get((scope, name), ())
         if bindings:
             return {('IMPORT_BINDING', bindings[0].location, span)} if len(bindings) == 1 and bindings[0].kind == 'import' else set()
         if scope == '<module>':
@@ -30,11 +27,10 @@ def api_bindings(index: Index, span: Span) -> set[Edge]:
 
 def context_edges(index: Index, chain: tuple[Span, ...]) -> set[Edge]:
     result = set()
-    definitions = {m.source_id + ':' + s.target: s.location for m in index.modules for s in m.symbols if s.kind == 'function' and s.target}
     for span in chain:
-        call = next(c for m in index.modules for c in m.calls if c.location == span)
-        if call.target in definitions:
-            result.add(('CALLS', span, definitions[call.target]))
+        _, call = index.calls[span]
+        if call.target in index.definitions:
+            result.add(('CALLS', span, index.definitions[call.target]))
     return result
 
 
@@ -46,7 +42,7 @@ def path_identity(path: EvidencePath) -> str:
     return stable_id('evidence', path.model_dump(mode='json', exclude={'evidence_id', 'verification_status', 'historical_verification_status', 'replay_status', 'gaps'}))
 
 
-def project(snapshot: Snapshot, index: Index, proposal: Proposal, claim_type: str,
+def project(snapshot_id: str, identities: dict[str, SourceIdentity], ast_nodes, index: Index, proposal: Proposal, claim_type: str,
             versions: Versions, *, slice_nodes: int = 200) -> EvidencePath:
     fact = dict(proposal.facts)[claim_type]
     candidate = proposal.candidate
@@ -64,9 +60,6 @@ def project(snapshot: Snapshot, index: Index, proposal: Proposal, claim_type: st
     positions.update(p for _, a, b in edges for p in (a, b))
     if len(positions) > min(400, slice_nodes) or len(edges) > min(400, slice_nodes):
         raise OverflowError('evidence_slice_limit')
-    from deep_analysis.lazy_ast import SpanNodes
-    ast_nodes = SpanNodes(index.modules)
-    identities = {s.source_id: s for s in snapshot.identity.sources}
     nodes = []
     for span in sorted(positions, key=lambda p: (p.source_id, p.start_line, p.start_col, p.end_line, p.end_col)):
         digest = identities[span.source_id].sha256
@@ -80,7 +73,7 @@ def project(snapshot: Snapshot, index: Index, proposal: Proposal, claim_type: st
         a, b = by_span[source], by_span[target]
         projected.append(EvidenceEdge(edge_id=edge_identity(kind, a, b, candidate.context.conditions), edge_type=kind,
                                       source_node=a, target_node=b, conditions=candidate.context.conditions))
-    path = EvidencePath(evidence_id='pending', claim_type=claim_type, snapshot_id=snapshot.identity.snapshot_id, context=candidate.context,
+    path = EvidencePath(evidence_id='pending', claim_type=claim_type, snapshot_id=snapshot_id, context=candidate.context,
                         nodes=tuple(nodes), edges=tuple(projected), versions=versions)
     return path.model_copy(update={'evidence_id': path_identity(path)})
 

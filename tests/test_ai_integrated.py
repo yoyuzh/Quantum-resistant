@@ -109,7 +109,8 @@ class IntegratedAiTests(unittest.TestCase):
         self.service.client = httpx.AsyncClient(transport=httpx.MockTransport(answer))
         self.assertEqual(self.client.post('/api/ai/test').status_code, 200)
         self.assertEqual(requests[0]['messages'], [{'role': 'user', 'content': 'Return only the JSON object {"ok":true}.'}])
-        self.assertEqual(requests[0]['thinking'], {'type': 'disabled'})
+        self.assertEqual(requests[0]['thinking'], {'type': 'enabled'})
+        self.assertEqual(requests[0]['reasoning_effort'], 'high')
         self.assertEqual(task_routes.store.scheduler.used, 0)
 
     def test_wrapper_declaration_does_not_duplicate_its_crypto_call_candidate(self):
@@ -275,7 +276,8 @@ class IntegratedAiTests(unittest.TestCase):
         self.assertEqual({o['algorithm'].get('value') for o in operations}, {'RS256', 'HS256'})
         self.assertEqual(len({o['operation_id'] for o in operations}), 2)
         with task_routes.store.read_job(identity) as job:
-            catalogue = json.loads(job.control.ai_catalog.read_text(encoding='utf-8'))
+            from backend.collection_common import Deadline
+            catalogue = task_routes.store.ai.catalogue(job, result, Deadline.after())
             context_groups = [c for c in catalogue['candidates'] if c['context']]
             self.assertEqual(context_groups, [])
             self.assertEqual(catalogue['locally_resolved'], 2)
@@ -529,19 +531,26 @@ class AiContractTests(unittest.TestCase):
             return httpx.Response(200)
         async def exercise():
             async with httpx.AsyncClient(transport=httpx.MockTransport(answer)) as client:
-                with patch.dict(BUDGETS, request_seconds=.02), self.assertRaises(ProviderError) as caught:
+                with patch.dict(BUDGETS, thinking_request_seconds=.02), self.assertRaises(ProviderError) as caught:
                     await complete(client, Config(base_url='https://model.invalid/'), b'{}', lambda: None)
                 self.assertEqual(caught.exception.code, 'provider_timeout')
         asyncio.run(exercise())
         self.assertEqual(len(requests), 1)
 
-    def test_deepseek_explicitly_disables_thinking(self):
-        from backend.ai.config import Config
+    def test_deepseek_uses_high_thinking_for_existing_profiles_and_protocols(self):
+        from backend.ai.config import Config, ConfigStore
         from backend.ai.provider import body
-        value = json.loads(body(Config(preset='deepseek'), []))
-        self.assertEqual(value['thinking'], {'type': 'disabled'})
+        self.assertFalse(ConfigStore().update(Settings(reasoning_disabled=True)).reasoning_disabled)
+        value = json.loads(body(Config(preset='deepseek', reasoning_disabled=True), []))
+        self.assertEqual(value['thinking'], {'type': 'enabled'})
         self.assertEqual(value['response_format'], {'type': 'json_object'})
-        self.assertNotIn('reasoning_effort', value)
+        self.assertEqual(value['reasoning_effort'], 'high')
+        self.assertEqual(value['max_tokens'], BUDGETS['thinking_output_tokens'])
+        responses = json.loads(body(Config(protocol='responses'), []))
+        self.assertEqual(responses['reasoning'], {'effort': 'high'})
+        anthropic = json.loads(body(Config(protocol='anthropic', output_mode='prompt'), []))
+        self.assertEqual(anthropic['output_config']['effort'], 'high')
+
     def test_untrusted_endpoints_are_rejected(self):
         for value in ('http://example.org/v1', 'https://u:p@example.org', 'https://example.org?key=secret', 'https://example.org/#x', 'https://example.org\\@localhost'):
             with self.subTest(value=value), self.assertRaises(ValueError):

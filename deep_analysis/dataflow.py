@@ -80,7 +80,7 @@ class Evaluator:
         self.hits = 0
         self.contexts: dict[str, set[str]] = {}
         self.modules = {m.source_id: m for m in discovery.index.modules}
-        self.cross = snapshot.identity.path_fidelity == 'relative_paths' and len(snapshot.identity.package_roots) == 1
+        self.cross = discovery.index.cross_module
 
     def frame_key(self, frame: Frame) -> str:
         return stable_id('frame', [self.snapshot.identity.snapshot_id, self.versions, frame.module.source_id, frame.scope,
@@ -277,15 +277,14 @@ class Evaluator:
         return self.store.unknown('unsupported_attribute')
 
     def imported_value(self, target: str | None, frame: Frame, node: ast.AST, static_default: bool) -> Fact:
-        selected = [m for m in self.modules.values() if m.name and target and target.startswith(m.name + '.')]
+        selected, name = self.discovery.index.names.longest(target or '', allow_exact=False)
         if not selected:
             return self.store.unknown('missing_module')
-        length = max(len(m.name or '') for m in selected)
-        selected = [m for m in selected if len(m.name or '') == length]
         if len(selected) != 1:
             return self.store.unknown('ambiguous_module')
         module = selected[0]
-        name = target[length + 1:]
+        if module.package_root != frame.module.package_root:
+            return self.store.unknown('cross_root_import')
         if '.' in name:
             return self.store.unknown('unsupported_attribute')
         fact = self.lookup(name, Frame(module), None, static_default=static_default)

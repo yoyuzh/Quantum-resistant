@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import ast
+from collections import defaultdict
 from dataclasses import dataclass, field, replace
+from functools import cached_property
 import json
 import sys
-from typing import Callable
+from typing import Callable, Iterable
 
 from deep_analysis.models import Budgets, Coverage, CoverageCount, Diagnostic, Span
+from deep_analysis.paths import path_names
 from deep_analysis.snapshot import Snapshot
 from deep_analysis.lazy_ast import AstCache
 
@@ -38,12 +41,16 @@ class Module:
     symbols: tuple[Symbol, ...]
     calls: tuple[Call, ...]
     tree_ref: object = field(repr=False, compare=False)
+    node_ref: Callable[[Span], ast.AST] | None = field(default=None, repr=False, compare=False)
+    package_root: str | None = None
 
     @property
     def tree(self):
         return self.tree_ref() if callable(self.tree_ref) else self.tree_ref
 
     def node_at(self, span):
+        if self.node_ref is not None:
+            return self.node_ref(span)
         found = None
         for node in ast.walk(self.tree):
             if getattr(node, "end_lineno", None) is not None and location(self.source_id, node) == span:
@@ -51,6 +58,21 @@ class Module:
         if found is None:
             raise KeyError(span)
         return found
+
+    @cached_property
+    def bindings(self):
+        values = defaultdict(list)
+        for symbol in self.symbols:
+            values[symbol.scope, symbol.name].append(symbol)
+        return dict(values)
+
+    @cached_property
+    def global_taints(self):
+        return {s.name for s in self.symbols if s.kind == 'global_taint'}
+
+    @cached_property
+    def dynamic_namespace(self):
+        return any(s.kind == 'dynamic_namespace' for s in self.symbols)
 
 
 @dataclass(frozen=True)
@@ -64,6 +86,41 @@ class Index:
     nodes_used: int = 0
     edges_used: int = 0
     structure_bytes: int = 0
+    cross_module: bool = False
+
+    @cached_property
+    def names(self):
+        return ModuleNames(self.modules)
+
+    @cached_property
+    def calls(self):
+        return {c.location: (m, c) for m in self.modules for c in m.calls}
+
+    @cached_property
+    def definitions(self):
+        return {m.source_id + ':' + s.target: s.location for m in self.modules
+                for s in m.symbols if s.kind == 'function' and s.target}
+
+
+class ModuleNames:
+    def __init__(self, modules: Iterable[Module]):
+        self.by_name = defaultdict(list)
+        self.tops = set()
+        paths = []
+        for module in modules:
+            paths.append(module.path)
+            if module.name:
+                self.by_name[module.name].append(module)
+                self.tops.add(module.name.split('.')[0])
+        self.path_names = path_names(paths)
+
+    def longest(self, target: str, *, allow_exact: bool = True):
+        prefix = target if allow_exact else target.rpartition('.')[0]
+        while prefix:
+            if prefix in self.by_name:
+                return self.by_name[prefix], target[len(prefix):].lstrip('.')
+            prefix = prefix.rpartition('.')[0]
+        return (), ''
 
 
 def location(source_id: str, node: ast.AST) -> Span:
@@ -75,12 +132,21 @@ def module_name(path: str, root: str) -> str | None:
     prefix = '' if root == '.' else root + '/'
     if not path.startswith(prefix):
         return None
-    parts = path[len(prefix):-3].split('/')
+    parts = path[len(prefix):].rsplit('.', 1)[0].split('/')
     if parts[-1] == '__init__':
         parts.pop()
     if not parts or any(not p.isidentifier() for p in parts):
         return None
     return '.'.join(parts)
+
+
+def owning_root(path: str, roots: set[str]) -> str | None:
+    parent = path.rpartition('/')[0]
+    while parent:
+        if parent in roots:
+            return parent
+        parent = parent.rpartition('/')[0]
+    return '.' if '.' in roots else None
 
 
 def dotted(node: ast.AST) -> str | None:
@@ -167,20 +233,20 @@ def collect_symbols(source_id: str, tree: ast.Module, checkpoint: Callable[[], o
     return tuple(symbols)
 
 
-def resolve(name: str | None, scope: str, module: Module, modules: list[Module], cross_module: bool,
+def resolve(name: str | None, scope: str, module: Module, modules: ModuleNames | Iterable[Module], cross_module: bool,
             seen: tuple[tuple[str, str], ...] = ()) -> tuple[str | None, str | None]:
-    if any(s.kind == 'dynamic_namespace' for s in module.symbols):
+    if module.dynamic_namespace:
         return None, 'dynamic_namespace'
     if not name:
         return None, 'dynamic_call'
     head, *rest = name.split('.')
-    if any(s.name == head and s.kind == 'global_taint' for s in module.symbols):
+    if head in module.global_taints:
         return None, 'dynamic_scope_write'
     current = scope
     while True:
-        if any(s.name == '*' and s.scope == current for s in module.symbols):
+        if (current, '*') in module.bindings:
             return None, 'wildcard_import'
-        bindings = [s for s in module.symbols if s.scope == current and s.name == head]
+        bindings = module.bindings.get((current, head), ())
         if bindings:
             if len(bindings) != 1 or bindings[0].target is None:
                 return None, 'shadowed_or_dynamic_binding'
@@ -193,41 +259,36 @@ def resolve(name: str | None, scope: str, module: Module, modules: list[Module],
             if binding.kind != 'import':
                 return None, 'unsupported_receiver'
             target = '.'.join([binding_target, *rest])
-            local = [m for m in modules if m.name and (target == m.name or target.startswith(m.name + '.'))]
-            if local:
+            table = modules if isinstance(modules, ModuleNames) else ModuleNames(modules)
+            selected, suffix = table.longest(target)
+            if selected:
                 if not cross_module:
                     return None, 'cross_module_disabled'
-                best = max(len(m.name or '') for m in local)
-                selected = [m for m in local if len(m.name or '') == best]
                 if len(selected) != 1:
                     return None, 'ambiguous_module'
                 other = selected[0]
-                suffix = target[len(other.name or ''):].lstrip('.')
+                if module.package_root != other.package_root:
+                    return None, 'cross_root_import'
                 key = (other.source_id, suffix)
                 if not suffix or key in seen or len(seen) >= 20:
                     return None, 'module_or_import_cycle'
-                target, reason = resolve(suffix, '<module>', other, modules, cross_module, (*seen, key))
+                target, reason = resolve(suffix, '<module>', other, table, cross_module, (*seen, key))
                 return target, 'missing_module' if reason == 'unbound_name' else reason
-            if head == '*' or any(s.name == '*' and s.scope == current for s in module.symbols):
-                return None, 'wildcard_import'
             # A collected package of this name takes precedence over installed libraries.
             top = target.split('.')[0]
-            if any(m.name and m.name.split('.')[0] == top for m in modules):
+            if top in table.tops:
                 return None, 'missing_module'
-            if any(m.path.split('/')[-1] == top + '.py' or top in m.path.split('/')[:-1] for m in modules):
+            if top in table.path_names:
                 return None, 'local_library_collision'
             if top in ('jwt', 'cryptography', 'Crypto', 'ecdsa'):
                 return target, None
             return None, 'missing_module'
-        if any(s.name == '*' and s.scope == current for s in module.symbols):
-            return None, 'wildcard_import'
         if current == '<module>':
             return None, 'unbound_name'
         current = current.rsplit('.', 1)[0]
 
 
-def index_calls(module: Module, modules: list[Module], cross_module: bool,
-                checkpoint: Callable[[], object]) -> tuple[Call, ...]:
+def index_calls(module: Module, checkpoint: Callable[[], object]) -> tuple[Call, ...]:
     calls: list[Call] = []
     pending: list[tuple[ast.AST, str]] = [(module.tree, '<module>')]
     while pending:
@@ -235,8 +296,7 @@ def index_calls(module: Module, modules: list[Module], cross_module: bool,
         node, scope = pending.pop()
         if isinstance(node, ast.Call):
             expression = dotted(node.func)
-            target, reason = resolve(expression, scope, module, modules, cross_module)
-            calls.append(Call(scope, expression or '<dynamic>', location(module.source_id, node), target, reason))
+            calls.append(Call(scope, expression or '<dynamic>', location(module.source_id, node), None, None))
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             inner = scope + '.' + node.name
             if isinstance(node, ast.ClassDef):
@@ -250,14 +310,15 @@ def index_calls(module: Module, modules: list[Module], cross_module: bool,
 
 
 def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
-                target_minor: int = 10, checkpoint: Callable[[], object] = lambda: None) -> Index:
+                target_minor: int = sys.version_info.minor, checkpoint: Callable[[], object] = lambda: None) -> Index:
     budgets = budgets or Budgets()
     if not 10 <= target_minor <= sys.version_info.minor:
         raise ValueError('目标语法必须为3.10至宿主版本')
-    cache = getattr(snapshot, "ast_cache", None) or AstCache(snapshot.logical.sources, checkpoint)
+    cache = getattr(snapshot, "ast_cache", None) if target_minor == sys.version_info.minor else None
+    cache = cache or AstCache(snapshot.logical.sources, checkpoint, target_minor=target_minor)
     modules, diagnostics = [], list(snapshot.diagnostics)
-    roots = snapshot.identity.package_roots
-    cross = snapshot.identity.path_fidelity == 'relative_paths' and len(roots) == 1
+    roots = set(snapshot.identity.package_roots)
+    cross = snapshot.identity.path_fidelity == 'relative_paths' and bool(roots)
     nodes = edges = size = 0
     for source in snapshot.logical.sources:
         checkpoint()
@@ -273,15 +334,23 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
                 if count > budgets.ast_nodes or depth > budgets.ast_depth:
                     raise OverflowError('ast_limit')
                 stack.extend((child, depth + 1) for child in ast.iter_child_nodes(node))
-        except (SyntaxError, ValueError, RecursionError, OverflowError) as exc:
-            code = 'ast_limit' if isinstance(exc, (RecursionError, OverflowError)) else 'parse_failed'
-            diagnostics.append(Diagnostic(code=code, message='模块解析失败或达到语法树上限',
+        except (OSError, SyntaxError, ValueError, RecursionError, OverflowError) as exc:
+            code = ('source_unavailable' if isinstance(exc, OSError) else
+                    'ast_limit' if isinstance(exc, (RecursionError, OverflowError)) else 'parse_failed')
+            reason = {'source_unavailable': '源码不可读取', 'ast_limit': '达到单文件语法树上限', 'parse_failed': 'Python 语法解析失败'}
+            detail = reason[code]
+            file_name = identity.relative_path
+            file_width = 511 - len(detail)
+            if len(file_name) > file_width:
+                file_name = '…' + file_name[-(file_width - 1):]
+            diagnostics.append(Diagnostic(code=code, message=f'{file_name}：{detail}',
                                           location=Span(source_id=identity.source_id, start_line=max(1, getattr(exc, 'lineno', 1) or 1), start_col=0,
                                                         end_line=max(1, getattr(exc, 'lineno', 1) or 1), end_col=1)))
             continue
-        name = module_name(identity.relative_path, roots[0]) if cross else None
+        root = owning_root(identity.relative_path, roots) if cross else None
+        name = module_name(identity.relative_path, root) if root is not None else None
         symbols = collect_symbols(identity.source_id, tree, checkpoint)
-        module = Module(identity.source_id, name, identity.relative_path, symbols, (), tree)
+        module = Module(identity.source_id, name, identity.relative_path, symbols, (), tree, package_root=root)
         # Resolve relative import strings only against a proved package identity.
         imports = {location(identity.source_id, n): n for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom))}
         mapped = []
@@ -295,39 +364,37 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
         module = replace(module, symbols=tuple(mapped))
         # Store raw call spans now. Resolution after all modules are indexed does
         # not need a second parse of every file.
-        module = replace(module, calls=index_calls(module, [], False, checkpoint))
-        ast_bytes = len(ast.dump(tree, include_attributes=True).encode('utf-8'))
-        encoded = ast_bytes + len(json.dumps([(s.name, s.kind, s.scope, s.target, s.location.model_dump()) for s in mapped], ensure_ascii=False).encode('utf-8'))
-        if nodes + count > budgets.index_nodes or size + encoded + len(source.content.encode('utf-8')) > budgets.structure_bytes:
+        module = replace(module, calls=index_calls(module, checkpoint))
+        encoded = len(json.dumps([(s.name, s.kind, s.scope, s.target, s.location.model_dump()) for s in mapped], ensure_ascii=False).encode('utf-8'))
+        if nodes + count > budgets.index_nodes or size + encoded > budgets.structure_bytes:
             diagnostics.append(Diagnostic(code='index_limit', message='索引节点或结构体积达到上限'))
             break
         nodes += count
-        size += encoded + len(source.content.encode('utf-8'))
-        modules.append(replace(module, tree_ref=lambda identity=identity.source_id: cache.get(identity)[0]))
+        size += encoded
+        modules.append(replace(module, tree_ref=lambda identity=identity.source_id: cache.get(identity)[0], node_ref=cache.node))
     output = []
+    names = ModuleNames(modules)
+    collected_names = path_names(s.relative_path for s in snapshot.identity.sources) | set(snapshot.identity.unavailable_imports)
     for module in modules:
         calls = []
         for call in module.calls:
             checkpoint()
-            target, reason = resolve(call.expression, call.scope, module, modules, cross)
+            target, reason = resolve(call.expression, call.scope, module, names, cross)
             calls.append(replace(call, target=target, reason=reason))
         # Failed/excluded local modules still shadow an installed library of the same name.
         calls = tuple(replace(c, target=None, reason='unavailable_or_ambiguous_local')
-                      if c.target and ':' not in c.target and any(
-                          s.relative_path.split('/')[-1] == c.target.split('.')[0] + '.py'
-                          or c.target.split('.')[0] in s.relative_path.split('/')[:-1]
-                          for s in snapshot.identity.sources) else c for c in calls)
+                      if c.target and ':' not in c.target and c.target.split('.')[0] in collected_names else c for c in calls)
         encoded = len(json.dumps([(c.scope, c.expression, c.target, c.reason, c.location.model_dump()) for c in calls], ensure_ascii=False).encode('utf-8'))
         if edges + len(calls) > budgets.index_edges or size + encoded > budgets.structure_bytes:
             diagnostics.append(Diagnostic(code='index_limit', message='调用边或结构体积达到上限'))
             # Retain complete symbol facts but publish no half call set for this module.
-            output.extend(modules[len(output):])
             break
         edges += len(calls)
         size += encoded
         output.append(replace(module, calls=calls))
     coverage = snapshot.identity.coverage.model_copy(update={
         'parsed': CoverageCount(count=len(modules), total=len(snapshot.logical.sources)),
+        'analyzed': CoverageCount(count=len(output), total=len(snapshot.logical.sources)),
         'partial': snapshot.identity.coverage.partial or bool(diagnostics),
         'gaps': tuple(sorted(set(snapshot.identity.coverage.gaps) | {d.code for d in diagnostics}))[:200],
     })
@@ -336,4 +403,4 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
             checkpoint()
             cache.summarize(module)
     return Index(tuple(output), tuple(diagnostics[:200]), coverage, sys.version.split()[0], f'3.{target_minor}',
-                 nodes_used=nodes, edges_used=edges, structure_bytes=size)
+                 nodes_used=nodes, edges_used=edges, structure_bytes=size, cross_module=cross)

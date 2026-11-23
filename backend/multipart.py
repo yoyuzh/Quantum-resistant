@@ -73,7 +73,7 @@ class MultipartParser:
                     from backend.uploads import normalize_filename
                     self.name = normalize_filename(filename, 'uploaded.py')
                     if not is_supported_source_path(self.name):
-                        raise HTTPException(400, f'{self.name} 不是受支持的文本文件')
+                        raise HTTPException(400, f'不支持 {self.name} 的文件格式')
                     if self.file_count >= self.max_files:
                         raise HTTPException(413, '单次最多上传 5000 个文件')
                     self.file_count += 1
@@ -121,7 +121,7 @@ def decode_file(name: str, body: bytes, remaining: int) -> tuple[str, bytes]:
     try:
         content = body.decode('utf-8-sig')
     except UnicodeError as exc:
-        raise HTTPException(400, f'{name} 不是有效 UTF-8 文本') from exc
+        raise HTTPException(400, f'{name} 编码无效，需使用 UTF-8') from exc
     data = content.encode('utf-8')
     if len(data) > remaining:
         raise HTTPException(413, '源码文本超过 100 MiB 限制')

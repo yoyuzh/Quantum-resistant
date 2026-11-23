@@ -117,9 +117,9 @@ def write_release_files(root: Path, identity: dict[str, str], checksum: str) -> 
         "包含安装包、SHA256SUMS.txt 和 BUILD-INFO.json。\n"
         f"源码提交：`{identity['sha']}`。\n\n"
         "该提交已通过 Windows/Linux CI 检查；打包后的 Python 后端已通过离线冒烟检查。\n"
-        f"本次发布为{channel}。安装程序尚未代码签名。自动检查不代表安装后桌面交互已实机验收。\n"
+        f"{channel}。安装程序未签名。安装后桌面交互待实机验收。\n"
         "安装后无需另行安装 Python、Node.js 或 WebView2。\n"
-        "可用 PowerShell 的 Get-FileHash -Algorithm SHA256 校验下载文件；校验值不证明发布者身份。\n"
+        "在 PowerShell 用 Get-FileHash -Algorithm SHA256 比对下载文件的校验值。\n"
     )
     (directory / "RELEASE-NOTES.md").write_text(notes, encoding="utf-8")
 

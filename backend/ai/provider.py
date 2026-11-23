@@ -37,11 +37,6 @@ class ProviderError(Exception):
         super().__init__(message)
 
 
-def reusable(previous, config, snapshot):
-    return (previous.get('config_version') == config.version and previous.get('input_digest') == snapshot
-            and previous.get('prompt_version') == PROMPT_VERSION and previous.get('policy_version') == POLICY)
-
-
 def continuable(previous,snapshot):
     return (previous.get('input_digest')==snapshot and previous.get('prompt_version')==PROMPT_VERSION
             and previous.get('policy_version')==POLICY and previous.get('schema_version') in ('ai-assisted-4','ai-assisted-5'))
@@ -70,18 +65,20 @@ def body(config, candidates):
         if candidate.get('_recovery'):
             groups[-1]['repair']='仅补齐本项，按validation_errors修正字段；只引用本项evidence_ids列出的ID，不沿用之前的短ID。证据不足请明确弃答，不要输出opinion_kind或编造结论。'
             groups[-1]['validation_errors']=candidate.get('_repair_errors', [])[-4:]
-    value = {'model': config.model, 'stream': False, config.output_parameter: BUDGETS['output_tokens'],
+    output_limit = BUDGETS['thinking_output_tokens'] if config.preset == 'deepseek' else BUDGETS['output_tokens']
+    value = {'model': config.model, 'stream': False, config.output_parameter: output_limit,
              'messages': [{'role': 'system', 'content': SYSTEM}, {'role': 'user', 'content': json.dumps({
                  'policy': POLICY, 'candidates': groups, 'evidence': list(evidence.values())}, ensure_ascii=False)}]}
     if config.json_mode:
         value['response_format'] = {'type': 'json_object'}
-    if config.preset == 'deepseek' and config.reasoning_disabled:
-        value['thinking'] = {'type': 'disabled'}
     return json.dumps(encode(config,value), ensure_ascii=False, separators=(',', ':')).encode('utf-8')
 
 
 async def complete(client, config, data, check):
     acquired = False
+    thinking = config.preset == 'deepseek'
+    seconds = BUDGETS['thinking_request_seconds'] if thinking else BUDGETS['request_seconds']
+    max_response_bytes = BUDGETS['thinking_response_bytes'] if thinking else BUDGETS['response_bytes']
     async def exchange():
         nonlocal acquired
         while not HTTP_SLOTS.acquire(blocking=False):
@@ -89,7 +86,8 @@ async def complete(client, config, data, check):
             await asyncio.sleep(.05)
         acquired = True
         url, headers = destination(config)
-        async with client.stream('POST', url, content=data, headers=headers) as response:
+        timeout = httpx.Timeout(seconds, connect=min(5, seconds), pool=min(5, seconds))
+        async with client.stream('POST', url, content=data, headers=headers, timeout=timeout) as response:
             if response.status_code != 200:
                 code = {401:'provider_auth',403:'provider_auth',402:'provider_balance',429:'provider_rate_limit',
                         400:'provider_parameters',422:'provider_parameters'}.get(response.status_code,
@@ -113,7 +111,7 @@ async def complete(client, config, data, check):
             raw = bytearray()
             async for chunk in response.aiter_bytes():
                 check()
-                if len(raw) + len(chunk) > BUDGETS['response_bytes']:
+                if len(raw) + len(chunk) > max_response_bytes:
                     raise ProviderError('response_limit', '模型响应超过大小限制')
                 raw.extend(chunk)
         try:
@@ -129,7 +127,7 @@ async def complete(client, config, data, check):
                              for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')}
         except (ValueError, KeyError, IndexError, TypeError, AttributeError):
             raise ProviderError('provider_format', '模型返回空内容或协议格式无效') from None
-    task = asyncio.create_task(asyncio.wait_for(exchange(), BUDGETS['request_seconds']))
+    task = asyncio.create_task(asyncio.wait_for(exchange(), seconds))
     try:
         while not task.done():
             check()

@@ -4,20 +4,20 @@
 
 ## 安装包与平台
 
-- 下载入口：[GitHub Release安装包](https://github.com/yoyuzh/Quantum-resistant/releases)。当前版本 V1.4.0，正式版本标签 v1.4.0，同一 Release 包含全部平台安装包。
+- 当前版本 V1.4.1，各平台安装包集中在[同一 Release](https://github.com/yoyuzh/Quantum-resistant/releases/tag/v1.4.1)。
 - Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
 - Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
 - macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
 - macOS Apple Silicon：`Quantum-Scanner-X.Y.Z-mac-arm64.dmg`。
 - 完整性校验：同目录的 `SHA256SUMS.txt`。
-- 安装包尚未正式代码签名，不包含发布者身份认证。当前未提供 Windows 发布者签名或 macOS Developer ID 签名与 Apple 公证；系统可能显示相应提示。不要通过关闭系统安全功能解决安装提示。
-- Windows、macOS Intel/Apple Silicon、Ubuntu 22.04 x64 的原生构建及冻结后端冒烟均已通过托管 runner 验证；不将其视为全部平台安装后 GUI 兼容性认证。Ubuntu 24.04 和 macOS 最低系统版本仍需实机验收。
+- 安装包尚未正式代码签名或通过 Apple 公证，系统可能显示安全提示。
+- Release 包含各平台原生构建与冻结后端检查。安装后的界面兼容性以实机运行结果为准。
 
 SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在 PowerShell 中运行 `Get-FileHash -Algorithm SHA256 安装程序路径`，与随包校验值比较。
 
 ## 数据与网络
 
-本地代码只作静态分析，扫描不会执行上传的代码，也不会安装被扫描的 PyPI 包。代码片段、文件上传、迁移知识和报告导出可离线使用。用户主动扫描 GitHub/PyPI 或刷新热门仓库时，后端访问采集允许列表中的远程服务。配置模型并确认发送后，开启AI的扫描还会将必要脱敏片段发往所选模型端点；关闭AI可继续离线静态分析。模型设置默认记住配置，密钥由主进程使用系统安全存储加密；取消记住后仅用于当前会话。安全存储不可用或保存失败时界面提示“仅本次运行”，不写明文；详见[AI辅助分析](ai-analysis.md)。
+软件静态读取代码和发行包。代码片段、文件上传、迁移知识和报告导出可离线使用。用户主动扫描 GitHub/PyPI 或刷新热门仓库时，后端访问采集允许列表中的远程服务。配置模型并确认发送后，开启AI的扫描还会将必要脱敏片段发往所选模型端点；关闭AI可继续离线静态分析。模型设置默认记住配置，密钥由主进程使用系统安全存储加密；取消记住后仅用于当前会话。安全存储不可用或保存失败时界面提示“仅本次运行”，不写明文；详见[AI辅助分析](ai-analysis.md)。
 
 用户数据目录由 Electron 的 `userData` 确定：Windows 通常为 `%APPDATA%\Quantum Resistant Scanner`，macOS 为 `~/Library/Application Support/Quantum Resistant Scanner`，Linux 为 `~/.config/Quantum Resistant Scanner`（可能由 XDG 配置调整）。主题和热门快照位于该目录；日志最多每类4份、每份约1 MiB，不记录令牌、源码正文或请求体。源码、归档和任务结果在其 `cache/scans` 中短期保存，保留原有2 GiB容量、结果15分钟/8份/512 MiB限制。
 
@@ -62,7 +62,7 @@ npm --prefix desktop start
 
 ## 安全与维护
 
-桌面后端仅监听回环随机端口，所有HTTP资源使用每次启动生成的会话令牌；令牌通过管道传递，只由Electron主进程附加到确切的本地地址。普通浏览器和无令牌客户端不能读取桌面扫描内容。该机制不是对同一操作系统用户恶意程序的隔离，也不提供多用户服务认证。
+桌面后端仅监听回环随机端口，所有HTTP资源使用每次启动生成的会话令牌；令牌通过管道传递，只由Electron主进程附加到确切的本地地址。普通浏览器和无令牌客户端不能读取桌面扫描内容。桌面后端面向单用户本地运行。相同系统账号内的进程共享操作系统权限。
 
 窗口启用沙箱、上下文隔离及CSP，不向网页暴露Node.js或通用文件/命令接口；外链只允许指定NIST HTTPS域名并由系统浏览器打开。后台进程随父进程退出。安装资源采用ASAR完整性校验，禁用RunAsNode、NODE_OPTIONS及Node调试参数。
 

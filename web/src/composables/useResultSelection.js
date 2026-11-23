@@ -61,8 +61,8 @@ export function useResultSelection(result, { body, header } = {}) {
     visited.add('findings');
     tab.value = 'findings';
     announcement.value = match
-      ? `发现明细 · ${match.algorithm} · ${fileLabel(match, result.value.sources)} · 第 ${match.line} 行`
-      : '发现明细 · 当前范围没有匹配证据';
+      ? `${match.algorithm}：${fileLabel(match, result.value.sources)} 第 ${match.line} 行`
+      : '当前范围没有匹配证据';
     await nextTick();
     if (id !== sequence || !body?.value) return;
     const target = [...body.value.querySelectorAll('[data-finding-key]')]

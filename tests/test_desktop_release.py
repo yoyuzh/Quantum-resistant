@@ -139,7 +139,8 @@ class DesktopReleaseTests(unittest.TestCase):
         self.assertFalse(info["signed"])
         notes = (self.desktop / "release" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
         self.assertIn("预发布", notes)
-        self.assertIn("不代表安装后桌面交互已实机验收", notes)
+        self.assertIn("安装程序未签名", notes)
+        self.assertIn("安装后桌面交互待实机验收", notes)
 
     def test_formal_and_prerelease_versions_keep_matching_identity(self) -> None:
         for version, tag, prerelease in [

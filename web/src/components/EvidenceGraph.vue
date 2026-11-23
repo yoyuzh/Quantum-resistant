@@ -12,7 +12,7 @@ watch([()=>props.active,()=>props.result],()=>{opened.value=false;});
 </script>
 <template>
   <section ref="root" class="evidence-graph" aria-label="证据关系图"><div class="segmented-group"><button class="button secondary" :aria-pressed="mode==='migration'" @click="mode='migration'">迁移关系</button><button class="button secondary" :aria-pressed="mode==='calls'" @click="mode='calls'">调用与证据</button></div>
-    <GraphPreview v-if="available" :data="data" :mode="mode" @open="open" /><p v-else class="notice">此历史结果未记录资产分析，重新扫描可生成关系图。</p>
+    <GraphPreview v-if="available" :data="data" :mode="mode" @open="open" /><p v-else class="notice">重新扫描可生成关系图。</p>
     <GraphWorkbench :open="opened" :mode="mode" :data="data" :result="result" :focus-id="focusId" :trigger="trigger" :load-source="loadSource" @close="opened=false" @mode="mode=$event" />
   </section>
 </template>

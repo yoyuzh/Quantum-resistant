@@ -9,10 +9,10 @@ defineEmits(['select']);
 <template>
   <button class="finding-row" :class="{ selected }" :aria-pressed="selected"
     :data-finding-key="findingKey(finding)"
-    :aria-label="`${finding.algorithm} · ${finding.risk_level} · ${fileLabel(finding, peers)} · 第 ${finding.line} 行，查看详情与源码`"
+    :aria-label="`${finding.algorithm}，${finding.risk_level}，${fileLabel(finding, peers)}，第 ${finding.line} 行，查看详情`"
     @click="$emit('select', finding, $event)">
     <span class="finding-algorithm"><strong>{{ finding.algorithm }}</strong><small>{{ finding.verification_status ? statusLabel(finding.verification_status) : finding.risk_level }}</small></span>
-    <span class="finding-location"><strong>{{ fileLabel(finding, peers) }}</strong><small>第 {{ finding.line }} 行<span v-if="finding.origins?.includes('cross_file')"> · 跨文件</span><span v-if="finding.review_required"> · 需人工处理</span></small></span>
+    <span class="finding-location"><strong>{{ fileLabel(finding, peers) }}</strong><small>第 {{ finding.line }} 行<span v-if="finding.origins?.includes('cross_file')">，跨文件</span><span v-if="finding.review_required">，需人工处理</span></small></span>
     <code>{{ finding.evidence }}</code>
     <AppIcon class="row-arrow" name="chevron" :size="14" />
   </button>

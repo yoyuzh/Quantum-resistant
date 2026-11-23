@@ -325,7 +325,7 @@ class ReportInsightTests(unittest.TestCase):
         result = build_insights([])
         self.assertEqual(result['affected_files'], 0)
         self.assertEqual(result['files'], [])
-        self.assertIn('不等于', result['conclusions'][1])
+        self.assertIn('本次扫描未检出', result['conclusions'][1])
 
 
 if __name__ == '__main__':

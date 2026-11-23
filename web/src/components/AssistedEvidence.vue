@@ -14,8 +14,8 @@ const reasons = { unknown_key_source: '密钥来源未确认', unbound_name: '�
 </script>
 <template>
   <div class="evidence-detail">
-    <p v-if="operation.evidence_scope === 'algorithm_policy'" class="notice">此处识别的是验签允许算法策略，不能据此确认令牌实际采用的算法。</p>
-    <p v-if="operation.context.kind === 'uninstantiated_template'" class="notice">当前仅发现封装定义，未解析到调用实例。</p>
+    <p v-if="operation.evidence_scope === 'algorithm_policy'" class="notice">此处为验签算法允许列表。令牌实际算法待确认。</p>
+    <p v-if="operation.context.kind === 'uninstantiated_template'" class="notice">已定位封装定义，调用位置待确认。</p>
     <dl class="claim-list"><template v-for="claim in operation.claims" :key="claim.claim_type">
       <dt>{{ { ALGORITHM: '算法', OPERATION_TYPE: '操作', KEY_SOURCE: '密钥来源', QUANTUM_CLASS: '量子风险分类' }[claim.claim_type] }}</dt>
       <dd>{{ claim.level === 'E3' ? '静态证据已核验' : '待确认' }}<InfoTip v-if="claim.value.kind === 'unknown'" :label="{ALGORITHM:'算法',OPERATION_TYPE:'操作',KEY_SOURCE:'密钥来源',QUANTUM_CLASS:'量子风险分类'}[claim.claim_type]+'未确认原因'">{{ reasons[claim.value.reason] || '当前语义范围内无法确认' }}</InfoTip></dd>
@@ -23,7 +23,7 @@ const reasons = { unknown_key_source: '密钥来源未确认', unbound_name: '�
     <div class="path-types">
       <span v-for="type in edgeTypes" :key="type">{{ edgeLabels[type] }}</span>
     </div>
-    <DisclosurePanel v-for="(span, i) in positions" :key="JSON.stringify(span)" :title="`${file(span.source_id)} · 第 ${span.start_line} 行`" @toggle="$event ? opened.add(i) : opened.delete(i)">
+    <DisclosurePanel v-for="(span, i) in positions" :key="JSON.stringify(span)" :title="`${file(span.source_id)} 第 ${span.start_line} 行`" @toggle="$event ? opened.add(i) : opened.delete(i)">
       <CodePreview v-if="opened.has(i)" :sources="result.sources" :finding="{ source_id: span.source_id, line: span.start_line, file_name: file(span.source_id) }" :load-source="loadSource" />
     </DisclosurePanel>
   </div>

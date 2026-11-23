@@ -89,7 +89,47 @@ def decode_github_blob(payload: dict) -> str:
             raise FileCollectionError("文件超过 2 MiB 限制", 'file_size')
         return data.decode("utf-8-sig")
     except (binascii.Error, UnicodeError) as exc:
-        raise FileCollectionError("文件不是有效 UTF-8 文本", 'encoding') from exc
+        raise FileCollectionError("文件编码无效，需使用 UTF-8", 'encoding') from exc
+
+
+def complete_tree(client, api: str, headers: dict, payload: dict, deadline: Deadline) -> tuple[list[dict], bool]:
+    """Recover a truncated recursive tree with bounded non-recursive requests."""
+    root = payload.get('sha')
+    if not isinstance(root, str) or not re.fullmatch(r'[0-9a-fA-F]{40}', root):
+        return payload['tree'], True
+    trees = [('', root)]
+    recovered = []
+    walk = deadline.child(min(60, deadline.remaining() / 3))
+    try:
+        for _ in range(128):
+            if not trees:
+                return recovered, False
+            prefix, sha = trees.pop()
+            data = github_get(client, f'{api}/git/trees/{sha}', headers=headers, deadline=walk, attempts=1).json()
+            if not isinstance(data, dict) or data.get('truncated') or not isinstance(data.get('tree'), list):
+                raise CollectionError('GitHub 子树文件列表不完整')
+            for item in data['tree']:
+                walk.remaining()
+                path = item.get('path') if isinstance(item, dict) else None
+                if not isinstance(path, str) or path in ('', '.', '..') or '/' in path:
+                    raise CollectionError('GitHub 子树路径无效')
+                name = prefix + path
+                if item.get('type') == 'tree':
+                    child = item.get('sha')
+                    if not isinstance(child, str) or not re.fullmatch(r'[0-9a-fA-F]{40}', child):
+                        raise CollectionError('GitHub 子树标识无效')
+                    trees.append((name + '/', child))
+                elif item.get('type') == 'blob' and is_supported_source_path(name):
+                    recovered.append({**item, 'path': name})
+                if len(recovered) + len(trees) > 100_000:
+                    raise CollectionError('GitHub 子树超过列表上限')
+        if not trees:
+            return recovered, False
+    except (httpx.HTTPError, ValueError, CollectionError, OSError):
+        deadline.remaining()
+    existing = {item['path']: item for item in payload['tree'] if isinstance(item.get('path'), str)}
+    existing.update((item['path'], item) for item in recovered)
+    return list(existing.values()), True
 
 
 def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSources:
@@ -164,15 +204,22 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                         pass
                 if (len(candidates) > 32 or payload.get('truncated')) and (not archive_first or version not in attempts_by_ref):
                     try:
-                        return from_archive(version)
+                        documents = from_archive(version)
+                        if documents:
+                            return documents
                     except (CollectionTimeout, GitHubAccessError):
                         raise
                     except (httpx.HTTPError, ValueError, CollectionError, zipfile.BadZipFile, OSError) as exc:
                         last_error = exc
+                truncated = bool(payload.get('truncated'))
+                if truncated:
+                    tree, truncated = complete_tree(client, api, headers, payload, deadline)
+                    candidates = [i for i in tree if i.get('type') == 'blob' and is_supported_source_path(str(i.get('path', '')))]
+                    candidates.sort(key=lambda i: source_priority(i['path']))
                 eligible = [i for i in candidates if int(i.get("size") or 0) <= MAX_COLLECTED_FILE_BYTES][:limit]
                 reasons = Counter(file_size=len(candidates) - len([i for i in candidates if int(i.get('size') or 0) <= MAX_COLLECTED_FILE_BYTES]))
                 reasons['file_limit'] = max(0, len(candidates) - reasons['file_size'] - len(eligible))
-                deadline.control.emit(candidate_files=None if payload.get('truncated') else len(candidates), processed_files=sum(reasons.values()), skipped_files=sum(reasons.values()), totals_final=False)
+                deadline.control.emit(candidate_files=None if truncated else len(candidates), processed_files=sum(reasons.values()), skipped_files=sum(reasons.values()), totals_final=False)
                 deadline.control.emit(stage="采集源码文件")
                 def fetch(item):
                     path = item["path"]
@@ -207,20 +254,22 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     docs.sort(key=lambda d: source_priority(d[1]))
                     skipped = len(candidates) - len(docs)
                     diagnostics = []
-                    if skipped or payload.get("truncated"):
-                        diagnostics.append({"code": "partial_collection", "message": f"仅扫描已采集的 {len(docs)} 个文件，存在未扫描文件。"})
+                    if skipped:
+                        diagnostics.append({"code": "partial_collection", "message": f"采集提前结束，已采集 {len(docs)} 个文件。"})
+                    if truncated:
+                        diagnostics.append({'code': 'github_tree_truncated', 'message': 'GitHub 文件列表不完整，候选总数未知。'})
                     errors = [str(value) for _, value in completed if isinstance(value, CollectionError)]
                     if errors:
                         diagnostics.append({"code": "file_collection_errors", "message": "；".join(errors[:3])})
                     if timed_out:
-                        diagnostics.append({"code": "collection_timeout", "message": "采集达到时间预算，已保留完成的文件。"})
+                        diagnostics.append({"code": "collection_timeout", "message": "文件采集超时。"})
                     for _, value in completed:
                         if isinstance(value, Exception):
                             reasons[getattr(value, 'reason', 'download_failure')] += 1
                     reasons['cancelled' if deadline.control.cancelled.is_set() else 'timeout'] += max(0, len(eligible) - len(completed))
                     deadline.control.emit(processed_files=len(candidates), skipped_files=skipped, analysis_total=len(docs), totals_final=True)
-                    return CollectedSources(docs, limit=limit, candidates=None if payload.get("truncated") else len(candidates),
-                                            skipped=skipped, partial=bool(skipped or timed_out or payload.get("truncated")), diagnostics=diagnostics, skip_reasons=dict(reasons))
+                    return CollectedSources(docs, limit=limit, candidates=None if truncated else len(candidates),
+                                            skipped=skipped, partial=bool(skipped or timed_out or truncated), diagnostics=diagnostics, skip_reasons=dict(reasons))
                 if timed_out:
                     raise CollectionTimeout("GitHub 文件采集超时")
                 if access_error:

@@ -185,8 +185,8 @@ class BackendApiTests(unittest.TestCase):
         self.assertIn("# 抗量子密码风险检测与迁移辅助软件 扫描报告", response.text)
         self.assertIn("report_demo.py", response.text)
         self.assertIn("RSA", response.text)
-        self.assertIn("风险发现总数：1", response.text)
-        self.assertIn("迁移优先级：立即规划迁移", response.text)
+        self.assertIn("共 1 项发现", response.text)
+        self.assertIn("（立即规划迁移）", response.text)
         self.assertIn("+08:00", response.text)
 
     def test_markdown_report_handles_clean_sources(self) -> None:
@@ -197,8 +197,8 @@ class BackendApiTests(unittest.TestCase):
         response = self.client.post("/api/report/markdown", json=scan_response.json())
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("风险发现总数：0", response.text)
-        self.assertIn("未发现已知量子脆弱公钥算法用法", response.text)
+        self.assertIn("共 0 项发现", response.text)
+        self.assertIn("本次扫描未检出已知量子脆弱公钥算法", response.text)
 
 
 class PopularResultsApiTests(unittest.TestCase):

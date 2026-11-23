@@ -26,7 +26,6 @@ defineEmits(['toggle-input', 'rescan', 'cancel']);
         <div class="empty">
           <span class="empty-mark"><AppIcon name="scan" :size="28" /></span>
           <h2>等待扫描</h2>
-          <p>扫描后显示算法、命中位置与迁移建议。</p>
         </div>
         <KnowledgePanel />
       </div>

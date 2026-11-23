@@ -11,5 +11,5 @@ export function modelStatus(profile) {
   if(state==='tested')return '连接测试通过';
   if(state==='success')return '最近调用成功';
   if(state && state!=='untested')return '最近连接失败';
-  return profile.ready?'已配置 · 未测试':'配置不完整';
+  return profile.ready?'已配置（未测试）':'配置不完整';
 }

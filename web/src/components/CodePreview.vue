@@ -40,7 +40,7 @@ const full = computed(() => {
     <p>{{ error }}</p><button class="button secondary" @click="load">重试读取源码</button>
   </div>
   <div v-else-if="lines.length" class="source-preview">
-  <div class="source-toolbar"><span>第 {{ finding.line }} 行{{ context ? ' · 完整文件' : ' · 附近源码' }}</span><button v-if="sourceData?.content" class="button text-action compact" @click="context=!context">{{ context ? '收起上下文' : '完整源码' }}</button></div>
+  <div class="source-toolbar"><span>第 {{ finding.line }} 行</span><button v-if="sourceData?.content" class="button text-action compact" @click="context=!context">{{ context ? '收起上下文' : '完整源码' }}</button></div>
   <pre v-if="context" class="full-code" tabindex="0" :aria-label="`${finding.file_name} 完整源码`"><code>{{ full.before }}<mark>{{ full.target }}</mark>{{ full.after }}</code></pre>
   <div v-else
     class="code-view"
@@ -53,7 +53,7 @@ const full = computed(() => {
     </div>
   </div>
   </div>
-  <p v-else class="notice">源码不可用，此结果仅保留代码证据。</p>
+  <p v-else class="notice">源码不可用。</p>
 </template>
 
 <style scoped>

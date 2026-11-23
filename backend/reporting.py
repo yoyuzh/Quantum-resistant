@@ -37,7 +37,7 @@ def build_markdown_report(
     scanned_at: Optional[str] = None, coverage: dict | None = None,
     diagnostics: list[dict] | None = None,
 ) -> str:
-    from backend.report_presentation import BOUNDARIES, key_conclusions, scope_status, migration_presentation
+    from backend.report_presentation import SCORE_NOTE, key_conclusions, scope_status, scope_columns, migration_presentation
     import json
     import re
     summary = build_summary(sources, findings)
@@ -45,24 +45,22 @@ def build_markdown_report(
     insights = analysis["insights"]
     cell = markdown_table_cell
     lines = ["# 抗量子密码风险检测与迁移辅助软件 扫描报告", "",
-             f"{cell(SOURCE_LABELS.get(source_type, source_type))} · {cell(scanned_at or beijing_now_iso())}（北京时间）", "",
+             f"{cell(SOURCE_LABELS.get(source_type, source_type))}，{cell(scanned_at or beijing_now_iso())}（北京时间）", "",
              "## 摘要与关键结论", "",
-             f"- 风险发现总数：{summary['finding_count']} · 受影响文件：{insights['affected_files']}",
-             f"- 文件数量：{summary['source_count']} · 算法种类：{len(summary['algorithm_counts'])}",
-             f"- 迁移评分：{summary['migration_score']['score']}/100 · 迁移优先级：{cell(summary['migration_score']['priority'])}",
-             *[f"- {cell(line)}" for line in key_conclusions(analysis)], "", scope_status(coverage), "",
-             "## 扫描范围", ""]
+             f"- 共 {summary['finding_count']} 项发现，涉及 {insights['affected_files']} 个文件。",
+             f"- 扫描 {summary['source_count']} 个文件，检出 {len(summary['algorithm_counts'])} 类算法。",
+             f"- 迁移评分：{summary['migration_score']['score']}/100（{cell(summary['migration_score']['priority'])}）",
+             *[f"- {cell(line)}" for line in key_conclusions(analysis)], ""]
+    if status := scope_status(coverage):
+        lines.extend([status, ""])
+    lines.extend(["## 扫描范围", ""])
     def rows(headers, values):
         lines.extend(["| " + " | ".join(headers) + " |", "| " + " | ".join("---" for _ in headers) + " |"])
         lines.extend("| " + " | ".join(cell(v) for v in row) + " |" for row in values)
         lines.append("")
-    if coverage:
-        rows(["项目", "本次数据"], [["已分析文件", coverage.get('scanned_files', summary['source_count'])],
-             ["候选文件", coverage.get('candidate_files') if coverage.get('candidate_files') is not None else '未知'],
-             ["跳过文件", coverage.get('skipped_files', 0)]])
-    else:
-        lines.extend(["扫描范围未知。", ""])
-    lines.extend(["## 主要统计", "", f"统计分母：本次全部 {len(findings)} 项发现。", ""])
+    labels, scope = scope_columns(coverage, summary['source_count'])
+    rows(["项目", "本次数据"], list(zip(labels, scope)))
+    lines.extend(["## 主要统计", ""])
     for title, key in [("算法", "algorithms"), ("受影响文件 Top 8", "files"), ("用途", "purposes")]:
         lines.extend([f"### {title}", ""])
         rows(["项目", "发现数"], [[r['label'] + (f" ({r['key']})" if key == 'files' else ''), r['count']] for r in insights[key]])
@@ -76,9 +74,9 @@ def build_markdown_report(
         for a in analysis['assets']])
     lines.extend(["## 发现明细", ""])
     if not findings:
-        lines.extend(["未发现已知量子脆弱公钥算法用法。", ""])
+        lines.extend(["无发现。", ""])
     for index, finding in enumerate(findings, 1):
-        lines.extend([f"### {index}. {cell(finding['algorithm'])} · 第 {cell(finding['line'])} 行 · {cell(finding['risk_level'])}", "",
+        lines.extend([f"### {index}. {cell(finding['algorithm'])}（{cell(finding['risk_level'])}，第 {cell(finding['line'])} 行）", "",
                       f"文件：{cell(finding['file_name'])}", ""])
         # A longer fence preserves arbitrary evidence containing backticks and newlines.
         evidence = str(finding['evidence'])
@@ -89,8 +87,8 @@ def build_markdown_report(
         if finding.get('detection_method'):
             method += f" ({finding['detection_method']})"
         lines.extend([
-            f"- 文件身份：{cell(finding['source_id'])} · 来源：{cell(finding.get('source_type') or '未记录')}",
-            f"- 识别方式：{cell(method)} · 密码库：{cell(finding.get('library') or '未记录')}",
+            f"- 文件身份：{cell(finding['source_id'])}，来源：{cell(finding.get('source_type') or '未记录')}",
+            f"- 识别方式：{cell(method)}，密码库：{cell(finding.get('library') or '未记录')}",
             f"- 完整 API：{cell(finding.get('resolved_api') or '未记录')}", "",
             f"原因：{cell(finding['reason'])}", "",
             f"迁移参考：{cell(finding['recommendation'])}", "",
@@ -116,7 +114,7 @@ def build_markdown_report(
                  for index, url in enumerate(migration['references'], 1))
     if not analysis['migrations']:
         lines.extend(["无迁移待办。", ""])
-    lines.extend(["## 附录", "", "### 评分与能力边界", "", *[f"- {line}" for line in BOUNDARIES], "", "### 识别依据", ""])
+    lines.extend(["## 附录", "", "### 迁移评分", "", SCORE_NOTE, "", "### 识别依据", ""])
     rows(["识别方式", "发现数"], [[r['label'], r['count']] for r in insights['methods']])
     lines.extend(["### 范围详情", ""])
     rows(["字段", "值"], [[k, json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v] for k, v in (coverage or {}).items()])

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 from fastapi import HTTPException
 from backend.models import MAX_SOURCE_BYTES, SourceType, ScanResponse
@@ -36,7 +37,7 @@ def build_scan_response(
             try:
                 deadline.remaining()
             except CollectionTimeout:
-                diagnostics.append({"code": "analysis_interrupted", "message": "分析已中断，仅保留完整分析过的文件。"})
+                diagnostics.append({"code": "analysis_interrupted", "message": "文件分析中断。"})
                 break
             deadline.control.emit(stage="静态分析")
         if len(document) == 3:
@@ -67,17 +68,23 @@ def build_scan_response(
 
     summary = build_summary(sources, findings)
     coverage = dict(getattr(documents, "coverage", {"scanned_files": len(sources), "candidate_files": len(documents)}))
-    coverage['scanned_files'] = len(sources)
-    if len(sources) < len(documents):
+    unscanned = {note['source_id'] for note in diagnostics if note.get('source_id')
+                 and note.get('code') in ('analysis_limit', 'config_parse_error')}
+    degraded = {note['source_id'] for note in diagnostics if note.get('source_id') and note.get('code') == 'syntax_fallback'}
+    coverage['scanned_files'] = len(sources) - len(unscanned)
+    coverage['degraded_files'] = len(degraded - unscanned)
+    skipped_in_analysis = max(0, len(documents) - len(sources)) + len(unscanned)
+    coverage['skipped_files'] = coverage.get('skipped_files', 0) + skipped_in_analysis
+    if skipped_in_analysis or coverage['degraded_files']:
         coverage['partial'] = True
-        coverage['skipped_files'] = coverage.get('skipped_files', 0) + len(documents) - len(sources)
+    reasons = Counter(coverage.get('skip_reasons', {}))
+    if unscanned:
+        reasons['analysis_failure'] += len(unscanned)
     if pipeline:
-        reasons = dict(coverage.get('skip_reasons', {}))
-        for reason, count in pipeline.skip_reasons.items():
-            reasons[reason] = reasons.get(reason, 0) + count
-        coverage['skip_reasons'] = reasons
+        reasons.update(pipeline.skip_reasons)
         if pipeline.skip_reasons:
-            diagnostics.append({'code': 'analysis_interrupted', 'message': '存在未完成分析的文件，已保留完整分析过的部分。'})
+            diagnostics.append({'code': 'analysis_interrupted', 'message': '部分文件未完成分析。'})
+    coverage['skip_reasons'] = dict(reasons)
     if deadline:
         deadline.control.emit(stage='汇总结果', skipped_files=coverage.get('skipped_files', 0))
     return ScanResponse(

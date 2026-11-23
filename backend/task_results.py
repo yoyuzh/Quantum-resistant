@@ -29,7 +29,7 @@ def persist_result(store, job, value):
                 raise RuntimeError('来源仍在读取，不能释放源码换取结果空间')
             store.storage.discard_sources(job.folder)
             job.control.source_paths = {}
-        note = {'code': 'source_storage_evicted', 'message': '临时存储容量不足，完整分析结果已保留；本次源码未保留，查看源码需重新扫描。'}
+        note = {'code': 'source_storage_evicted', 'message': '临时空间不足。重新扫描可查看源码。'}
         for source in result.get('sources', []):
             source['content_available'] = False
         result.setdefault('diagnostics', []).append(note)

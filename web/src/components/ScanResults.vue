@@ -18,8 +18,31 @@ defineEmits(['toggle-input', 'rescan']);
 const result = computed(() => props.result.integrated_analysis ? { ...props.result,
   findings: props.result.integrated_analysis.findings, summary: props.result.integrated_analysis.summary,
   analysis: props.result.integrated_analysis.analysis } : props.result);
-const deepIncomplete=computed(()=>['partial','failed','cancelled'].includes(result.value.deep_analysis?.status));
-const scopeDiagnostics=computed(()=>[...(result.value.diagnostics || []),...(deepIncomplete.value?result.value.deep_analysis.diagnostics || []:[])]);
+const deep = computed(() => result.value.deep_analysis);
+const deepIncomplete=computed(()=>['partial','failed','cancelled'].includes(deep.value?.status));
+const deepStatus = computed(() => {
+  if (deep.value?.status === 'cancelled') return '跨文件核验已取消。';
+  if (deep.value?.status === 'failed') return '跨文件核验失败。';
+  if (!deep.value?.work_completed) return '跨文件核验未完成。';
+  return deep.value.coverage?.parsed?.count ? '可解析的 Python 文件已完成核验。' : '没有可核验的 Python 文件。';
+});
+const deepFileCount = computed(() => {
+  const coverage = deep.value?.coverage;
+  if (!coverage?.parsed) return '';
+  return `${coverage.parsed.count} / ${coverage.selected?.total ?? coverage.parsed.total ?? '未知'} 个 Python 文件已解析。`;
+});
+const syntaxGap = computed(() => {
+  const errors = deep.value?.diagnostics?.filter(note => note.code === 'parse_failed') || [];
+  if (errors.length !== 1) return '';
+  return result.value.sources.find(source => source.source_id === errors[0].location?.source_id)?.file_name || '';
+});
+const scopeDiagnostics = computed(() => {
+  const notes = result.value.diagnostics || [];
+  if (!deepIncomplete.value) return notes;
+  const fallbacks = new Set(notes.filter(note => note.code === 'syntax_fallback').map(note => note.source_id));
+  return [...notes, ...(deep.value.diagnostics || []).filter(note => note.code !== 'library_version_assumption' &&
+    !(note.code === 'parse_failed' && fallbacks.has(note.location?.source_id)))];
+});
 const loadSource = useSourceContent(result);
 const body = ref(null);
 const header = ref(null);
@@ -36,7 +59,7 @@ async function clearFilters() {
 <template>
   <div class="result-layout">
     <Teleport to="#result-view-navigation"><ResultTabs v-if="presented" :tab="tab" @select="switchTab" /></Teleport>
-    <p class="sr-only" role="status">本次分析已结束，共 {{ result.summary.finding_count }} 项{{ result.integrated_analysis ? '确认风险' : '规则发现' }}。</p>
+    <p class="sr-only" role="status">本次扫描共 {{ result.summary.finding_count }} 项{{ result.integrated_analysis ? '确认风险' : '规则发现' }}。</p>
     <div ref="header" class="result-sticky">
       <ResultHeader :result="result" :tab="tab" :filters="filters" :origin="origin"
         :announcement="announcement" :state="state" :input="input" @back="back" @reset="clearFilters"
@@ -48,7 +71,10 @@ async function clearFilters() {
       <ResultHelp :score="result.summary.migration_score" :coverage="result.coverage" />
     </div>
     <div v-if="!result.coverage || result.coverage.partial || scopeDiagnostics.length || deepIncomplete" class="result-coverage">
-      <p v-if="deepIncomplete" class="deep-status" role="status">跨文件核验未全部完成，已保留 {{ result.deep_analysis.operations?.length || 0 }} 项完整操作；规则发现仍可查看。</p>
+      <p v-if="deepIncomplete" class="deep-status" role="status">
+        {{ deepStatus }}{{ deepFileCount }}已产出 {{ deep.operations?.length || 0 }} 项操作的证据。
+        <template v-if="syntaxGap">{{ syntaxGap }} 有语法错误。</template>
+      </p>
       <CoverageNotice :coverage="result.coverage" :diagnostics="scopeDiagnostics" compact />
     </div>
     <div id="result-panel" ref="body" class="panel-body stack" role="tabpanel" tabindex="0"
@@ -80,7 +106,7 @@ async function clearFilters() {
 .result-coverage { padding: 0 var(--workspace-gutter); flex-shrink: 0;
   max-height: 25dvh; overflow-y: auto; background: var(--bg-surface); }
 .result-summary > :first-child { flex: 1; }
-.deep-status { font-size:14px;padding-block:4px;color:var(--text-secondary); }
+.deep-status { font-size:14px;padding-block:4px;color:var(--text-secondary);overflow-wrap:anywhere; }
 .panel-body { background: transparent; padding: 16px var(--workspace-gutter); }
 .panel-body.is-overview { padding-block: 12px; }
 .panel-body.is-findings { padding: 0; overflow: hidden; gap: 0; }

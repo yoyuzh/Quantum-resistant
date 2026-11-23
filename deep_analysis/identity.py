@@ -21,6 +21,8 @@ def snapshot_id(snapshot: SnapshotIdentity) -> str:
     facts = snapshot.model_dump(mode="json", exclude={"snapshot_id"})
     facts["sources"] = sorted(facts["sources"], key=lambda item: (item["relative_path"], item["source_id"]))
     facts["package_roots"] = sorted(facts["package_roots"])
+    if not facts['unavailable_imports']:
+        facts.pop('unavailable_imports')
     return stable_id("snapshot", facts)
 
 
@@ -37,7 +39,10 @@ def operation_id(snapshot: str, sink: Span, context: CallContext, rules: str, se
 def extract_span(content: str, span: Span) -> str:
     """Reject out-of-bounds or split code points instead of rounding columns."""
     # Only LF separates Python source lines; preserve CRLF and Unicode separators.
-    lines = content.encode("utf-8").split(b"\n")
+    return extract_span_lines(content.encode('utf-8').split(b'\n'), span)
+
+
+def extract_span_lines(lines: list[bytes], span: Span) -> str:
     if span.end_line > len(lines):
         raise ValueError("位置超出源码行数")
     start = lines[span.start_line - 1]

@@ -6,7 +6,6 @@ import os
 import secrets
 from dataclasses import replace
 from threading import RLock
-from pathlib import Path
 
 from fastapi import HTTPException
 from pydantic import Field

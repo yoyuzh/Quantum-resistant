@@ -109,14 +109,18 @@ def catalog(base, control, check):
         except (OSError, UnicodeError):
             notes.append('source_unavailable')
             continue
-        read += len(text.encode('utf-8'))
+        encoded = text.encode('utf-8')
+        source_hash = hashlib.sha256(encoded).hexdigest()
+        if getattr(control, 'source_digests', {}).get(identity, source_hash) != source_hash:
+            raise ValueError('来源源码摘要已改变，请重新扫描')
+        read += len(encoded)
         identities[identity] = digest([source['file_name'], text])
-        if source['file_name'].endswith(('.py', '.pyw')):
+        if source['file_name'].lower().endswith(('.py', '.pyw')):
             try:
                 cached = getattr(control, 'source_facts', {}).get(identity)
                 if cached:
                     facts = json.loads(cached.read_text(encoding='utf-8'))
-                    if facts['sha256'] != hashlib.sha256(text.encode('utf-8')).hexdigest():
+                    if facts['sha256'] != source_hash:
                         notes.append('source_digest_mismatch')
                         identities.pop(identity, None)
                         continue

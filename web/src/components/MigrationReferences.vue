@@ -48,14 +48,13 @@ onBeforeUnmount(() => dialog.value?.close());
         <div :id="`${id}-content`" ref="content" class="reference-content" role="tabpanel" tabindex="0" :aria-labelledby="`${id}-${tab}`">
           <div v-show="tab === 'workflow'">
             <MigrationSteps v-if="presentation.shared.length" :actions="presentation.shared" />
-            <p v-else class="notice">当前结果没有通用迁移流程，请通过对应记录的“查看方案”打开迁移步骤。</p>
+            <p v-else class="notice">在各条待办的「查看方案」中查看迁移步骤。</p>
           </div>
           <KnowledgeContent v-if="visited.has('knowledge')" v-show="tab === 'knowledge'" />
           <div v-show="tab === 'standards'" class="reference-links">
-            <p class="small muted">静态标准参考，请结合密码用途和平台支持复核。</p>
             <a v-for="(url, index) in presentation.references" :key="url" :href="url" target="_blank" rel="noopener noreferrer"
               class="button text-action"><AppIcon name="external" :size="16" />NIST 标准参考{{ presentation.references.length > 1 ? ` ${index + 1}` : '' }}</a>
-            <p v-if="!presentation.references.length" class="notice">当前结果未提供 NIST 标准参考链接。</p>
+            <p v-if="!presentation.references.length" class="notice">本次暂无 NIST 标准链接。</p>
           </div>
         </div>
       </div>

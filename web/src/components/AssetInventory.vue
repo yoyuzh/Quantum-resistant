@@ -19,7 +19,7 @@ const assets = computed(() => {
   <PagedCollection :items="assets" :item-key="assetKey" label="密码资产清单" :row-height="142" :touch-row-height="156">
     <template #heading><h3>密码资产 <span class="small muted">{{ assets.length }} 项</span></h3></template>
     <template #empty>
-      <p class="notice">{{ !analysis ? '此历史结果未记录资产分析，请在发现明细中查看证据。' : '当前范围内没有密码资产。' }}</p>
+      <p class="notice">{{ !analysis ? '历史结果缺少资产清单。证据见发现明细。' : '本次未检出密码资产。' }}</p>
     </template>
     <template #default="{ item, visibleItems }">
       <AssetRecord :asset="item" :peers="analysis.assets" @inspect="element=>inspect(item,visibleItems,element)" @reveal="(asset, location) => $emit('reveal', asset, location)" />

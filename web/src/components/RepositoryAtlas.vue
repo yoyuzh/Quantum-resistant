@@ -84,9 +84,9 @@ function download() {
     <div ref="popupLayer" />
     <template v-if="active">
       <header class="atlas-header">
-        <h2 :id="titleId">仓库算法与用途边捆绑图</h2>
+        <h2 :id="titleId">仓库算法与用途关系图</h2>
         <div class="atlas-actions">
-          <button class="button secondary compact" :aria-expanded="filtersOpen" @click="filtersOpen=!filtersOpen">筛选{{ filter || relations?.filtered ? ' · 已启用' : '' }}</button>
+          <button class="button secondary compact" :aria-expanded="filtersOpen" @click="filtersOpen=!filtersOpen">{{ filter || relations?.filtered ? '筛选中' : '筛选' }}</button>
           <GraphExportMenu :export-view="format => relations?.download(format)" :export-list="download" :disabled="!relations?.canExport" />
           <button class="button secondary compact" autofocus @click="close">关闭</button>
         </div>
@@ -95,11 +95,11 @@ function download() {
         <RepositoryBundleRelations ref="relations" :rows="atlas.rows" :evidence-open="Boolean(selected)"
           :rankings="rankings" :status="mode" :filter="filter" :filters-open="filtersOpen" :popup-target="popupLayer"
           :stamp="formatTime(result.scanned_at)+'（北京时间）'" @filter="filter=$event" @select="select" @clear-evidence="selected=null">
-          <template #scope>{{ batchScope(atlas) }} · {{ label(mode) }}</template>
+          <template #scope>{{ batchScope(atlas) }}（{{ label(mode) }}）</template>
           <template #help>
             <InfoTip label="图形操作与扫描范围" :popup-target="popupLayer">
               点击仓库或算法查看关系，点击连线查看证据。滚轮缩放，拖动画布平移。颜色和线型区分用途。
-              密钥材料表示识别到带算法标识的 PEM 密钥头。{{ formatTime(result.scanned_at) }}（北京时间） · {{ result.meta?.query || '样本条件未知' }}
+              密钥材料来自带算法标识的 PEM 密钥头。最近扫描于 {{ formatTime(result.scanned_at) }}（北京时间）。
             </InfoTip>
           </template>
           <template #evidence>
@@ -112,7 +112,7 @@ function download() {
         </RepositoryBundleRelations>
         <details v-if="atlas.failures.length" class="atlas-failures">
           <summary>失败或未完成仓库（{{ atlas.failed }}）</summary>
-          <p v-for="f in atlas.failures" :key="f.full_name">{{ f.full_name }} · {{ f.error }}</p>
+          <p v-for="f in atlas.failures" :key="f.full_name">{{ f.full_name }}：{{ f.error }}</p>
         </details>
       </div>
     </template>

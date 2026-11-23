@@ -38,7 +38,7 @@ class ReadingReportTests(unittest.TestCase):
                     self.assertIn(escape(str(finding[field]), quote=report is html), report)
             for value in ('download_failed', '读取失败', 'lost.py'):
                 self.assertIn(value, report)
-            self.assertEqual(report.count('统计分母'), 1)
+            self.assertNotIn('统计分母', report)
             self.assertNotIn('其余 0', report)
         self.assertEqual(html.count('<article><h3>'), len(payload['findings']))
         self.assertIn('<th>候选方案</th>', html)
@@ -47,8 +47,8 @@ class ReadingReportTests(unittest.TestCase):
         payload = self.payload()
         payload.update(findings=[], coverage=None)
         for report in (build_html_report(**payload), build_markdown_report(**payload)):
-            self.assertIn('扫描范围未知', report)
-            self.assertIn('零发现不能证明安全', report)
+            self.assertEqual(report.count('扫描范围未知'), 1)
+            self.assertIn('本次扫描未检出已知量子脆弱公钥算法', report)
             self.assertIn('附录', report)
             self.assertIn('无迁移待办', report)
 

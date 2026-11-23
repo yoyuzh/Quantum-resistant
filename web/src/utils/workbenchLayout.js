@@ -9,14 +9,14 @@ export function algorithmColor(value = '') {
 }
 function sizeNode(node, mode) {
   const filename = node.label.split(/[\\/]/).at(-1);
-  node.title = mode === 'calls' && node.role === 'operation' ? node.algorithm + (node.api?' · '+node.api.split('.').at(-1):'') : node.kind === 'file' ? filename : node.label;
-  node.badge = mode === 'calls' ? node.kindLabel + (node.status === 'ai_assessed' ? ' · AI研判' : node.status === 'pending' ? ' · 证据不足' : '') : '';
-  const status = node.status === 'ai_assessed' ? 'AI研判 · ' : node.status === 'pending' ? '证据不足 · ' : '';
+  node.title = mode === 'calls' && node.role === 'operation' ? node.algorithm + (node.api?' / '+node.api.split('.').at(-1):'') : node.kind === 'file' ? filename : node.label;
+  node.badge = mode === 'calls' ? node.kindLabel + (node.status === 'ai_assessed' ? '（AI 研判）' : node.status === 'pending' ? '（证据不足）' : '') : '';
+  const status = node.status === 'ai_assessed' ? 'AI 研判：' : node.status === 'pending' ? '证据不足：' : '';
   node.description = mode === 'calls' && node.role === 'operation'
-    ? [filename + ' · 第 ' + node.line + ' 行', node.purpose].filter(Boolean).join(' · ')
+    ? [filename + ' 第 ' + node.line + ' 行', node.purpose].filter(Boolean).join('，')
     : status + (node.detail || '');
   node.inlineBadge=mode==='calls';
-  if(node.inlineBadge)node.description=node.badge+' · '+node.description;
+  if(node.inlineBadge)node.description=node.badge+' '+node.description;
   const max = node.kind === 'algorithm' ? (mode === 'calls' ? 340 : 250) : node.kind === 'reference' ? 370 : 310;
   const estimate = [...node.title].reduce((n, c) => n + (/[^\u0000-\u00ff]/.test(c) ? 15 : 9.4), 0);
   node.width = Math.min(max, Math.max(mode==='calls' && node.role==='operation'?340:node.kind==='algorithm'?156:210, estimate+32));

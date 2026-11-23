@@ -62,7 +62,7 @@ export function useScan() {
       else Object.assign(body,binding);
       if (signal.aborted) return;
       return remote[mode].execute(body, signal, '', endpoint);
-    }, { errorMessage: e => state.result ? `本次扫描未完成，当前显示上次结果：${e.message}` : e.message });
+    }, { errorMessage: e => state.result ? `${e.message}（当前显示上次结果）` : e.message });
     } finally {starting.delete(mode);}
   }
   return { states, start, cancel: (mode) => remote[mode]?.cancel() };

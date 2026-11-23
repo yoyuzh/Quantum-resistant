@@ -53,7 +53,7 @@ def build_snapshot(documents: Iterable, source_type: SourceType, *, relative_pat
             readable = document.content_available is not False
         else:
             name, identity, readable = document.name, document.source_id, True
-        if not name.endswith(".py"):
+        if not name.lower().endswith(('.py', '.pyw')) and not (source_type == 'snippet' and '.' not in name):
             continue
         if not readable:
             diagnostics.append(Diagnostic(code="source_unavailable", message="已采集源码不可读取，未重新采集"))
@@ -95,8 +95,8 @@ def build_snapshot(documents: Iterable, source_type: SourceType, *, relative_pat
     gaps = set(coverage.get("skip_reasons", {}))
     if fidelity != "relative_paths":
         gaps.add("snippet_local_only" if fidelity == "snippet" else "flat_paths_no_cross_module")
-    elif len(roots) != 1:
-        gaps.add("package_root_not_unique")
+    elif not roots:
+        gaps.add('package_root_missing')
     gaps.update(d.code for d in diagnostics)
     count = len(sources)
     inherited = Coverage(collected=CoverageCount(count=len(docs), total=coverage.get("candidate_files")),

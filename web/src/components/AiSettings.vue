@@ -8,7 +8,7 @@ import { notify } from '../composables/useNotice.js';
 import AppIcon from './AppIcon.vue';
 import { modelStatus } from '../utils/modelProfiles.js';
 const dialog=ref(null),selected=ref('new'),busy=ref(false),error=ref(''),status=ref(''),confirmDelete=ref(false);
-const profileOptions=computed(()=>[{value:'new',label:'新配置'},...aiProfiles.profiles.map(p=>({value:p.id,label:p.name+(p.active?' · 已启用':'')}))]);
+const profileOptions=computed(()=>[{value:'new',label:'新配置'},...aiProfiles.profiles.map(p=>({value:p.id,label:p.name+(p.active?'（已启用）':'')}))]);
 const current=computed(()=>aiProfiles.profiles.find(p=>p.id===selected.value) || null);
 watch(error,value=>{if(value)notify(value,'error');});
 watch(status,value=>{if(value)notify(value);});
@@ -42,7 +42,7 @@ onBeforeUnmount(()=>{sequence++;dialog.value?.close();});
     <div class="settings-layout"><aside><div class="profile-actions"><button class="button primary compact" :disabled="busy || !aiSettings.can_manage || aiProfiles.profiles.filter(p=>!p.readonly).length>=32" @click="selected='new';confirmDelete=false">新增配置</button><button class="button secondary compact" :disabled="busy || !aiSettings.can_manage || !aiProfiles.active_profile_id" @click="activate(null)">全部停用</button></div>
       <SelectControl v-if="aiProfiles.profiles.length" class="mobile-profile-picker" v-model="selected" label="已保存配置" :options="profileOptions" :popup-target="dialog" />
       <div class="profile-list" aria-label="已保存模型配置"><button v-for="profile in aiProfiles.profiles" :key="profile.id" class="profile-row" :class="{selected:selected===profile.id}" :aria-pressed="selected===profile.id" @click="selected=profile.id;confirmDelete=false"><strong>{{ profile.name }}</strong><span>{{ profile.model }}</span><small>{{ profile.active?'已启用':'未启用' }}</small></button></div>
-    </aside><section class="profile-main"><div v-if="current" class="profile-summary"><div class="profile-heading"><h3>{{ current.name }}</h3><strong>{{ modelStatus(current) }}</strong></div><span>{{ current.readonly?'环境变量 · 只读':current.credential_persisted?'系统安全存储':'仅本次运行' }}</span><button class="button secondary compact" :disabled="busy || !aiSettings.can_manage || current.active" @click="activate(current.id)">{{ current.active?'当前启用':'启用此配置' }}</button></div>
+    </aside><section class="profile-main"><div v-if="current" class="profile-summary"><div class="profile-heading"><h3>{{ current.name }}</h3><strong>{{ modelStatus(current) }}</strong></div><span>{{ current.readonly?'环境配置（只读）':current.credential_persisted?'系统安全存储':'仅本次运行' }}</span><button class="button secondary compact" :disabled="busy || !aiSettings.can_manage || current.active" @click="activate(current.id)">{{ current.active?'当前启用':'启用此配置' }}</button></div>
       <p v-if="!aiSettings.can_manage" class="notice">仅本机可管理模型配置。</p>
       <AiProfileEditor v-if="aiSettingsOpen" :key="selected" :profile="current" :providers="aiProfiles.providers" :busy="busy" :can-manage="aiSettings.can_manage" :popup-target="dialog" :first="!aiProfiles.profiles.length" @save="save" @test="test" @clear="remove(true)" />
       <div v-if="current && !current.readonly" class="delete-actions"><button v-if="!confirmDelete" class="button text-action compact" :disabled="busy || !aiSettings.can_manage" @click="confirmDelete=true">删除配置</button><template v-else><span>删除后需重新填写凭据。</span><button class="button secondary compact" :disabled="busy" @click="remove()">确认删除</button><button class="button text-action compact" @click="confirmDelete=false">取消</button></template></div>

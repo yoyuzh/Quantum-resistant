@@ -14,7 +14,7 @@ const current=computed(()=>rows.value[0]);
   <aside class="graph-evidence-detail" aria-label="图节点依据与源码"><header><strong>{{ node.label }}</strong><button class="button text-action compact" @click="$emit('close')">收起</button></header><span class="tag">{{ node.referenceLabel!==undefined?'迁移参考':statusLabel(node.status) }}</span>
     <p v-if="node.detail">{{ node.detail }}</p><FindingDetail v-if="current" :finding="current" :sources="result.sources" :load-source="loadSource" compact />
     <CodePreview v-if="current || (node.sourceId && node.line)" :sources="result.sources" :finding="current || {source_id:node.sourceId,line:node.line,file_name:file}" :load-source="loadSource" />
-    <div v-else><p v-if="node.kind==='reference'">此项为迁移参考，须结合已确认用途评估协议和库的兼容性。</p><p>{{ rows.length }} 项关联发现</p><ul><li v-for="row in rows.slice(0,30)" :key="row.finding_id">{{ row.file_name }} · 第 {{ row.line }} 行 · {{ row.algorithm }}</li></ul></div>
+    <div v-else><p v-if="node.kind==='reference'">评估迁移前，请核对用途、协议与密码库支持。</p><p>{{ rows.length }} 项关联发现</p><ul><li v-for="row in rows.slice(0,30)" :key="row.finding_id">{{ row.file_name }} 第 {{ row.line }} 行（{{ row.algorithm }}）</li></ul></div>
   </aside>
 </template>
 <style scoped>

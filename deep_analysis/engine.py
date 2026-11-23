@@ -7,7 +7,7 @@ from typing import Callable, Iterator
 from deep_analysis.abstract_values import SemanticLimit
 from deep_analysis.dataflow import Evaluator, Frame, SEMANTICS_VERSION, SliceLimit, contains
 from deep_analysis.discovery import CallSite, Discovery, DISCOVERY_VERSION
-from deep_analysis.identity import operation_id, template_id, stable_id
+from deep_analysis.identity import operation_id, template_id
 from deep_analysis.models import ArgumentFact, Budgets, CallContext, CoverageCount, Diagnostic, Unknown
 from deep_analysis.semantic_models import Candidate, SemanticResult
 from deep_analysis.snapshot import Snapshot
@@ -137,7 +137,7 @@ def analyze(snapshot: Snapshot, *, index: Index | None = None, budgets: Budgets 
         limited = partial = True
         diagnostics.append(Diagnostic(code=str(exc), message='共享语义结构达到上限，已完成候选保留'))
     coverage = index.coverage.model_copy(update={
-        'analyzed': CoverageCount(count=0 if limited else len(index.modules), total=len(snapshot.logical.sources)),
+        'analyzed': CoverageCount(count=0 if limited else index.coverage.analyzed.count, total=len(snapshot.logical.sources)),
         'partial': partial,
         'gaps': tuple(sorted(set(index.coverage.gaps) | {d.code for d in diagnostics}))[:200],
     })

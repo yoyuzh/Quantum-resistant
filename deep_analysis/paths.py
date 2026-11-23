@@ -3,6 +3,17 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from typing import Iterable
+
+
+def path_names(paths: Iterable[str]) -> set[str]:
+    names = set()
+    for path in paths:
+        *dirs, filename = path.split('/')
+        names.update(dirs)
+        if filename.lower().endswith(('.py', '.pyw')):
+            names.add(filename.rsplit('.', 1)[0])
+    return names
 
 
 def safe_path(value: str) -> str:

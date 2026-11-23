@@ -76,6 +76,7 @@ class Scope(Record):
     candidate_files: Count | None
     file_limit: Count | None
     skipped_files: Count
+    degraded_files: Count = 0
     partial: Annotated[bool, Field(strict=True)]
     skip_reasons: dict[Short, Count] = Field(default_factory=dict, max_length=32)
 
@@ -189,6 +190,7 @@ def read_library() -> Library:
 
 def complete_coverage(coverage: Scope) -> bool:
     return (not coverage.partial and not coverage.skipped_files
+            and not coverage.degraded_files
             and coverage.candidate_files == coverage.scanned_files)
 
 
@@ -200,9 +202,14 @@ def merge_library(incoming: list[Repository], *, protect_complete: bool = False)
         for repo in incoming:
             key = repo.full_name.casefold()
             previous = records.get(key)
-            if (protect_complete and previous and not complete_coverage(repo.coverage)
-                    and (complete_coverage(previous.coverage) or previous.coverage.scanned_files > repo.coverage.scanned_files)):
-                continue
+            if protect_complete and previous:
+                coverage_regressed = not complete_coverage(repo.coverage) and (
+                    complete_coverage(previous.coverage) or previous.coverage.scanned_files > repo.coverage.scanned_files)
+                verification_regressed = (complete_coverage(previous.coverage)
+                    and previous.algorithm_inventory.stages.get('pending') == 'completed'
+                    and repo.algorithm_inventory.stages.get('pending') in ('partial', 'failed', 'cancelled'))
+                if coverage_regressed or verification_regressed:
+                    continue
             if previous is None or repo.scanned_at > previous.scanned_at:
                 records[key] = repo
                 changed = True

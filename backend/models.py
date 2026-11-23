@@ -116,6 +116,7 @@ class Coverage(BaseModel):
     file_limit: int | None = None
     candidate_files: int | None = None
     skipped_files: int = 0
+    degraded_files: int = 0
     partial: bool = False
     skip_reasons: dict[str, int] = Field(default_factory=dict)
 

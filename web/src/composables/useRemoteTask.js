@@ -3,6 +3,7 @@ import { request } from '../api/client.js';
 import { followTask } from '../utils/remoteTasks.js';
 import { uploadRequest } from '../api/upload.js';
 import { createRequestId } from '../utils/requestId.js';
+import { presentScanCompletion } from './useTaskRunner.js';
 
 export function useRemoteTask(kind, state, storageKey = kind) {
   const key = `quantum-task-${storageKey}`;
@@ -71,7 +72,7 @@ export function useRemoteTask(kind, state, storageKey = kind) {
         throw new Error('任务结果格式不完整，请重新扫描');
       state.taskNote =
         status.state === 'partial'
-          ? status.error || (status.cancel_requested ? '任务已取消，已保留完成部分。' : '部分结果：仅包含完整分析的文件。')
+          ? status.error || (status.cancel_requested ? '扫描已取消，已保留部分结果。' : '扫描部分完成。')
           : '';
       if (
         kind === 'popular' &&
@@ -82,6 +83,7 @@ export function useRemoteTask(kind, state, storageKey = kind) {
         state.previous = state.result;
       if (kind === 'popular') save('');
       result.task_id = status.id || state.taskId;
+      await presentScanCompletion(state, status, result, signal);
       return result;
     } catch (error) {
       if (!signal.aborted) save('');
@@ -110,7 +112,7 @@ export function useRemoteTask(kind, state, storageKey = kind) {
       });
       if (!disposed) state.progress = progress;
     } catch (error) {
-      if (!disposed) state.connection = `取消请求未确认：${error.message}。可再次点击取消。`;
+      if (!disposed) state.connection = `取消状态未确认，请重试（${error.message}）`;
     } finally {
       if (!disposed) state.cancelling = false;
     }

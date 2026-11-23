@@ -41,7 +41,7 @@ onBeforeUnmount(() => dialog.value?.close());
       @keydown.tab="trapFocus" @cancel.prevent="close()" @click="$event.target === dialog && close()">
       <template v-if="asset">
         <header class="asset-drawer-header">
-          <div><h2 id="asset-title">{{ asset.algorithm }} · 资产详情</h2><span class="tag">{{ statusLabel(asset.verification_status) }}</span></div>
+          <div><h2 id="asset-title">{{ asset.algorithm }} 资产详情</h2><span class="tag">{{ statusLabel(asset.verification_status) }}</span></div>
           <button class="button secondary" autofocus aria-label="关闭资产详情" @click="close()"><AppIcon name="close" :size="18" />关闭</button>
         </header>
         <div ref="content" class="asset-drawer-body">

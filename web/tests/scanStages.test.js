@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scanStage } from '../src/utils/scanStages.js';
+import { completedModelProgress, libraryScanStage, modelCompletionStage, scanStage } from '../src/utils/scanStages.js';
 import { selectedFindings } from '../src/utils/analysis.js';
 import { findingKey } from '../src/utils/results.js';
 
@@ -25,4 +25,18 @@ test('pending filters preserve independent call contexts and legacy confirmation
   assert.notEqual(findingKey(a),findingKey(b));
   assert.deepEqual(selectedFindings({findings:[a,b]},{status:'pending'}),[b]);
   assert.deepEqual(selectedFindings({findings:[a,b]},{status:'confirmed'}),[a]);
+});
+
+test('a single in-flight batch exposes live work and reserves 100 for all accepted replies', () => {
+  const progress = {stage:'模型复核', elapsed:12, ai_running:true, purpose_review:true,
+    activity:{waiting_since:8}, ai_progress:{completed:0, discovered:1, active_groups:1}};
+  for (const model of [scanStage(progress), libraryScanStage(progress)]) {
+    assert.equal(model.row.percent, 0);
+    assert.equal(model.modelWaiting, true);
+    assert.equal(model.detail, '1 组等待模型回复（4 秒）');
+  }
+  assert.equal(completedModelProgress({status:'partial', completed:0, discovered:1}), null);
+  assert.equal(completedModelProgress({status:'completed', completed:0, discovered:0}), null);
+  const ai = completedModelProgress({status:'completed', completed:1, discovered:1});
+  assert.equal(modelCompletionStage(ai, 3).row.percent,100);
 });

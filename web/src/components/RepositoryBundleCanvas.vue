@@ -134,7 +134,7 @@ function revealNode(event, node) {
     y:y + clamp(py, 30, dimensions.value.height - 30) - py });
 }
 function describe(link) {
-  return `${link.repo} → ${link.algorithm} · ${link.label} · ${format.format(link.count)}${props.legacy ? ' 条关联' : ' 项检出'}`;
+  return `${link.repo} → ${link.algorithm}（${link.label}），${format.format(link.count)}${props.legacy ? ' 条关联' : ' 项检出'}`;
 }
 function reset() {
   fit();
@@ -175,10 +175,10 @@ defineExpose({ download });
           </g>
           <g v-for="node in graph.nodes" :key="node.id" class="bundle-node" role="button" tabindex="0"
             :class="{ related:relatedNodes.has(node.id) }"
-            :aria-pressed="isSelected(node)" :aria-label="`${node.key} · ${format.format(node.count)} ${legacy ? '条关联' : '项检出'}`"
+            :aria-pressed="isSelected(node)" :aria-label="`${node.key}，${format.format(node.count)} ${legacy ? '条关联' : '项检出'}`"
             @pointerenter="hovered=node" @pointerleave="hovered=null" @focus="revealNode($event,node)" @click="emit('node',node,$event.currentTarget)"
             @keydown.enter.prevent="emit('node',node,$event.currentTarget)" @keydown.space.prevent="emit('node',node,$event.currentTarget)">
-            <title>{{ node.key }} · {{ format.format(node.count) }} {{ legacy ? '条关联' : '项检出' }}</title>
+            <title>{{ node.key }}，{{ format.format(node.count) }} {{ legacy ? '条关联' : '项检出' }}</title>
             <line :x1="node.x" :x2="node.labelX + (node.side === 'repo' ? 4 : -4)" :y1="node.y" :y2="node.labelY"
               :stroke="isSelected(node) ? 'var(--accent)' : 'var(--border)'" />
             <circle :cx="node.x" :cy="node.y" :r="isSelected(node) ? 5 : 3"

@@ -26,6 +26,7 @@ def encode(config, value, *, definition=None):
     if definition is None:
         definition=schema(test)
     limit=value.get(config.output_parameter,8192)
+    thinking = config.preset == 'deepseek'
     mode=config.output_mode
     if config.protocol=='chat':
         if mode=='schema':
@@ -36,6 +37,9 @@ def encode(config, value, *, definition=None):
             value.pop('response_format',None)
         if config.preset=='qwen' and config.reasoning_disabled:
             value['enable_thinking']=False
+        if thinking:
+            value['thinking'] = {'type': 'enabled'}
+            value['reasoning_effort'] = 'high'
         return value
     system='\n'.join(m['content'] for m in messages if m['role']=='system')
     user='\n'.join(m['content'] for m in messages if m['role']=='user')
@@ -45,11 +49,16 @@ def encode(config, value, *, definition=None):
         if mode!='prompt':
             result['text']={'format':({'type':'json_schema','name':'crypto_analysis','strict':True,'schema':definition}
                                       if mode=='schema' else {'type':'json_object'})}
+        if thinking:
+            result['reasoning'] = {'effort': 'high'}
         return result
     if config.protocol=='anthropic':
         result={'model':config.model,'system':system,'messages':[{'role':'user','content':user}],'max_tokens':limit}
         if mode=='schema':
             result['output_config']={'format':{'type':'json_schema','schema':definition}}
+        if thinking:
+            result['thinking'] = {'type': 'adaptive'}
+            result.setdefault('output_config', {})['effort'] = 'high'
         return result
     result={'contents':[{'role':'user','parts':[{'text':user}]}],
             'systemInstruction':{'parts':[{'text':system}]},'generationConfig':{'maxOutputTokens':limit}}

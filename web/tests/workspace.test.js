@@ -96,7 +96,7 @@ test('input layouts collapse on complete, partial and empty results and retain e
 
 test('source descriptions use submitted names without retaining source code', () => {
   assert.equal(describeInput('snippet', { filename: 'a.py', content: 'private code' }), 'a.py');
-  assert.equal(describeInput('files', { files: [{ name: 'a.py' }, { name: 'b.py' }] }), '2 个文件 · a.py');
+  assert.equal(describeInput('files', { files: [{ name: 'a.py' }, { name: 'b.py' }] }), '2 个文件');
 });
 
 test('grid capacity counts complete double rows and keeps an identity visible after resize', t => {

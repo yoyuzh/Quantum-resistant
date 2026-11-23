@@ -7,7 +7,8 @@ const skipLabels = {
 
 export function repositoryScanCoverage(repo) {
   const coverage = repo.coverage;
-  if (coverage?.partial || coverage?.skipped_files > 0) return 'partial';
+  if (coverage?.partial || coverage?.skipped_files > 0 || coverage?.degraded_files > 0 ||
+      ['partial', 'failed', 'cancelled'].includes(repo.analysis_summary?.deep_status)) return 'partial';
   if (coverage?.candidate_files == null) return 'unknown';
   return coverage.candidate_files === coverage.scanned_files ? 'complete' : 'partial';
 }
@@ -16,7 +17,7 @@ export const coverageLabels = { complete: '完整扫描', partial: '部分扫描
 
 export function repositorySkipReasons(coverage) {
   return Object.entries(coverage?.skip_reasons || {}).filter(([,count]) => count > 0)
-    .map(([reason,count]) => `${skipLabels[reason] || '其他原因'} ${count} 个`).join(' · ');
+    .map(([reason,count]) => `${skipLabels[reason] || '其他原因'} ${count} 个`).join('，');
 }
 
 export function libraryScanSummary(result) {
@@ -31,5 +32,5 @@ export function libraryScanSummary(result) {
   if (failures) parts.push(`失败或未完成 ${failures} 个`);
   if (saved) parts.push(`已入库 ${saved} 个`);
   if (retained) parts.push(`保留原记录 ${retained} 个`);
-  return parts.join(' · ');
+  return parts.join('，');
 }

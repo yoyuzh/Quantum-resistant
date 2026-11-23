@@ -5,7 +5,7 @@ import asyncio
 import json
 from concurrent.futures import TimeoutError
 
-from backend.ai.config import Config
+from backend.ai.config import BUDGETS, Config
 from backend.ai.protocols import encode
 from backend.ai.provider import ProviderError, complete
 from backend.ai.service import AiService
@@ -81,17 +81,16 @@ def discover_repositories(service: AiService, config: Config, limit: int | None,
         {'id': i, 'name': repo.full_name, 'stars': repo.star_count}
         for i, repo in enumerate(repos, 1)
     ]}
+    thinking = config.preset == 'deepseek'
     request = {
-        'model': config.model, 'stream': False, config.output_parameter: 2048,
+        'model': config.model, 'stream': False, config.output_parameter: 8192 if thinking else 2048,
         'messages': [
             {'role': 'system', 'content': SELECTION_PROMPT},
             {'role': 'user', 'content': json.dumps(data, ensure_ascii=False)},
         ],
     }
-    if config.preset == 'deepseek' and config.reasoning_disabled:
-        request['thinking'] = {'type': 'disabled'}
     payload = json.dumps(encode(config, request, definition=SELECTION_SCHEMA), ensure_ascii=False).encode()
-    model_budget = budget.child(45)
+    model_budget = budget.child(BUDGETS['thinking_request_seconds'] if thinking else BUDGETS['request_seconds'])
 
     def check() -> None:
         model_budget.remaining()

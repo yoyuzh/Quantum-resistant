@@ -13,7 +13,7 @@ def build_json_report(sources: list[dict[str, Any]], findings: list[dict[str, An
                       coverage: dict | None = None, diagnostics: list[dict] | None = None) -> dict[str, Any]:
     return {
         "version": 1, "scanned_at": scanned_at or beijing_now_iso(), "source_type": source_type,
-        "scope_note": "本次静态扫描的密码资产清单，不是完整供应链或标准化 CBOM。未包含完整源码。",
+        "scope_note": "本次静态扫描检出的密码资产。",
         "sources": [{key: value for key, value in source.items() if key != "content"} for source in sources],
         "findings": findings, "summary": build_summary(sources, findings),
         "coverage": coverage, "diagnostics": diagnostics or [], "analysis": build_analysis(findings),

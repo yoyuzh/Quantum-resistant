@@ -21,7 +21,7 @@ export function collectionLayout({ height, width, count, heading = 0, footer = 0
 
 export function describeInput(mode, draft) {
   if (mode === 'snippet') return draft.filename;
-  if (mode === 'files') return `${draft.files.length} 个文件 · ${draft.files[0]?.name || ''}`;
+  if (mode === 'files') return draft.files.length === 1 ? draft.files[0].name : `${draft.files.length} 个文件`;
   return draft.value;
 }
 

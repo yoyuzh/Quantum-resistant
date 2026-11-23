@@ -91,10 +91,10 @@ onBeforeUnmount(() => dialog.value?.close());
           <SelectControl v-if="!recheck" v-model="limit" label="本轮最多扫描的仓库数" :options="options" :popup-target="popupLayer" />
         </div>
         <RepositoryRecheckPicker v-if="recheck" v-model="selected" :repos="repos" />
-        <p v-if="recheck" class="small">复查会扫描所选仓库的默认分支并更新用途。达到批次预算时保留已完成的结果。</p>
-        <p v-if="scope === 'discover'" class="small">选仓时向模型发送公开仓库名称和 Star 数。{{ limit === 'unlimited' ? '由 AI 在候选范围内决定数量。' : '' }}</p>
+        <p v-if="recheck" class="small">扫描所选仓库的默认分支，更新用途。</p>
+        <p v-if="scope === 'discover'" class="small">向模型发送公开仓库名和 Star 数。{{ limit === 'unlimited' ? '扫描数量由模型选择。' : '' }}</p>
         <label class="purpose-option"><input v-model="assistPurpose" type="checkbox" />让 AI 复核规则未识别的用途</label>
-        <p v-if="assistPurpose" class="small">将规则未识别的公开源码证据片段脱敏后发送给当前模型，结果标为 AI 推断。</p>
+        <p v-if="assistPurpose" class="small">将用途待确认的公开源码片段脱敏后发送给模型。</p>
         <div v-if="requiresModel" class="model-row">
           <span>{{ aiSettings.ready ? aiSettings.profile_name || aiSettings.model : aiSettings.loading ? '正在读取模型配置' : '需要启用已授权的模型' }}</span>
           <button type="button" class="button text-action compact" @click="aiSettingsOpen = true">
@@ -123,6 +123,7 @@ header h2 { font-size:20px; }
 .model-row { background:var(--bg-elevated); border-radius:var(--radius); padding:8px 10px; }
 .scan-error { margin:10px 0 0; overflow-wrap:anywhere; }
 .repository-scan-dialog :deep(.scan-loading) { min-height:0; padding:12px 4px 0; }
+.repository-scan-dialog :deep(.loading-center) { padding-block:14px; }
 @media(max-height:550px) { .repository-scan-dialog :deep(.loading-center) { gap:9px; padding-block:6px; } }
 @media(max-width:440px) { .scan-fields { grid-template-columns:1fr; } }
 </style>

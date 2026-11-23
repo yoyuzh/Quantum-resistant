@@ -8,7 +8,7 @@ defineEmits(['reveal', 'inspect']);
 <template>
   <article class="asset-record">
     <div class="asset-identity"><AppIcon name="file" :size="18" /><strong :title="asset.file_name">{{ fileLabel(asset,peers) }}</strong><span class="tag">{{ asset.algorithm }}</span></div>
-    <p>{{ statusLabel(asset.verification_status) }} · {{ asset.purpose }}</p>
+    <p>{{ asset.purpose }}（{{ statusLabel(asset.verification_status) }}）</p>
     <div class="asset-actions"><button class="button text-action" @click="$emit('reveal',asset,asset.locations[0])">{{ asset.finding_count }} 项证据 <AppIcon name="arrow" :size="16" /></button>
       <button class="button secondary compact" aria-haspopup="dialog" @click="$emit('inspect',$event.currentTarget)">查看详情</button></div>
   </article>

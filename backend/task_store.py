@@ -15,7 +15,8 @@ from fastapi import HTTPException
 from backend.collection_common import CollectionControl, CollectionTimeout, Deadline
 from backend.reporting import beijing_now_iso
 from backend.temp_storage import TemporaryStorage
-from backend.collection_config import RESULT_CACHE_BYTES, SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS
+from backend.collection_config import DEEP_TIMEOUT_SECONDS, RESULT_CACHE_BYTES, SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS
+from backend.ai.config import BUDGETS
 from backend.scheduler import ScanScheduler, Admission
 
 TERMINAL = {'succeeded', 'partial', 'failed', 'cancelled'}
@@ -258,8 +259,10 @@ class TaskStore:
     def _run(self, job, work):
         with self.lock:
             job.state, job.stage, job.started = 'running', '准备扫描', self.now()
-        limit = POPULAR_TIMEOUT_SECONDS if job.kind == 'popular' else 900 if job.kind == 'ai' else SCAN_TIMEOUT_SECONDS
-        budget = Deadline(min(time.monotonic() + limit, job.accepted + (1500 if job.kind != 'popular' else limit)), job.control)
+        limit = POPULAR_TIMEOUT_SECONDS if job.kind == 'popular' else BUDGETS['seconds'] if job.kind == 'ai' else SCAN_TIMEOUT_SECONDS
+        total = limit if job.kind in ('popular', 'ai') else limit + DEEP_TIMEOUT_SECONDS + BUDGETS['seconds']
+        end = job.accepted + total
+        budget = Deadline(min(time.monotonic() + limit, end), job.control)
         continuation = False
         try:
             result = work(budget)
@@ -277,17 +280,13 @@ class TaskStore:
             if job.kind == 'ai' and hasattr(job.control, 'ai_continuation'):
                 continuation = self.ai.schedule(job, *job.control.ai_continuation)
                 return
-            if job.kind in {'snippet', 'files', 'github', 'pypi'} and result.get('sources') and ('ai_assisted' in job.payload or job.payload.get('_cross_file')):
+            if (job.kind in {'snippet', 'files', 'github', 'pypi'} and result.get('sources')
+                    and ('ai_assisted' in job.payload or job.payload.get('_cross_file'))):
                 from backend.deep_scanning import run_deep
-                result = run_deep(result, budget)
-                self._save(job, result)
-                if not job.control.cancelled.is_set():
-                    try:
-                        self.ai.catalogue(job, result, budget)
-                    except CollectionTimeout:
-                        pass
-                if job.payload.get('ai_assisted'):
-                    continuation = self.ai.continue_job(job, result, Deadline(min(job.accepted + 1500, time.monotonic() + 900), job.control))
+                result = run_deep(result, Deadline(end, job.control))
+                if job.payload.get('ai_assisted') and not job.control.cancelled.is_set():
+                    self._save(job, result)
+                    continuation = self.ai.continue_job(job, result, Deadline(end, job.control))
                     if continuation:
                         return
                     result['ai_analysis'] = self.ai.skipped()
@@ -314,12 +313,12 @@ class TaskStore:
             job.state = ('partial' if partial else 'succeeded') if has_result else ('cancelled' if job.control.cancelled.is_set() else 'failed')
             if not has_result:
                 job.result = None
-                job.error = '没有完整分析的文件；上次结果已保留'
+                job.error = '没有完整分析的文件'
 
     def _fail(self, job, exc):
         with self.lock:
             job.state = 'partial' if job.result else 'cancelled' if job.control.cancelled.is_set() else 'failed'
-            job.error = str(exc) if isinstance(exc, (CollectionTimeout, RuntimeError, ValueError)) else '扫描服务异常，请重试；上次结果已保留'
+            job.error = str(exc) if isinstance(exc, (CollectionTimeout, RuntimeError, ValueError)) else '扫描服务异常，请重试'
             if isinstance(exc, HTTPException):
                 job.error = '来源任务已过期或服务已重启，无法补做AI分析；已有结果保留' if exc.status_code == 404 else str(exc.detail)
             logger.warning('scan_job kind=%s error=%s', job.kind, type(exc).__name__)

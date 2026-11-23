@@ -26,7 +26,7 @@ export function textRows(node) {
   }
   (node.lines || [node.label]).forEach(text => { rows.push({ x, y, text, size: (node.aggregated?13:15) * scale }); y += 20 * scale; });
   y += 3 * scale;
-  const prefix = node.status === 'ai_assessed' ? 'AI研判 · ' : node.status === 'pending' ? '证据不足 · ' : '';
+  const prefix = node.status === 'ai_assessed' ? 'AI 研判：' : node.status === 'pending' ? '证据不足：' : '';
   const detail = node.detailLines || (node.detail ? [prefix + node.detail] : []);
   detail.forEach(text => { rows.push({ x, y, text, size: 13 * scale, secondary: true }); y += 17 * scale; });
   return rows;

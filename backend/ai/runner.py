@@ -5,7 +5,7 @@ import time
 from contextlib import aclosing
 
 from backend.ai.config import BUDGETS, POLICY, digest
-from backend.ai.provider import PROMPT_VERSION, ProviderError, body, complete, parse, reusable, continuable
+from backend.ai.provider import PROMPT_VERSION, ProviderError, body, complete, parse, continuable
 from backend.ai.context import select
 
 
@@ -56,11 +56,11 @@ async def analyze(service, job, base, prepared, config, end):
     last_failure = None
     def check():
         if job.control.cancelled.is_set() or job.stop_ai.is_set():
-            raise ProviderError('cancelled', 'AI已停止；完整结果已保留')
+            raise ProviderError('cancelled', 'AI 复核已停止')
         if not service.profiles.valid(config):
             raise ProviderError('config_changed', '模型配置已变化，后续批次停止')
         if time.monotonic() >= end:
-            raise ProviderError('ai_timeout', 'AI阶段达到15分钟截止时间，完整结果已保留')
+            raise ProviderError('ai_timeout', 'AI 复核达到 15 分钟上限')
     def coverage():
         result['coverage']['completed'] = len(result['opinions'])
         result['coverage']['remaining'] = max(0, prepared['total'] - len(result['opinions']))
@@ -68,11 +68,12 @@ async def analyze(service, job, base, prepared, config, end):
         coverage()
         files = list(dict.fromkeys(e['file_name'] for c in candidates for e in c.get('evidence', [])))[:3]
         job.control.emit(stage='模型复核', ai_progress={**result['coverage'], 'calls': result['calls'],
+            'active_groups':len(candidates) if waiting_since is not None else 0,
             'recovery_groups':result['automatic_recovery']['scheduled']}, activity={'action':action,'files':files,
             'completed':result['coverage']['completed'],'total':prepared['total'],'batch':result['calls'], 'waiting_since':waiting_since,
             'repository':next((c.get('repository') for c in candidates if c.get('repository')),None)})
     async def save(candidates=()):
-        progress('校验返回意见、关联证据并保存完整结果', candidates)
+        progress('保存模型研判', candidates)
         await asyncio.get_running_loop().run_in_executor(service.store.executor, service.store._save, job, {**base, 'ai_analysis': result})
     done = {o['candidate_id'] for o in old}
     pending = [c for c in selected if c['candidate_id'] not in done]
@@ -95,10 +96,10 @@ async def analyze(service, job, base, prepared, config, end):
                 if not pending:
                     break
                 result['coverage']['selected'] += len(pending)
-                progress('自动接续下一组待复核问题')
+                progress('准备下一批复核')
             window, pending = pending[:BUDGETS['batch'] * 4], pending[BUDGETS['batch'] * 4:]
             attempted.update(c['candidate_id'] for c in window)
-            progress('准备调用方、封装定义及算法配置证据')
+            progress('准备复核证据')
             if 'catalogue' in prepared:
                 window = await asyncio.get_running_loop().run_in_executor(service.store.executor, service.materialize, job, prepared, window, check)
             working = []
@@ -119,6 +120,12 @@ async def analyze(service, job, base, prepared, config, end):
                 if result['calls'] >= BUDGETS['calls']:
                     raise ProviderError('call_budget', '模型调用达到本次预算，可继续未完成项')
                 outstanding = {}
+
+                def waiting():
+                    if outstanding:
+                        progress('等待模型回复', [c for batch, _ in outstanding.values() for c in batch],
+                                 min(sent for _, sent in outstanding.values()))
+
                 def next_batch():
                     check()
                     if not working or result['calls'] >= BUDGETS['calls']:
@@ -144,22 +151,21 @@ async def analyze(service, job, base, prepared, config, end):
                     for candidate in batch:
                         identity = candidate['candidate_id']
                         transmissions[identity] = transmissions.get(identity,0) + 1
-                    outstanding[id(batch)] = batch
+                    outstanding[id(batch)] = (batch, max(0, time.monotonic() - job.started))
+                    waiting()
                     return batch, data
                 batches = [item for _ in range(2) if (item := next_batch())]
                 if not batches:
                     if not working:
                         break
                     raise ProviderError('input_budget', '累计输入达到本次预算，可继续未完成项')
-                waiting_since = max(0, time.monotonic() - job.started)
-                progress('模型正在核对算法、用途与跨文件证据', [c for batch,_ in batches for c in batch], waiting_since)
                 async with aclosing(completed_batches(service, config, batches, check, next_batch)) as responses:
                     async for batch, response in responses:
                         check()
                         outstanding.pop(id(batch),None)
                         if isinstance(response, BaseException):
                             if not isinstance(response, ProviderError):
-                                raise ProviderError('provider_failure', '模型请求异常，静态结果已保留')
+                                raise ProviderError('provider_failure', '模型请求失败')
                             service.profiles.report(config,response.code)
                             if response.code in ('provider_auth','provider_balance','provider_parameters'):
                                 raise response
@@ -173,19 +179,23 @@ async def analyze(service, job, base, prepared, config, end):
                                         raise ProviderError('retry_after_deadline','服务要求的等待时间超过本次剩余预算，已保存完成部分')
                                     job.control.emit(recovery={'reason':response.code,'attempt':max(transmissions[c['candidate_id']] for c in retry),
                                         'retry_at_elapsed':time.monotonic()-job.started+delay})
-                                    progress('请求暂未完成，等待后自动恢复',retry)
+                                    progress('等待重试',retry)
                                     until=time.monotonic()+delay
                                     while time.monotonic()<until:
                                         check()
                                         await asyncio.sleep(min(.1,until-time.monotonic()))
                                     recover(retry)
+                                    job.control.emit(recovery=None)
+                                waiting()
                                 continue
-                            if response.code in ('output_truncated','provider_format'):
+                            if response.code in ('output_truncated','provider_format','response_limit'):
                                 recover(batch)
                                 failures += bool(any(c.get('_recovery') for c in batch))
+                            waiting()
                             continue
                         content, values = response
                         job.control.emit(recovery=None)
+                        progress('核对模型回复', batch)
                         service.profiles.report(config,'success')
                         usage.append(values)
                         opinions, notes = parse(content, batch)
@@ -214,10 +224,9 @@ async def analyze(service, job, base, prepared, config, end):
                         returned = {o['candidate_id'] for o in opinions}
                         recover([c for c in batch if c['candidate_id'] not in returned])
                         await save(batch)
-                        if outstanding:
-                            progress('模型正在核对其余并行问题的证据', [c for group in outstanding.values() for c in group], waiting_since)
+                        waiting()
                 if failures >= 3:
-                    raise ProviderError('protocol_failures', '连续三次结构补救无有效输出，已保留完成部分')
+                    raise ProviderError('protocol_failures', '模型连续三次返回无效格式')
             await save()
     except ProviderError as exc:
         result['stop_reason'] = exc.code
@@ -237,7 +246,7 @@ async def analyze(service, job, base, prepared, config, end):
     elif result['coverage']['remaining'] and result['stop_reason'] is None:
         result['stop_reason'] = last_failure or 'unresolved_responses'
         message = '部分问题自动补救后仍缺少有效意见' if result['automatic_recovery']['scheduled'] else '部分问题缺少可发送证据或有效响应'
-        result['diagnostics'].append({'code':'unresolved_responses','message':message+'；已保留完整部分'})
+        result['diagnostics'].append({'code':'unresolved_responses','message':message})
     result['opinions'].sort(key=lambda o: o['candidate_id'])
     from collections import Counter
     result['outcomes'] = dict(Counter(o.get('decision','insufficient') for o in result['opinions']))

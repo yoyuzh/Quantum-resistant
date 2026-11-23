@@ -21,19 +21,3 @@ export function readAiPreference(storage) {
 export function saveAiPreference(value, storage) {
   try { (storage ?? globalThis.localStorage)?.setItem('quantum-ai-assisted', String(value)); } catch { /* Optional preference. */ }
 }
-export function migrationTasks(result) {
-  const tasks = new Map();
-  for (const operation of confirmedOperations(result)) {
-    const algorithm = operation.algorithm?.value || operation.algorithm_family || '算法待确认';
-    const purpose = operation.operation_type;
-    const key = `${operation.template_id}:${algorithm}:${purpose}`;
-    if (!tasks.has(key)) tasks.set(key, { key, algorithm, purpose, files: new Set(), operations: 0,
-      direction: ['sign', 'verify'].includes(purpose) ? '评估 ML-DSA / SLH-DSA；核对签名格式、密钥存储和验证方兼容性。'
-        : purpose === 'key_exchange' ? '评估 ML-KEM；核对协议、通信双方、共享密钥派生及回退策略。'
-          : '先确认实际用途和协议约束，再选择迁移方案；不能直接替换任意密码 API。' });
-    const task = tasks.get(key);
-    task.operations++;
-    for (const span of [operation.sink_location, ...operation.context.call_chain]) task.files.add(span.source_id);
-  }
-  return [...tasks.values()].map(t => ({ ...t, files: t.files.size }));
-}

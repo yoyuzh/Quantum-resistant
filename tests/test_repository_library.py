@@ -307,7 +307,10 @@ class LibraryTests(unittest.TestCase):
             self.assertTrue(status['purpose_review'])
             self.assertTrue(result['meta']['library_saved'], result)
             self.assertEqual(len(seen), 1)
-            saved = next(record for record in read_library().repos if record.full_name == result['repos'][0]['full_name'])
-            purposes = {(g.algorithm, g.purpose, g.origin, g.status) for g in saved.algorithm_inventory.groups}
+            repo = result['repos'][0]
+            self.assertEqual(repo['coverage']['degraded_files'], 1)
+            self.assertIn(repo['full_name'], result['meta']['library_retained_repositories'])
+            purposes = {(g['algorithm'], g['purpose'], g['origin'], g['status'])
+                        for g in repo['algorithm_inventory']['groups']}
             self.assertIn(('RSA', 'key_generation', 'ai', 'confirmed'), purposes)
             self.assertIn(('Ed448', 'key_generation', 'static', 'confirmed'), purposes)

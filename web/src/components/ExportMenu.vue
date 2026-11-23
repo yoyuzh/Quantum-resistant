@@ -22,16 +22,16 @@ function save(format) {
       </summary>
       <div class="export-options">
         <button class="button export-option" :disabled="exporting" @click="save('html')">
-          HTML · 阅读 / 打印
+          HTML（阅读与打印）
         </button>
         <button class="button export-option" :disabled="exporting" @click="save('markdown')">
-          Markdown · 编辑
+          Markdown
         </button>
         <button class="button export-option" :disabled="exporting" @click="save('json')">
-          JSON · 完整数据
+          JSON（结构化数据）
         </button>
         <button class="button export-option" :disabled="exporting" @click="save('csv')">
-          CSV · 发现表格
+          CSV（发现明细）
         </button>
       </div>
     </details>

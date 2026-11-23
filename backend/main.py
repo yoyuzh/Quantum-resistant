@@ -24,7 +24,7 @@ from backend.integrated_reports import router as integrated_report_router
 from backend.storage import write_results
 from backend.uploads import MAX_TOTAL_UPLOAD_BYTES
 from backend.collection_config import (MAX_COLLECTED_FILES, MAX_TEXT_BYTES, MAX_ARCHIVE_BYTES,
-                                       SCAN_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS,
+                                       SCAN_TIMEOUT_SECONDS, DEEP_TIMEOUT_SECONDS, POPULAR_TIMEOUT_SECONDS,
                                        MAX_ARCHIVE_MEMBERS, MAX_ARCHIVE_METADATA_BYTES, MAX_ARCHIVE_EXPANDED_BYTES)
 from backend.upload_stream import UPLOAD_TIMEOUT_SECONDS, UPLOAD_IDLE_SECONDS
 from backend import runtime
@@ -83,6 +83,7 @@ def scan_config() -> dict:
     return {'max_files': MAX_COLLECTED_FILES, 'max_file_bytes': MAX_SOURCE_BYTES,
             'max_text_bytes': MAX_TEXT_BYTES, 'max_upload_bytes': MAX_TOTAL_UPLOAD_BYTES,
             'max_archive_bytes': MAX_ARCHIVE_BYTES, 'scan_timeout_seconds': SCAN_TIMEOUT_SECONDS,
+            'deep_timeout_seconds': DEEP_TIMEOUT_SECONDS,
             'popular_timeout_seconds': POPULAR_TIMEOUT_SECONDS, 'minimum_loading_ms': 1500,
             'upload_timeout_seconds': UPLOAD_TIMEOUT_SECONDS, 'upload_idle_seconds': UPLOAD_IDLE_SECONDS,
             'max_archive_members': MAX_ARCHIVE_MEMBERS, 'max_archive_metadata_bytes': MAX_ARCHIVE_METADATA_BYTES,

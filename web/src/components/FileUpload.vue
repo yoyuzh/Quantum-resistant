@@ -65,7 +65,7 @@ async function samples() {
     >
       <span class="upload-icon"><AppIcon name="upload" :size="files.length ? 24 : 32" /></span>
       <strong>{{ files.length ? '继续添加文件' : '选择文件或拖放到这里' }}</strong>
-      <span class="muted small">源码、配置及 PEM 文本 · UTF-8 编码</span>
+      <span v-if="!files.length" class="muted small">UTF-8 源码、配置及 PEM 文件</span>
     </button>
     <div class="toolbar">
       <button type="button" class="button secondary compact" :disabled="disabled" @click="directoryPicker.click()"><AppIcon name="repository" :size="16" />选择目录</button>
@@ -103,7 +103,7 @@ async function samples() {
     </ul>
     <div v-if="pagination.pages > 1" class="toolbar">
       <button type="button" class="button secondary" :disabled="pagination.current <= 1" @click="page--">上一页</button>
-      <span class="small">{{ pagination.current }} / {{ pagination.pages }} · 每页100个文件</span>
+      <span class="small">第 {{ pagination.current }} / {{ pagination.pages }} 页</span>
       <button type="button" class="button secondary" :disabled="pagination.current >= pagination.pages" @click="page++">下一页</button>
     </div>
   </div>
@@ -136,8 +136,7 @@ async function samples() {
   padding: 0.8rem;
   text-align: left;
 }
-.has-files .upload-icon { grid-row: 1 / 3; align-self: center; }
-.has-files .small { grid-column: 2; font-size: 0.75rem; }
+.has-files .upload-icon { align-self: center; }
 .file-list {
   list-style: none;
   padding: 0;

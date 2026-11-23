@@ -7,7 +7,7 @@ export function fileLabel(item, peers = []) {
   if (ids.length < 2) return name;
   const suffix = String(id).slice(-6);
   const ambiguous = ids.filter((value) => String(value).slice(-6) === suffix).length > 1;
-  return `${name} · ${ambiguous ? id : suffix}`;
+  return `${name}（${ambiguous ? id : suffix}）`;
 }
 
 export function conciseInsights(result) {

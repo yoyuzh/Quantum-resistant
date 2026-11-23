@@ -83,7 +83,7 @@ def integrate(base: dict) -> dict:
             row['evidence'] = '验签允许算法策略：' + operation['api']
         if proven:
             targets = direction(algorithm, row['purpose_code'])['targets']
-            row['recommendation'] = ('按已确认用途评估 ' + ' / '.join(targets) + '；核对格式、参与方、密钥生命周期及互操作。') if targets else '先确认密钥和配置的实际用途，再选择迁移方案；不能直接替换任意 API。'
+            row['recommendation'] = ('按已确认用途评估 ' + ' / '.join(targets) + '；核对格式、参与方、密钥生命周期及互操作。') if targets else '确认密钥和配置的实际用途后，再选择迁移方案。'
         row['call_chain'] = operation['context']['call_chain']
         row['context_kind'] = operation['context']['kind']
         row['context_id'] = digest(operation['context'])
@@ -189,7 +189,7 @@ def integrate(base: dict) -> dict:
                             **direction(algorithm, code))
                 item['actions'] = [
                     {'title': '核对用途与协议', 'description': '核对调用证据、数据保密周期、参与方和协议约束。'},
-                    {'title': '选择迁移方向', 'description': '评估 ' + ' / '.join(item['targets']) + ' 的实现、互操作和回退。' if item['targets'] else '先确认实际用途；密钥生成、导入或算法配置不能直接决定迁移方案。'},
+                    {'title': '选择迁移方向', 'description': '评估 ' + ' / '.join(item['targets']) + ' 的实现、互操作和回退。' if item['targets'] else '结合调用位置确认密钥或配置的实际用途，再选择迁移方向。'},
                     {'title': '测试验证', 'description': '补充兼容、性能、密钥生命周期和回退测试；不据此认定迁移完成。'},
                 ]
                 migrations.append(item)

@@ -98,14 +98,6 @@ def scan_single_repo(repo: RepoInfo, max_files: int = POPULAR_REPO_FILE_LIMIT, *
         if not sources:
             raise CollectionError("没有采集到可扫描文件")
         response = build_scan_response(sources, 'github_repository', deadline=budget)
-        if getattr(budget.control.parent, 'library_scan', False):
-            unscanned = {item.source_id for item in response.diagnostics if item.source_id
-                         and item.code in {'analysis_limit', 'config_parse_error'}}
-            if unscanned:
-                response.coverage.partial = True
-                response.coverage.scanned_files -= len(unscanned)
-                response.coverage.skipped_files += len(unscanned)
-                response.coverage.skip_reasons['analysis_failure'] = response.coverage.skip_reasons.get('analysis_failure', 0) + len(unscanned)
         details = None
         if getattr(budget.control.parent, 'assisted_popular', False):
             from backend.popular_analysis import keep_snapshot

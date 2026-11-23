@@ -18,6 +18,6 @@ defineEmits(['update:modelValue']);
         spellcheck="false"
       />
     </label>
-    <p :id="`${mode}-requirement`" class="small muted">{{ mode === 'github' ? '仅支持公开仓库，扫描默认分支。' : '输入包名，优先扫描源码发行包。' }}</p>
+    <p :id="`${mode}-requirement`" class="small muted">{{ mode === 'github' ? '公开仓库的默认分支' : '优先扫描源码发行包' }}</p>
   </div>
 </template>

@@ -23,7 +23,7 @@ def direction(algorithm: str, purpose: str) -> dict:
                                'kind': 'conditional', 'condition': '仅在用于签名或验签时适用'})
         if algorithm in ('RSA', 'ECC', 'ECDH', 'DH', 'X25519', 'X448'):
             references.append({'label': '密钥建立场景：ML-KEM', 'targets': ['ML-KEM'],
-                               'kind': 'conditional', 'condition': '需确认密钥建立或混合加密协议设计，不能直接替换加解密API'})
+                               'kind': 'conditional', 'condition': '适用于密钥建立和混合加密，迁移前须确认协议设计。'})
     return {'purpose': PURPOSES.get(purpose, PURPOSES['unknown']), 'purpose_code': purpose,
             'targets': targets, 'migration_references': references, 'reference_url': STANDARD_URL,
             'reference_version': 'nist-fips-203-204-205-v1'}

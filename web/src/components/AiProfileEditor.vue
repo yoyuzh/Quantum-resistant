@@ -5,7 +5,7 @@ import InfoTip from './InfoTip.vue';
 import CheckboxControl from './CheckboxControl.vue';
 const props=defineProps({profile:Object,providers:Array,busy:Boolean,canManage:Boolean,popupTarget:Object,first:Boolean});
 const emit=defineEmits(['save','test','clear']);
-const blank=()=>({name:'',preset:'deepseek',base_url:'https://api.deepseek.com/v1',model:'deepseek-flash',api_key:'',consent:false,json_mode:true,output_parameter:'max_tokens',reasoning_disabled:true,remember:true,protocol:'chat',auth_mode:'bearer',output_mode:'json',region:''});
+const blank=()=>({name:'',preset:'deepseek',base_url:'https://api.deepseek.com/v1',model:'deepseek-flash',api_key:'',consent:false,json_mode:true,output_parameter:'max_tokens',reasoning_disabled:false,remember:true,protocol:'chat',auth_mode:'bearer',output_mode:'json',region:''});
 const form=reactive(blank());
 const provider=computed(()=>props.providers.find(p=>p.id===form.preset));
 const types=computed(()=>props.providers.map(p=>({value:p.id,label:p.name})));
@@ -30,9 +30,9 @@ function save(activate){emit('save',{...form,name:form.name.trim() || provider.v
       <SelectControl v-model="form.output_mode" label="输出格式" :options="[{value:'schema',label:'JSON Schema'},{value:'json',label:'JSON 对象'},{value:'prompt',label:'提示约束 JSON'}]" :popup-target="popupTarget" />
       <SelectControl v-model="form.auth_mode" label="鉴权方式" :options="[{value:'bearer',label:'Bearer API Key'},{value:'api-key',label:'api-key'},{value:'x-api-key',label:'x-api-key'},{value:'x-goog-api-key',label:'x-goog-api-key'},{value:'none',label:'本机服务无鉴权'}]" :popup-target="popupTarget" />
       <SelectControl v-model="form.output_parameter" label="兼容接口额度参数" :options="[{value:'max_tokens',label:'max_tokens'},{value:'max_completion_tokens',label:'max_completion_tokens'}]" :popup-target="popupTarget" />
-      <CheckboxControl v-if="['deepseek','qwen'].includes(form.preset)" v-model="form.reasoning_disabled" label="使用供应商支持的非思考模式" />
+      <CheckboxControl v-if="form.preset === 'qwen'" v-model="form.reasoning_disabled" label="关闭思考模式" />
     </div></details>
-    <CheckboxControl v-model="form.consent" class="wide" label="允许发送扫描所需的脱敏代码片段"><InfoTip label="发送范围与凭据说明">仅发送必要证据，不提供代码执行或联网能力。脱敏不能识别所有秘密；已发送内容无法撤回。密钥由系统安全存储保护，不写入浏览器存储。ChatGPT网页订阅不是API凭据。</InfoTip></CheckboxControl>
+    <CheckboxControl v-model="form.consent" class="wide" label="允许发送扫描所需的脱敏代码片段"><InfoTip label="发送范围">脱敏片段可能含有未识别的敏感信息。发送前请确认代码可交给当前模型。</InfoTip></CheckboxControl>
   </div></fieldset><footer><button class="button primary" type="submit" :disabled="busy || !canManage || profile?.readonly">{{ first?'保存并启用':'保存配置' }}</button><button v-if="profile" class="button secondary" type="button" :disabled="busy || !canManage" @click="$emit('test')">测试已保存配置</button><button v-if="profile?.has_key && !profile?.readonly" class="button text-action" type="button" :disabled="busy || !canManage" @click="clearCredential">删除凭据</button></footer></form>
 </template>
 <style scoped>
