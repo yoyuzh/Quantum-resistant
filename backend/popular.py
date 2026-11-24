@@ -17,6 +17,7 @@ from backend.pipeline import ScanPipeline
 from backend.scanning import build_scan_response
 from backend.temp_storage import TemporaryStorage
 from scan_quantum_vuln import analyze_source, build_migration_score
+from scanner.control import MAX_REPOSITORY_SOURCE_BYTES
 
 logger = logging.getLogger(__name__)
 GITHUB_SEARCH_API = "https://api.github.com/search/repositories"
@@ -143,6 +144,8 @@ def _run_batch_scan(repos, max_workers, *, max_files, budget, reserve_seconds):
     per_repo_bytes = MAX_TEXT_BYTES if library_scan else min(MAX_TEXT_BYTES, POPULAR_TEXT_BYTES // max(1, len(repos)))
     def scan_repo(repo):
         control = CollectionControl(max_bytes=per_repo_bytes, parent=budget.control, scope=repo.full_name, text_pool=text_pool)
+        if library_scan:
+            control.max_file_bytes = MAX_REPOSITORY_SOURCE_BYTES
         control.grace_seconds = budget.control.grace_seconds
         return scan_single_repo(repo, max_files=max_files, deadline=Deadline(budget.end, control), **options)
     completed, timed_out = concurrent_collect(repos, scan_repo, max_workers, budget)

@@ -23,6 +23,17 @@ def claim(operation, name='ALGORITHM'):
 
 
 class CryptoRulesTests(unittest.TestCase):
+    def test_wide_flat_literal_does_not_skip_cross_file_verification(self):
+        vector = ', '.join(str(index) for index in range(320))
+        result = analyze_crypto(snapshot({
+            'config.py': f'VECTOR = [{vector}]\nALGORITHM = "RS256"',
+            'app.py': 'import jwt\nfrom config import ALGORITHM\njwt.encode({}, key, algorithm=ALGORITHM)',
+        }))
+        self.assertEqual(result.status, 'completed')
+        self.assertEqual(result.coverage.parsed.count, 2)
+        self.assertEqual(claim(result.operations[0]).level, 'E3')
+        self.assertEqual(result.operations[0].algorithm, Known(value='RS256'))
+
     def test_syntax_failure_keeps_completed_work_and_names_the_excluded_file(self):
         source = snapshot({'app.py': 'import jwt\njwt.encode({},key,algorithm="RS256")',
                            'incomplete.py': 'value = call(\n'})

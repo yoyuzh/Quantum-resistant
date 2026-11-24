@@ -10,7 +10,7 @@ from urllib.parse import quote, urlparse
 
 import httpx
 
-from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes
+from backend.archives import collect_from_tar_bytes, collect_from_zip_bytes, decode_source
 from backend.collection_common import CollectionError, CollectionTimeout, CollectedSources, Deadline, concurrent_collect, get_with_retries, has_environment_proxy, remote_client_options
 from backend.collection_config import MAX_ARCHIVE_BYTES, MAX_COLLECTED_FILES, MAX_COLLECTED_FILE_BYTES
 from backend.collectors import is_supported_source_path, source_priority
@@ -78,16 +78,19 @@ def github_get(client: httpx.Client, url: str, *, headers: dict[str, str], **kwa
         raise
 
 
-def decode_github_blob(payload: dict) -> str:
+def decode_github_blob(payload: dict, path: str = '', *, max_file_bytes: int = MAX_COLLECTED_FILE_BYTES,
+                       declared_encodings: bool = False) -> str:
     if not isinstance(payload, dict):
         raise CollectionError("GitHub 文件响应格式无效")
     if payload.get("encoding") != "base64":
         raise CollectionError("GitHub 文件编码不支持")
     try:
         data = base64.b64decode("".join(str(payload.get("content", "")).split()), validate=True)
-        if len(data) > MAX_COLLECTED_FILE_BYTES:
-            raise FileCollectionError("文件超过 2 MiB 限制", 'file_size')
-        return data.decode("utf-8-sig")
+        if len(data) <= max_file_bytes:
+            content = decode_source(data, path, declared_encodings=declared_encodings)
+            if len(content.encode('utf-8')) <= max_file_bytes:
+                return content
+        raise FileCollectionError(f"文件超过 {max_file_bytes // (1024 * 1024)} MiB 限制", 'file_size')
     except (binascii.Error, UnicodeError) as exc:
         raise FileCollectionError("文件编码无效，需使用 UTF-8", 'encoding') from exc
 
@@ -139,6 +142,7 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
     headers, branches, last_error = github_headers(), ["main", "master"], None
     api_rate_error = None
     archive_first = getattr(deadline.control.parent, 'library_scan', False)
+    file_bytes = getattr(deadline.control, 'max_file_bytes', MAX_COLLECTED_FILE_BYTES)
     deadline.control.emit(stage="获取仓库信息")
     with httpx.Client(**remote_client_options()) as client:
         attempts_by_ref = set()
@@ -150,7 +154,8 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                                  max_bytes=MAX_ARCHIVE_BYTES, attempts=2, deadline=deadline, spool=True)
             archive_path = archive.extensions.get('archive_path')
             try:
-                return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline)
+                return collect_from_zip_bytes(archive_path or archive.content, url, max_files=limit, deadline=deadline,
+                                              max_file_bytes=file_bytes, declared_encodings=archive_first)
             finally:
                 if archive_path:
                     deadline.control.storage.remove(archive_path)
@@ -216,8 +221,9 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     tree, truncated = complete_tree(client, api, headers, payload, deadline)
                     candidates = [i for i in tree if i.get('type') == 'blob' and is_supported_source_path(str(i.get('path', '')))]
                     candidates.sort(key=lambda i: source_priority(i['path']))
-                eligible = [i for i in candidates if int(i.get("size") or 0) <= MAX_COLLECTED_FILE_BYTES][:limit]
-                reasons = Counter(file_size=len(candidates) - len([i for i in candidates if int(i.get('size') or 0) <= MAX_COLLECTED_FILE_BYTES]))
+                within_size = [i for i in candidates if int(i.get('size') or 0) <= file_bytes]
+                eligible = within_size[:limit]
+                reasons = Counter(file_size=len(candidates) - len(within_size))
                 reasons['file_limit'] = max(0, len(candidates) - reasons['file_size'] - len(eligible))
                 deadline.control.emit(candidate_files=None if truncated else len(candidates), processed_files=sum(reasons.values()), skipped_files=sum(reasons.values()), totals_final=False)
                 deadline.control.emit(stage="采集源码文件")
@@ -232,8 +238,9 @@ def github_sources(url: str, max_files: int, deadline: Deadline) -> CollectedSou
                     for target, params in urls:
                         try:
                             response = github_get(client, target, headers=headers, params=params,
-                                                        max_bytes=MAX_COLLECTED_FILE_BYTES * 2, attempts=1, deadline=deadline)
-                            content = decode_github_blob(response.json())
+                                                        max_bytes=file_bytes * 2, attempts=1, deadline=deadline)
+                            content = decode_github_blob(response.json(), path, max_file_bytes=file_bytes,
+                                                         declared_encodings=archive_first)
                             if not deadline.control.accept(len(content.encode('utf-8'))):
                                 raise FileCollectionError("采集文本达到来源总量上限", 'text_budget')
                             document = deadline.control.publish((url, path, content))

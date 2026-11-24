@@ -68,6 +68,7 @@ class Evaluator:
     def __init__(self, snapshot: Snapshot, discovery: Discovery, budgets: Budgets,
                  checkpoint: Callable[[], object], semantics: str = SEMANTICS_VERSION, rules: str = 'api-candidates-1'):
         self.snapshot, self.discovery, self.budgets = snapshot, discovery, budgets
+        self.evaluation_nodes = budgets.slice_nodes if budgets.evaluation_nodes is None else budgets.evaluation_nodes
         self.checkpoint, self.semantics = checkpoint, semantics
         self.versions = (semantics, rules, discovery.index.version, discovery.index.host_python, discovery.index.target_python)
         self.store = FactStore(budgets)
@@ -91,7 +92,7 @@ class Evaluator:
     def touch(self, key: str) -> None:
         self.checkpoint()
         self.touched.add(key)
-        if len(self.touched) > self.budgets.slice_nodes:
+        if len(self.touched) > self.evaluation_nodes:
             raise SliceLimit('slice_limit')
 
     def memo(self, key: str, compute: Callable[[], Fact]) -> Fact:

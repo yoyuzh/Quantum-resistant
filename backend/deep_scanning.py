@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 from backend.collection_common import CollectionTimeout
-from backend.collection_config import DEEP_TIMEOUT_SECONDS, MAX_COLLECTED_FILES, MAX_TEXT_BYTES
+from backend.collection_config import DEEP_TIMEOUT_SECONDS, MAX_COLLECTED_FILE_BYTES, MAX_COLLECTED_FILES, MAX_TEXT_BYTES
 from backend.pipeline import ANALYSIS_SLOTS
 from deep_analysis.identity import content_digest, snapshot_id
 from deep_analysis.lazy_ast import AstCache
@@ -39,6 +39,7 @@ def source_snapshot(base, control, deadline):
     paths = getattr(control, 'source_paths', {})
     relative = getattr(control, 'path_fidelity', base['source_type'] in ('github_repository', 'pypi_package'))
     size = 0
+    file_bytes = getattr(control, 'max_file_bytes', MAX_COLLECTED_FILE_BYTES)
     records = [record for record in base['sources'] if record['file_name'].lower().endswith(('.py', '.pyw'))
                or (base['source_type'] == 'snippet' and '.' not in record['file_name'])]
     candidates = []
@@ -64,7 +65,7 @@ def source_snapshot(base, control, deadline):
         except (OSError, UnicodeError):
             notes.append('source_unavailable')
             continue
-        if len(sources) >= MAX_COLLECTED_FILES or size + len(encoded) > MAX_TEXT_BYTES:
+        if len(sources) >= MAX_COLLECTED_FILES or len(encoded) > file_bytes or size + len(encoded) > MAX_TEXT_BYTES:
             notes.append('source_limit')
             continue
         digest = hashlib.sha256(encoded).hexdigest()
@@ -141,7 +142,9 @@ def run_deep(base, budget):
         cpu_wait = time.monotonic() - wait_started
         effective = deadline.remaining()
         snapshot = source_snapshot(base, control, deadline)
-        budgets = Budgets(effective_seconds=effective, cpu_wait_seconds=cpu_wait)
+        library = getattr(getattr(control, 'parent', None), 'library_scan', False)
+        budgets = Budgets(effective_seconds=effective, cpu_wait_seconds=cpu_wait,
+                          **({'contexts_per_function': 256, 'evaluation_nodes': 2000} if library else {}))
         last = analyze_crypto(snapshot, budgets=budgets, checkpoint=deadline.remaining, on_operation=progress,
                               on_interrupted=preserve).model_dump(mode='json')
         last['cache'] = {'max_ast_files': 2, 'peak_ast_files': snapshot.ast_cache.peak, 'parses': snapshot.ast_cache.parses}

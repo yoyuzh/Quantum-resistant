@@ -93,7 +93,11 @@ class ScannerRepairTests(unittest.TestCase):
         for filename, source, expected in [
             ('test.yaml', 'security:\n  algorithms:\n    - RS256\n    - ES256\nnotes: RS256\n', [(3, 'RSA'), (4, 'ECDSA')]),
             ('test.json', '{"enabled":true,\n"algorithms": [\n"RS256",\n"ES256"]}', [(3, 'RSA'), (4, 'ECDSA')]),
+            ('test.json', '{\n\t"algorithms": [["R\\u0053256"], {"notes": "ES256"}], "path": "a\\/b"\n}', [(2, 'RSA')]),
+            ('examples/.vscode/launch.json', '{\n// "algorithm": "ES256"\n"algorithm": "RS256",\n"url":"https://example.net",\n}', [(3, 'RSA')]),
             ('test.yaml', 'algorithms: [RS256, ES256] # EdDSA\n', [(1, 'ECDSA'), (1, 'RSA')]),
+            ('test.yaml', 'shared: &values [RS256]\nalgorithms: *values\nnotes: Ed25519\n---\nalgorithm: ES256', [(1, 'RSA'), (5, 'ECDSA')]),
+            ('empty.json', ' \t\n', []),
         ]:
             with self.subTest(filename=filename):
                 findings, notes = analyze_source(source, filename)

@@ -13,6 +13,7 @@ from deep_analysis.models import Budgets, Coverage, CoverageCount, Diagnostic, S
 from deep_analysis.paths import path_names
 from deep_analysis.snapshot import Snapshot
 from deep_analysis.lazy_ast import AstCache
+from scanner.parsing import ParserInputLimit
 
 
 @dataclass(frozen=True)
@@ -336,7 +337,7 @@ def build_index(snapshot: Snapshot, *, budgets: Budgets | None = None,
                 stack.extend((child, depth + 1) for child in ast.iter_child_nodes(node))
         except (OSError, SyntaxError, ValueError, RecursionError, OverflowError) as exc:
             code = ('source_unavailable' if isinstance(exc, OSError) else
-                    'ast_limit' if isinstance(exc, (RecursionError, OverflowError)) else 'parse_failed')
+                    'ast_limit' if isinstance(exc, (RecursionError, OverflowError, ParserInputLimit)) else 'parse_failed')
             reason = {'source_unavailable': '源码不可读取', 'ast_limit': '达到单文件语法树上限', 'parse_failed': 'Python 语法解析失败'}
             detail = reason[code]
             file_name = identity.relative_path

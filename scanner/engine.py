@@ -5,7 +5,8 @@ from dataclasses import asdict
 from pathlib import Path
 
 from scanner.api_catalog import RULES_VERSION
-from scanner.control import AnalysisLimit, MAX_SOURCE_BYTES, checkpoint
+from scanner.control import AnalysisLimit, checkpoint, source_byte_limit
+from scanner.parsing import ParserInputLimit
 from scanner.config_analysis import ConfigError, scan_config
 from scanner.pem_analysis import pem_material
 from scanner.python_analysis import analyze_with_ast
@@ -25,18 +26,20 @@ def analyze_source(source: str, filename: str = "snippet.py", source_type: str =
     tree = None
     config_pem: list[tuple[int, str]] = []
     try:
-        if len(source.encode("utf-8")) > MAX_SOURCE_BYTES:
-            raise AnalysisLimit("源码超过单文件 2MiB 分析上限")
+        if len(source.encode("utf-8")) > (limit := source_byte_limit.get()):
+            raise AnalysisLimit(f"源码超过单文件 {limit // (1024 * 1024)} MiB 分析上限")
         if suffix in {".json", ".yaml", ".yml"}:
-            found = scan_config(source, suffix, pem_values=config_pem)
+            vscode_json = suffix == '.json' and '.vscode' in filename.replace('\\', '/').split('/')[:-1]
+            found = scan_config(source, suffix, pem_values=config_pem, jsonc=vscode_json)
         elif python_source:
             try:
                 visitor = analyze_with_ast(source)
                 tree = visitor.tree
                 found = visitor.findings
                 diagnostics.extend(dict(note, source_id=identity) for note in visitor.diagnostics)
-            except (SyntaxError, IndentationError, ValueError, TypeError, RecursionError):
-                diagnostics.append({"code": "syntax_fallback", "message": f"{filename} 无法完成 Python AST 分析，已使用有限的文本规则。", "source_id": identity})
+            except (SyntaxError, ValueError, TypeError, RecursionError) as exc:
+                reason = '表达式超过语法预检查范围' if isinstance(exc, ParserInputLimit) else '无法解析为 Python 语法'
+                diagnostics.append({"code": "syntax_fallback", "message": f"{filename}：{reason}，已使用有限的文本规则。", "source_id": identity})
                 found = scan_with_regex(source, include_pem=False, dotnet=False)
         else:
             found = scan_with_regex(source, c_style=c_style, include_pem=False, dotnet=suffix == '.cs')

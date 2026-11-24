@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import ast
-import io
-import tokenize
 
-from scanner.control import AnalysisLimit, MAX_DEPTH, MAX_NODES, checkpoint
+from scanner.control import AnalysisLimit, MAX_NODES, checkpoint
+from scanner.parsing import parse_python
 from scanner.rules import sensitive_context, Finding, MODULE_HINTS, SENSITIVE_STRING_CONTEXT_RE, STRING_IDENTIFIER_RULES, VULNERABLE_ALGOS
 from scanner.api_catalog import API_ALGORITHMS as KNOWN_CALLS
 
+MAX_CALL_CONTEXTS = 64
 
 def get_dotted_name(node: ast.AST) -> str | None:
     if isinstance(node, ast.Name):
@@ -201,7 +201,7 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
         name = get_dotted_name(node.func)
         if name in self.function_calls:
             self.call_contexts += 1
-            if self.call_contexts > 64:
+            if self.call_contexts > MAX_CALL_CONTEXTS:
                 raise AnalysisLimit("函数调用绑定上下文超过分析上限")
             self.function_calls[name]["calls"].append(self.aliases.copy())
         if name and name.split(".")[0] in self.uncertain and not self.aliases.get(name.split(".")[0]):
@@ -356,43 +356,11 @@ class QuantumCryptoVisitor(ast.NodeVisitor):
     visit_GeneratorExp = visit_ListComp
 
 
-def validate_parser_input(source: str) -> None:
-    """Bound logical statements before entering CPython's recursive AST parser."""
-    logical_tokens = 0
-    total = 0
-    for token in tokenize.generate_tokens(io.StringIO(source).readline):
-        total += 1
-        if total % 128 == 1:
-            checkpoint()
-        if total > MAX_NODES:
-            raise SyntaxError("Python 输入 token 数超过 AST 预检查上限")
-        if token.type == tokenize.NEWLINE:
-            logical_tokens = 0
-        elif token.type not in (tokenize.NL, tokenize.INDENT, tokenize.DEDENT,
-                                tokenize.COMMENT, tokenize.ENDMARKER):
-            logical_tokens += 1
-            if logical_tokens > MAX_DEPTH * 4:
-                raise SyntaxError("Python 逻辑语句超过 AST 预检查上限")
-
 def analyze_with_ast(source: str) -> QuantumCryptoVisitor:
-    checkpoint()
     try:
-        validate_parser_input(source)
-    except tokenize.TokenError as exc:
-        raise SyntaxError(str(exc)) from exc
-    tree = ast.parse(source)
-    # Check before recursive visitors; ast.parse itself remains a bounded,
-    # non-preemptible library operation, not a claimed hard CPU timeout.
-    stack = [(tree, 0)]
-    count = 0
-    while stack:
-        node, depth = stack.pop()
-        count += 1
-        if count % 128 == 1:
-            checkpoint()
-        if depth > MAX_DEPTH or count > MAX_NODES:
-            raise AnalysisLimit("Python AST 深度或节点数超过分析上限")
-        stack.extend((child, depth + 1) for child in ast.iter_child_nodes(node))
+        tree = parse_python(source, check=checkpoint)
+    except OverflowError as exc:
+        raise AnalysisLimit("Python AST 深度或节点数超过分析上限") from exc
     visitor = QuantumCryptoVisitor()
     visitor.visit(tree)
     visitor.tree = tree

@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import gzip
 import bz2
+import tokenize
 import tarfile
 import zipfile
 from collections import Counter
@@ -52,7 +53,22 @@ def _root(names: list[str], strip_root: bool) -> str | None:
     return None
 
 
-def _collect(entries, read, origin, limit, root, deadline):
+def decode_source(data, name, *, declared_encodings=False):
+    if declared_encodings:
+        if data.startswith((b'\xff\xfe\x00\x00', b'\x00\x00\xfe\xff')):
+            return data.decode('utf-32')
+        if data.startswith((b'\xff\xfe', b'\xfe\xff')):
+            return data.decode('utf-16')
+        if PurePosixPath(name).suffix.lower() in ('.py', '.pyw'):
+            try:
+                encoding, _ = tokenize.detect_encoding(io.BytesIO(data).readline)
+                return data.decode(encoding)
+            except (SyntaxError, LookupError) as exc:
+                raise UnicodeError('Python 源码编码声明无效') from exc
+    return data.decode('utf-8-sig')
+
+
+def _collect(entries, read, origin, limit, root, deadline, *, file_bytes=MAX_COLLECTED_FILE_BYTES, declared_encodings=False):
     candidates = [(entry, name, size) for entry, name, size in entries
                   if PurePosixPath(name).suffix.lower() in ALLOWED_SOURCE_SUFFIXES]
     documents, diagnostics = [], []
@@ -71,17 +87,22 @@ def _collect(entries, read, origin, limit, root, deadline):
             reasons['file_limit'] += len(candidates) - len(documents) - sum(reasons.values())
             break
         name = safe_archive_member_name(raw_name, root)
-        if not name or size > MAX_COLLECTED_FILE_BYTES:
+        if not name or size > file_bytes:
             reasons['path' if not name else 'file_size'] += 1
             deadline.control.emit(processed_delta=1, skipped_delta=1)
             continue
         try:
             data = read(entry)
-            if len(data) > MAX_COLLECTED_FILE_BYTES:
+            if len(data) > file_bytes:
                 reasons['file_size'] += 1
                 deadline.control.emit(processed_delta=1, skipped_delta=1)
                 continue
-            content = data.decode("utf-8-sig")
+            content = decode_source(data, name, declared_encodings=declared_encodings)
+            text_size = len(content.encode('utf-8')) if declared_encodings else len(data)
+            if text_size > file_bytes:
+                reasons['file_size'] += 1
+                deadline.control.emit(processed_delta=1, skipped_delta=1)
+                continue
         except UnicodeError:
             reasons['encoding'] += 1
             deadline.control.emit(processed_delta=1, skipped_delta=1)
@@ -100,7 +121,7 @@ def _collect(entries, read, origin, limit, root, deadline):
             reasons['read_failure'] += 1
             deadline.control.emit(processed_delta=1, skipped_delta=1)
             continue
-        if not deadline.control.accept(len(data)):
+        if not deadline.control.accept(text_size):
             reasons['text_budget'] += 1
             deadline.control.emit(processed_delta=1, skipped_delta=1)
             continue
@@ -133,7 +154,9 @@ def limited_collection(result, extra_candidates=0):
     return result
 
 
-def collect_from_zip_bytes(data: bytes, origin: str, *, max_files: int = MAX_COLLECTED_FILES, strip_root: bool = True, deadline: Deadline | None = None) -> CollectedSources:
+def collect_from_zip_bytes(data: bytes, origin: str, *, max_files: int = MAX_COLLECTED_FILES, strip_root: bool = True,
+                           deadline: Deadline | None = None, max_file_bytes: int = MAX_COLLECTED_FILE_BYTES,
+                           declared_encodings: bool = False) -> CollectedSources:
     budget = deadline or Deadline.after()
     with data.open('rb') if isinstance(data, Path) else io.BytesIO(data) as raw:
         zip_preflight(raw, budget)
@@ -154,8 +177,9 @@ def collect_from_zip_bytes(data: bytes, origin: str, *, max_files: int = MAX_COL
             def read(info):
                 budget.remaining()
                 with archive.open(info) as stream:
-                    return stream.read(MAX_COLLECTED_FILE_BYTES + 1)
-            result = _collect(entries, read, origin, max_files, root, budget)
+                    return stream.read(max_file_bytes + 1)
+            result = _collect(entries, read, origin, max_files, root, budget,
+                              file_bytes=max_file_bytes, declared_encodings=declared_encodings)
             if cut < len(infos):
                 extra = sum(not i.is_dir() and PurePosixPath(i.filename).suffix.lower() in ALLOWED_SOURCE_SUFFIXES for i in infos[cut:])
                 result = limited_collection(result, extra)
@@ -224,7 +248,7 @@ def collect_from_tar_bytes(data: bytes, origin: str, *, max_files: int = MAX_COL
                         raise OSError('无法读取归档文件')
                     with stream:
                         return stream.read(MAX_COLLECTED_FILE_BYTES + 1)
-                result = _collect(entries, read, origin, max_files, root, budget)
+                result = _collect(entries, read, origin, max_files, root, budget, file_bytes=MAX_COLLECTED_FILE_BYTES)
                 return limited_collection(result, None) if limited else result
         finally:
             if expanded is not raw:

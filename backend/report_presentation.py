@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-SCORE_NOTE = "迁移评分用于安排优先级。高风险项 × 25 + 受影响文件 × 10 + 算法种类 × 10，上限 100。"
+SCORE_NOTE = "高风险项 × 25 + 受影响文件 × 10 + 算法种类 × 10，上限 100。"
 
 
 def migration_presentation(migrations: list[dict[str, Any]]) -> dict[str, Any]:

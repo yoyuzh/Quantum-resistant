@@ -26,6 +26,16 @@ def zip_bytes(files):
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_repository_zip_accepts_declared_encodings_and_retains_real_size_gaps(self):
+        latin = '# coding: latin-1\ntext = "café"'.encode('latin-1')
+        utf16 = 'algorithm: RS256'.encode('utf-16')
+        data = zip_bytes([('repo/source.py', latin), ('repo/config.yaml', utf16),
+                          ('repo/too-big.txt', b'x' * 41), ('repo/bad.txt', b'\xff')])
+        result = collect_from_zip_bytes(data, 'origin', max_file_bytes=40, declared_encodings=True)
+        self.assertEqual([doc[2] for doc in result], [latin.decode('latin-1'), utf16.decode('utf-16')])
+        self.assertEqual(result.coverage['skip_reasons'], {'file_size': 1, 'encoding': 1})
+        self.assertEqual(collect_from_zip_bytes(data, 'origin').coverage['skip_reasons'], {'encoding': 3})
+
     def test_zip_fills_remaining_text_budget_after_a_larger_file(self):
         deadline = Deadline(Deadline.after().end, CollectionControl(max_bytes=10))
         data = zip_bytes([('a.py', 'x = 1'), ('b.py', 'long = 2'), ('c.py', 'y = 3')])

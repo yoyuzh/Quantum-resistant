@@ -12,6 +12,8 @@ class AnalysisLimit(Exception):
 
 _checkpoint: ContextVar[Callable[[], object] | None] = ContextVar('scan_checkpoint', default=None)
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
+MAX_REPOSITORY_SOURCE_BYTES = 4 * 1024 * 1024
+source_byte_limit: ContextVar[int] = ContextVar('source_byte_limit', default=MAX_SOURCE_BYTES)
 MAX_NODES = 50_000
 MAX_DEPTH = 64
 
@@ -23,12 +25,14 @@ def checkpoint() -> None:
 
 
 @contextmanager
-def analysis_control(callback: Callable[[], object]) -> Iterator[None]:
+def analysis_control(callback: Callable[[], object], *, max_source_bytes: int = MAX_SOURCE_BYTES) -> Iterator[None]:
     token = _checkpoint.set(callback)
+    size_token = source_byte_limit.set(max_source_bytes)
     try:
         checkpoint()
         yield
     finally:
+        source_byte_limit.reset(size_token)
         _checkpoint.reset(token)
 
 

@@ -34,11 +34,11 @@
 
 GET /api/repository-library 读取本机资料库，并从随包的 web/repository-seed.json 补入缺少的仓库。导入校验版本化数据包，持锁合并并原子写入。每库限 16 MiB、5000 个仓库。仓库任务复用批次扫描准入、仓库隔离与有界静态分析。仅种子中经固定提交采集的数据保证附有 SHA。
 
-仓库全景主入口使用层次边捆绑图，具体仓库和算法沿同一圆周排列，连线按仓库、算法和用途聚合。默认展示静态确认记录。类别定位或节点选择会高亮匹配的关系，点击连线可查看证据。历史摘要按仓库与算法的关联计数，使用单独线型表示未记录的用途。
+仓库全景工作台支持层次边捆绑图和二维全景图。边捆绑图将匹配的仓库和算法沿完整圆周排列，连线按仓库、算法和用途聚合。二维全景图默认汇总类别与算法，展开后按仓库分页，并保留类别归属线。两图共用筛选、证据详情与导出，默认展示静态确认记录。导出覆盖全部匹配仓库，二维全景图使用独立分类视图保存交互 HTML，以分栏图保存 PNG。历史摘要按仓库与算法的关联计数。
 
 网页 AI 选仓调用 `POST /api/tasks/library/discover`，校验模型授权和版本后从最多 100 个未入库候选中选择。选仓请求发送候选编号、仓库名称、Star 数及数量限制，输出仅接纳候选内的去重编号。显式开启 `ai_assisted` 后，用途复核只向模型发送规则未识别用途的脱敏代码证据，资料库保存融合后的摘要。`POST /api/tasks/library/purposes` 作为兼容接口保留。
 
-`POST /api/tasks/library/recheck` 以已入库的仓库名为输入，可提交资料库内的全部仓库。复查的静态分析同时更新算法检出和用途。资料库任务优先采集默认分支归档，采集失败时回退到 GitHub 文件列表；每仓最多 100 MiB 文本，整批共享 512 MiB。候选文件数、跳过原因和入库名单随结果返回。新扫描不完整时，入库会保留已有完整结果或已分析更多文件的旧记录，复查详情继续展示本轮覆盖。
+`POST /api/tasks/library/recheck` 以已入库的仓库名为输入，可提交资料库内的全部仓库。复查的静态分析同时更新算法检出和用途。资料库任务优先采集默认分支归档，采集失败时回退到 GitHub 文件列表。单文件最多 4 MiB，每仓最多 100 MiB 文本，整批共享 512 MiB。除 UTF-8 外，资料库采集支持带 BOM 的 UTF-16/32 和 Python 源码声明的编码。跨文件分析每函数最多核验 256 个调用上下文，单条证据仍需独立回放。候选文件数、跳过原因、Python 核验范围和入库名单随结果返回。新扫描不完整时，入库会保留已有完整结果或已分析更多文件的旧记录，复查详情继续展示本轮覆盖。
 
 ## 响应约定
 
@@ -47,11 +47,11 @@ GET /api/repository-library 读取本机资料库，并从随包的 web/reposito
 - `coverage` 包含 scanned_files、file_limit、candidate_files（未知为 null）、skipped_files、degraded_files、skip_reasons 和 partial。跨文件核验用 `deep_analysis.work_completed` 标明可分析范围内的核验是否完成。
 - `diagnostics`：code、message、可选 source_id；例如 syntax_fallback、unknown_pem_algorithm、partial_collection。以实现中的 code 常量/字面量为准。
 - findings 的可选 `detection_method`：ast_call、ast_config、text_call、text_config、pem_header。可选 `library` / `resolved_api` 只用于已确认的 AST 密码 API 调用，缺失显示未记录。元数据随原识别过程产生，不重复扫描全文。
-- 可选 `analysis`：version=1、assets、migrations；仅描述当前输入的证据资产，不是完整或 CycloneDX 格式的 CBOM。
+- 可选 `analysis`：version=1，包含当前输入的证据资产和迁移建议，采用项目自有格式。
 
 公共 `analyze_source` / `scan_source_for_crypto` 通过 keyword-only 的 `include_metadata=True` 返回增强字段，默认关闭，CLI JSON 保持原字段。网页扫描与热门采集显式启用；原发现数量、去重规则和评分公式保持一致。
 
-保留 `POST /api/report/markdown`，新增 `POST /api/report/json` 和 `POST /api/report/csv`，均复用 ReportRequest，兼容缺少元数据的旧请求。JSON 导出含文件元信息、范围、诊断、原始发现、摘要和重新生成的分析，不输出 sources.content；CSV 为发现明细，不是完整扫描范围报告。
+`POST /api/report/{markdown,json,csv}` 共用 ReportRequest，可处理缺少元数据的旧请求。JSON 包含文件元信息、扫描范围、诊断、发现、摘要和分析，省略 `sources.content`。CSV 包含发现明细。
 
 热门响应保留 repos/meta/scanned_at，增加 failures 及每仓库 coverage/diagnostics/details_truncated。每仓库详情最多20项，总发现数量单独保留。历史结果缺少 coverage 时不可推算完整覆盖率。报告同步展示范围与诊断。
 
@@ -98,21 +98,21 @@ unittest 覆盖实际共享服务、API、上传边界、并发截止、存储�
 
 `utils/presentation.js` 根据现有统计生成最多三条短结论；文件同名才显示身份后缀，后缀冲突时显示完整身份。后端规范统计、扫描规则及评分没有变化。发现默认显示算法、风险、路径、行号和证据，详情保留身份、识别方法、密码库、API、原因、建议与源码入口；资产详情按同样方式折叠。
 
-HTML、Markdown 共用 `report_presentation.py` 的短结论与边界文案；阅读报告不折叠证据，不截断发现或诊断。附录保存评分、识别依据、范围字段、文件元信息与完整诊断。Markdown证据使用可容纳原始反引号的代码围栏；表格换行显示为“↵”，不依赖HTML标签。HTML使用转义文本、内联CSS/SVG和A4打印规则；正文不被打印隐藏。规范JSON和CSV导出未修改。
+HTML 和 Markdown 共用 `report_presentation.py`，完整呈现发现和证据。附录列出评分、识别依据、范围字段、文件元信息和诊断。Markdown 代码围栏保留原始反引号，表格内换行显示为“↵”。HTML 转义文本，使用内联 CSS、SVG 和 A4 打印样式。
 
 ## 扫描器识别与资源控制
 
-调用文本按完整名称消费一次，避免无括号点号链的后缀反复回溯。分析器通过线程内 ContextVar 接收共享 Deadline 检查；文本、词法、AST 遍历、配置事件和结果转换设检查点。管线仍在 finish 中等待分析线程真正退出，再冻结终态和释放引用，没有以 join 超时遗留线程。直接 build_scan_response 的分析也使用同一控制入口。第三方解析器的单次操作仍不可抢占，协作式预算不是通用硬 CPU 超时。
+文本规则一次读取完整调用名称。分析线程通过 ContextVar 共享 Deadline，检查点覆盖文本、词法、AST、配置及结果转换。`finish` 等待线程退出后冻结终态并释放引用。`build_scan_response` 共用同一超时机制。第三方解析器的单次调用须执行完毕才能检查截止时间。
 
 AST 函数体延后到所属块处理完后解析，已知直接调用保存当时绑定快照；顶层调用保持顺序。明确常量 if 分支按真值选择；未知分支绑定冲突只给 binding_unresolved 诊断。global/nonlocal 不作为词法局部变量预先遮蔽，参数、真实局部重绑定、类方法和推导式边界保留。没有在 AST 成功后补跑文本调用或配置规则。
 
-JSON 使用标准库验证语法，JSON/YAML 使用 PyYAML 6.0.3 SafeLoader 仅组合节点以保存标量行号，不构造 Python 对象。算法配置键下支持嵌套映射及列表，说明文字不作为算法值。YAML 锚点、别名、自定义标签、复杂键与多文档未纳入支持范围，显式诊断；深度上限64、配置事件/AST节点上限50000、Python绑定上限4096、直接函数调用绑定上下文上限64。超限会给 analysis_limit，畸形配置给 config_parse_error，不自动文本补猜。单文件2MiB以及任务、队列、HTTP、来源和临时存储容量均保持原值。范围中此类文件仍可查看元信息和诊断，不代表完整语义覆盖。
+JSON 使用标准库校验语法并保留标量行号，`.vscode` 下的 JSON 配置支持注释和尾逗号。YAML 使用 PyYAML SafeLoader 组合节点，支持多文档和非循环别名。复杂键的值按普通结构读取，自定义标签和循环别名会产生诊断。规则在相关配置键下匹配算法标识。默认深度上限 64，配置事件和 AST 节点上限 50000，Python 绑定上限 4096，直接函数调用绑定上下文上限 64。分析超限记录 `analysis_limit`，无效配置记录 `config_parse_error`，两者计入跳过。Python 语法回退计入降级分析。
 
 已知完整导入目标：PyCryptodome RSA/DSA/ECC import_key、construct（importKey 仅 RSA/DSA）；cryptography Ed25519/Ed448/X25519/X448 的私钥/公钥 bytes API，RSA/DSA/DH/EC 数字构造器及 EC 点导入/derive_private_key。通用序列化加载器和未知 key.sign 不推断 RSA。ECC 家族导入不推断具体曲线。EdDSA 单独保留家族画像及数字签名迁移用途，具体 Ed25519/Ed448 仅由明确证据识别。
 
 C风格词法过滤识别 JS/TS 模板文字并保留插值表达式；保留行列和 .NET 已有文字屏蔽边界，不宣称完整多语言解析。PEM 从明确文件头或承载完整块的源码/配置字面量识别，排除注释和独立文档字符串；头信息仍不验证密钥正文，通用头只给未知算法诊断。TOML 等其他配置仍为有限文本规则。验证方式与边界见 [验证说明](validation.md)。
 
-入口中的采集、热门扫描、存储与锁导出用于现有兼容调用和mock注入，并非可直接删除的无用代码。网页唯一源码入口为 `web/src/`。
+入口导出的采集、热门扫描、存储和锁接口供兼容调用和测试注入使用。网页源码入口为 `web/src/`。
 
 Windows/Linux 的原生窗口按钮覆盖高度统一为36px；应用标题栏使用 `titlebar-area-height` 与窗口按钮安全区域匹配。原生按钮保持系统悬停、最大化/恢复及关闭行为。移除网页菜单组件和菜单 IPC，内部菜单仅保留原生快捷键，阻止 F10/单独 Alt 显示菜单条；macOS 使用系统标题栏与菜单。主题切换仍同步原生界面与网页。
 

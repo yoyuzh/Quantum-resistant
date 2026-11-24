@@ -65,12 +65,10 @@ def export(identity: str, format: str, repository_id: str | None = None):
             f"来源：{SOURCE_LABELS.get(source_type, source_type) or '未知'}",
             f"扫描时间：{scanned_at}（北京时间）" if scanned_at else '扫描时间未知。',
             f"静态确认 {summary.get('finding_count', 0)} 项，AI研判 {changes.get('ai_assessed', 0)} 项，证据不足 {changes.get('pending', 0)} 项。",
-            f"迁移评分：{migration['score']}/100（{migration.get('priority', '未知')}）" if 'score' in migration else '迁移评分未知。',
+            f"迁移评分：{migration['score']}/100（{migration.get('priority', '未知')}，按静态确认项计算）" if 'score' in migration else None,
             scope_status(coverage),
         ]
         intro = [line for line in intro if line]
-        if migration:
-            intro.append('迁移评分按静态确认项计算。')
         analysis = value.get('analysis', {})
         sections = [('发现明细', headers, [cells(row) for row in rows]),
                     ('资产清单', ['文件','算法','状态','发现数','迁移方向'],
@@ -88,7 +86,7 @@ def export(identity: str, format: str, repository_id: str | None = None):
             deep_labels = {'completed': '完成', 'partial': '部分完成', 'failed': '失败', 'cancelled': '已取消'}
             if deep.get('work_completed') and deep_coverage.get('parsed', {}).get('count'):
                 deep_labels['partial'] = '可解析文件已核验'
-            sections.insert(1 if coverage else 0, ('跨文件核验', ['状态', '已解析 Python 文件', 'Python 候选文件', '产出证据的操作'], [[
+            sections.insert(1 if coverage else 0, ('跨文件核验', ['状态', '已解析 Python 文件', 'Python 候选文件', '已取证操作'], [[
                 deep_labels.get(deep.get('status'), '未知'), deep_coverage.get('parsed', {}).get('count', '未知'),
                 deep_coverage.get('selected', {}).get('total', '未知'), len(deep.get('operations', [])),
             ]]))

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from scanner.control import MAX_REPOSITORY_SOURCE_BYTES
 
 Text = Annotated[str, Field(min_length=1, max_length=512)]
 Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
@@ -75,7 +76,7 @@ class SourceIdentity(Contract):
     source_id: Text
     relative_path: Text
     sha256: Digest
-    size_bytes: Annotated[int, Field(strict=True, ge=0, le=2 * 1024 * 1024)]
+    size_bytes: Annotated[int, Field(strict=True, ge=0, le=MAX_REPOSITORY_SOURCE_BYTES)]
 
 
 class CoverageCount(Contract):
@@ -234,13 +235,14 @@ class Budgets(Contract):
     python_files: Annotated[int, Field(strict=True, ge=0, le=5000)] = 5000
     source_bytes: Annotated[int, Field(strict=True, ge=0, le=100 * 1024 * 1024)] = 100 * 1024 * 1024
     ast_nodes: Annotated[int, Field(strict=True, ge=0, le=50000)] = 50000
-    ast_depth: Annotated[int, Field(strict=True, ge=0, le=64)] = 64
+    ast_depth: Annotated[int, Field(strict=True, ge=0, le=160)] = 64
     index_nodes: Annotated[int, Field(strict=True, ge=0, le=2000000)] = 2000000
     index_edges: Annotated[int, Field(strict=True, ge=0, le=4000000)] = 4000000
     structure_bytes: Annotated[int, Field(strict=True, ge=0, le=256 * 1024 * 1024)] = 256 * 1024 * 1024
     slice_nodes: Annotated[int, Field(strict=True, ge=0, le=400)] = 400
+    evaluation_nodes: Annotated[int, Field(strict=True, ge=0, le=4000)] | None = None
     call_depth: Annotated[int, Field(strict=True, ge=0, le=5)] = 5
-    contexts_per_function: Annotated[int, Field(strict=True, ge=0, le=64)] = 64
+    contexts_per_function: Annotated[int, Field(strict=True, ge=0, le=512)] = 64
     value_candidates: Annotated[int, Field(strict=True, ge=0, le=4)] = 4
     seconds: Annotated[float, Field(ge=0, le=600)] = 600
     effective_seconds: Annotated[float, Field(ge=0, le=600)] = 600

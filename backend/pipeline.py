@@ -7,6 +7,7 @@ from queue import Empty, Queue
 from threading import BoundedSemaphore, Condition, Thread
 
 from backend.collection_common import CollectionTimeout
+from backend.collection_config import MAX_COLLECTED_FILE_BYTES
 from backend.temp_storage import StoredDocument
 from scan_quantum_vuln import analyze_source, make_source_id
 from scanner.control import analysis_control
@@ -50,15 +51,16 @@ class ScanPipeline:
             return document
         origin, name, content = document if len(document) == 3 else (None, *document)
         data = content.encode('utf-8')
+        control = self.budget.control
+        queue_limit = max(8 * 1024 * 1024, getattr(control, 'max_file_bytes', MAX_COLLECTED_FILE_BYTES))
         with self.condition:
-            while self.queued_bytes + len(data) > 8 * 1024 * 1024 or self.queue.full():
+            while self.queued_bytes + len(data) > queue_limit or self.queue.full():
                 self.budget.remaining()
                 self.condition.wait(.1)
             if self.closed:
                 raise CollectionTimeout("采集已结束")
             prefix = f'{self.namespace}:' if self.namespace else ''
             source_id = make_source_id(f"{prefix}{self.sequence}:{name}", content)
-            control = self.budget.control
             stored = document
             if isinstance(document, StoredDocument):
                 source_id = document.source_id
@@ -94,7 +96,8 @@ class ScanPipeline:
                     self.budget.remaining()
                 origin, name, content = document if len(document) == 3 else (None, *document)
                 self.budget.control.emit(activity={'action':'规则分析', 'files':[name], 'completed':len(self.records), 'total':None})
-                with analysis_control(self.budget.remaining):
+                limit = getattr(self.budget.control, 'max_file_bytes', MAX_COLLECTED_FILE_BYTES)
+                with analysis_control(self.budget.remaining, max_source_bytes=limit):
                     findings, notes = self.analyzer(content, name, self.source_type, identity, include_metadata=True)
                 findings = [dict(item, source_id=identity, file_name=name, source_type=self.source_type,
                                  risk_level=item.get('risk_level', '高风险'), reason=item.get('reason', ''),

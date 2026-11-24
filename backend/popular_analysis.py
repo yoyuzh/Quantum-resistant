@@ -11,6 +11,19 @@ from backend.repository_inventory import algorithm_inventory
 from backend.repository_library import batch_records, library_save_outcome
 
 
+def repository_analysis_summary(base):
+    deep = base['deep_analysis']
+    integrated = base['integrated_analysis']
+    coverage = deep.get('coverage', {})
+    gaps = set(coverage.get('gaps', ()))
+    gaps.update(item['code'] for item in deep.get('diagnostics', ())
+                if item['code'] in {'deep_failure', 'deep_interrupted', 'evidence_slice_limit',
+                                    'evidence_structure_limit', 'operation_limit', 'replay_limit'})
+    return {**integrated['changes'], 'deep_status': deep['status'], 'deep_work_completed': deep.get('work_completed'),
+            'deep_python': coverage.get('parsed'), 'deep_gaps': sorted(gaps),
+            'migration_score': integrated['summary']['migration_score']['score']}
+
+
 def keep_snapshot(repo, base, budget):
     from backend.deep_scanning import run_deep
     child, parent = budget.control, budget.control.parent
@@ -24,9 +37,8 @@ def keep_snapshot(repo, base, budget):
             parent.source_paths = {}
         parent.popular_snapshots[identity] = {'path':path, 'control':child, 'name':repo.full_name}
         parent.source_paths.update(getattr(child, 'source_paths', {}))
-    return identity, {**base['integrated_analysis']['changes'],'deep_status':base['deep_analysis']['status'],
-                      'migration_score':base['integrated_analysis']['summary']['migration_score']['score']}, algorithm_inventory(
-                          base['integrated_analysis']['findings'], deep_status=base['deep_analysis']['status'])
+    return identity, repository_analysis_summary(base), algorithm_inventory(
+        base['integrated_analysis']['findings'], deep_status=base['deep_analysis']['status'])
 
 
 def fair_allocations(counts: dict[str,int], limit: int) -> dict[str,int]:
@@ -137,8 +149,7 @@ def project(store, job, value):
                     store.storage.remove(old)
         repo['algorithm_inventory'] = algorithm_inventory(previous['integrated_analysis']['findings'],
             deep_status=previous['deep_analysis']['status'], ai_status=previous.get('ai_analysis', {}).get('status'))
-        repo['analysis_summary']={**previous['integrated_analysis']['changes'],'deep_status':previous['deep_analysis']['status'],
-                                  'migration_score':previous['integrated_analysis']['summary']['migration_score']['score']}
+        repo['analysis_summary'] = repository_analysis_summary(previous)
     return result
 
 
