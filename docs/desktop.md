@@ -4,7 +4,7 @@
 
 ## 安装包与平台
 
-- 当前版本 V1.4.1，各平台安装包集中在[同一 Release](https://github.com/yoyuzh/Quantum-resistant/releases/tag/v1.4.1)。
+- 当前版本 V1.5.0，各平台安装包集中在[同一 Release](https://github.com/yoyuzh/Quantum-resistant/releases/tag/v1.5.0)。
 - Windows x64：`Quantum-Scanner-X.Y.Z-win-x64.exe`。
 - Linux x64：`Quantum-Scanner-X.Y.Z-linux-amd64.deb`。
 - macOS Intel：`Quantum-Scanner-X.Y.Z-mac-x64.dmg`。
@@ -21,11 +21,11 @@ SHA-256 用于校验安装文件的完整性，不能证明发布者身份。在
 
 用户数据目录由 Electron 的 `userData` 确定：Windows 通常为 `%APPDATA%\Quantum Resistant Scanner`，macOS 为 `~/Library/Application Support/Quantum Resistant Scanner`，Linux 为 `~/.config/Quantum Resistant Scanner`（可能由 XDG 配置调整）。主题和热门快照位于该目录；日志最多每类4份、每份约1 MiB，不记录令牌、源码正文或请求体。源码、归档和任务结果在其 `cache/scans` 中短期保存，保留原有2 GiB容量、结果15分钟/8份/512 MiB限制。
 
-明暗切换同步网页、窗口背景和标题栏；启动画面使用已保存的主题。Windows/Linux 使用36px紧凑标题栏及原生窗口按钮，不再提供应用菜单入口或弹层，F10/单独 Alt 不会打开菜单条。Ctrl+C/V/Z、缩放、重载和 Alt+F4 等常用快捷键保留。macOS 保留原生标题栏和系统菜单。
+明暗主题同步启动画面、网页、窗口背景和标题栏。Windows 和 Linux 使用 36px 标题栏与原生窗口按钮，支持 Ctrl+C/V/Z、缩放、重载和 Alt+F4。macOS 使用原生标题栏和系统菜单。
 
-退出后不恢复扫描任务；先导出需要保存的结果。进行中关闭窗口会提示取消任务并退出，最长约10秒停止本地后端。异常退出遗留的暂存目录在下次启动清理。卸载保留用户设置、热门快照和已导出的报告；可在确认不再需要后自行删除用户数据目录。应用不会写入安装资源目录，也不会携带开发者机器上的热门快照、令牌或扫描结果。
+退出前请导出需要保留的结果。扫描期间关闭窗口需确认取消任务，后端最多等待约 10 秒退出。应用下次启动时清理异常退出留下的暂存目录。卸载保留用户设置、热门快照和已导出的报告。确认无需保留时可删除用户数据目录。
 
-四种报告通过系统保存对话框选择位置。保存完成、取消或失败都有桌面提示；网页的“已生成”只表示内容已生成。HTML 报告可用浏览器打开，并打印为 PDF。
+导出报告时，在系统保存对话框选择位置。以桌面保存提示为准。HTML 报告可在浏览器打印为 PDF。
 
 ## 从源码构建
 
@@ -79,4 +79,4 @@ npm --prefix desktop start
 
 新增配置操作通过白名单IPC交给主进程，单次输入最多32 KiB；父子私有stdio启动包及配置包最多512 KiB，不含命令行参数。主进程负责加密文件和保存状态，后端只接收运行配置。普通网页不能通过HTTP修改桌面密钥。
 
-关系图打开即铺满应用内容区，支持平移缩放及交互 HTML 和 PNG 导出。关系图与报告沿用用户触发的本机blob下载边界，通过保存对话框选择位置，不开放任意下载来源。任务提交时绑定模型；仅切换启用项不会改变正在运行或排队的任务。
+关系图打开后铺满应用内容区，支持平移、缩放和导出交互 HTML 或 PNG。关系图和报告通过系统对话框保存到本机。任务使用提交时绑定的模型。

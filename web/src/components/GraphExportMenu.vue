@@ -19,7 +19,7 @@ async function choose(format) {
     if (format === 'list') props.exportList();
     else {
       const save = await props.exportView(format);
-      if (typeof save === 'function') {
+      if (typeof save === 'function' && menu.value) {
         prepared.value = save;
         menu.value.open = true;
       }

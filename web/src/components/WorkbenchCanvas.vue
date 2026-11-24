@@ -142,7 +142,7 @@ defineExpose({ fit, locate, exportView });
 </script>
 <template>
   <div ref="root" class="canvas-workspace" :data-scale="view.scale" :data-hover="hover">
-    <canvas ref="canvas" tabindex="0" aria-label="完整关系图。滚轮缩放，拖动画布平移，0复位显示全部；搜索可定位记录，点击节点查看依据。"
+    <canvas ref="canvas" tabindex="0" aria-label="关系图。滚轮缩放，拖动平移，按 0 复位。"
       @wheel="wheel" @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="drag=null"
       @pointerleave="hover='';invalidate()" @keydown="key" />
     <p v-if="!graph.nodes.length" class="canvas-empty" role="status">没有匹配的关系</p>

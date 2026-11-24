@@ -24,7 +24,7 @@ defineProps({ disabled: Boolean });
 .switch-track::after { content: ''; position: absolute; width: 12px; height: 12px; top: 3px; left: 3px; border-radius: 50%; background: var(--bg-surface); }
 input:checked + .switch-track { background: var(--accent); }
 input:checked + .switch-track::after { transform: translateX(14px); }
-input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 3px; }
+:global(:root[data-keyboard] .ai-toggle input:focus-visible ~ span:last-child) { text-decoration: underline 2px; text-underline-offset: 4px; }
 input:disabled ~ span { opacity: .55; }
 @media (forced-colors: active) { .switch-track { border: 1px solid ButtonText; } input:checked + .switch-track { background: Highlight; } }
 </style>

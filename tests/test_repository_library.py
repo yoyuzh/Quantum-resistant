@@ -18,6 +18,14 @@ from backend.popular import RepoInfo
 from backend.repository_library import Repository, enrich_seed_copy, read_library
 
 
+def pinned_base(repo: Repository) -> Repository:
+    """Restore the identity fields required to compare historical seed snapshots."""
+    return repo.model_copy(update={
+        'revision': 'a' * 40,
+        'algorithm_inventory': repo.algorithm_inventory.model_copy(update={'basis': 'base'}),
+    })
+
+
 class LibraryTests(unittest.TestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()
@@ -32,8 +40,10 @@ class LibraryTests(unittest.TestCase):
 
     def test_portable_roundtrip_conflicts_and_atomic_failure(self):
         initial = self.client.get(self.url).json()
-        self.assertEqual(len({r['full_name'].casefold() for r in initial['repos']}), 30)
-        self.assertTrue(all(len(r['revision']) == 40 and r['coverage']['scanned_files'] > 0 for r in initial['repos']))
+        bundled = json.loads(self.seed.read_text(encoding='utf-8'))
+        self.assertEqual(initial, bundled)
+        self.assertEqual(len({r['full_name'].casefold() for r in initial['repos']}), len(bundled['repos']))
+        self.assertTrue(all(r['coverage']['scanned_files'] > 0 for r in initial['repos']))
         row = {**initial['repos'][0], 'full_name': 'owner/new', 'scanned_at': '2025-01-01T00:00:00Z'}
         def upload(*rows):
             return self.client.post(self.url + '/import', json={'schema_version': 1, 'repos': rows})
@@ -62,14 +72,14 @@ class LibraryTests(unittest.TestCase):
         previous = self.local.read_bytes()
         result = self.client.get(self.url).json()
         records = {r['full_name']: r for r in result['repos']}
-        self.assertEqual(len(records), 31)
+        self.assertEqual(len(records), len(initial['repos']) + 1)
         self.assertEqual(records[refreshed['full_name']], refreshed)
         self.assertEqual(records[user_added['full_name']], user_added)
         self.assertEqual(self.local.read_bytes(), previous)
 
     def test_seed_purposes_enrich_only_comparable_copies(self):
-        current = next(repo for repo in read_library().repos
-                       if any(group.purpose != 'unknown' for group in repo.algorithm_inventory.groups))
+        current = pinned_base(next(repo for repo in read_library().repos
+                                   if any(group.purpose != 'unknown' for group in repo.algorithm_inventory.groups)))
         data = current.model_dump(mode='json')
         counts = {}
         for group in data['algorithm_inventory']['groups']:
@@ -81,13 +91,15 @@ class LibraryTests(unittest.TestCase):
         ]
         old = Repository.model_validate(data)
         self.assertEqual(enrich_seed_copy(old, current), current)
+        unpinned = old.model_copy(update={'revision': None})
+        self.assertEqual(enrich_seed_copy(unpinned, current), unpinned)
         changed = old.model_copy(update={'scanned_at': old.scanned_at.replace(year=2030)})
         self.assertEqual(enrich_seed_copy(changed, current), changed)
 
     def test_seed_update_keeps_known_purposes_in_partially_classified_copies(self):
-        current = next(repo for repo in read_library().repos if
-                       any(g.purpose == 'key_material' for g in repo.algorithm_inventory.groups) and
-                       any(g.purpose not in ('key_material', 'unknown') for g in repo.algorithm_inventory.groups))
+        current = pinned_base(next(repo for repo in read_library().repos if
+                                   any(g.purpose == 'key_material' for g in repo.algorithm_inventory.groups) and
+                                   any(g.purpose not in ('key_material', 'unknown') for g in repo.algorithm_inventory.groups)))
         data = current.model_dump(mode='json')
         groups = data['algorithm_inventory']['groups']
         group = next(g for g in groups if g['purpose'] == 'key_material')
@@ -160,7 +172,8 @@ class LibraryTests(unittest.TestCase):
             first = (url, 'config.py', 'algorithm = "RS256"\n')
             if url.endswith('/complete'):
                 return CollectedSources([first], candidates=2, skipped=1, partial=True, skip_reasons={'download_failure': 1})
-            return CollectedSources([first, (url, 'other.py', 'value = 1')], candidates=2)
+            large_source = '#' + 'x' * (2 * 1024 * 1024) + '\nvalue = 1'
+            return CollectedSources([first, (url, 'other.py', large_source)], candidates=2)
 
         def submit(names, key):
             response = self.client.post('/api/tasks/library/recheck', json={'repositories': names},
@@ -186,6 +199,12 @@ class LibraryTests(unittest.TestCase):
             self.assertEqual(result['meta']['library_saved_repositories'], ['owner/partial'])
             self.assertEqual(result['meta']['library_retained_repositories'], ['owner/complete'])
             self.assertEqual(result['repos'][0]['coverage']['skip_reasons'], {'download_failure': 1})
+            old_summary = result['repos'][0]['analysis_summary']
+            self.assertEqual(old_summary['deep_status'], 'partial')
+            self.assertTrue(old_summary['deep_work_completed'])
+            new_summary = result['repos'][1]['analysis_summary']
+            self.assertEqual(new_summary['deep_status'], 'completed')
+            self.assertEqual(new_summary['deep_python'], {'count': 2, 'total': 2})
             self.assertEqual(fetch.call_count, 2)
             saved = {record.full_name: record for record in read_library().repos}
             self.assertEqual(saved['owner/complete'], Repository.model_validate(full))

@@ -32,7 +32,7 @@ function save(activate){emit('save',{...form,name:form.name.trim() || provider.v
       <SelectControl v-model="form.output_parameter" label="兼容接口额度参数" :options="[{value:'max_tokens',label:'max_tokens'},{value:'max_completion_tokens',label:'max_completion_tokens'}]" :popup-target="popupTarget" />
       <CheckboxControl v-if="form.preset === 'qwen'" v-model="form.reasoning_disabled" label="关闭思考模式" />
     </div></details>
-    <CheckboxControl v-model="form.consent" class="wide" label="允许发送扫描所需的脱敏代码片段"><InfoTip label="发送范围">脱敏片段可能含有未识别的敏感信息。发送前请确认代码可交给当前模型。</InfoTip></CheckboxControl>
+    <CheckboxControl v-model="form.consent" class="wide" label="允许发送脱敏代码片段"><InfoTip label="发送范围">脱敏可能遗漏敏感信息。请确认代码可发给当前模型。</InfoTip></CheckboxControl>
   </div></fieldset><footer><button class="button primary" type="submit" :disabled="busy || !canManage || profile?.readonly">{{ first?'保存并启用':'保存配置' }}</button><button v-if="profile" class="button secondary" type="button" :disabled="busy || !canManage" @click="$emit('test')">测试已保存配置</button><button v-if="profile?.has_key && !profile?.readonly" class="button text-action" type="button" :disabled="busy || !canManage" @click="clearCredential">删除凭据</button></footer></form>
 </template>
 <style scoped>

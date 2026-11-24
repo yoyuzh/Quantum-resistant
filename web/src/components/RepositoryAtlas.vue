@@ -3,7 +3,7 @@ import { computed, nextTick, ref, useId, watch } from 'vue';
 import { batchScope, label, repositoryAtlas } from '../utils/repositoryAtlas.js';
 import { inventoryFilename, inventoryMarkdown } from '../utils/repositoryInventory.js';
 import { formatTime } from '../utils/results.js';
-import RepositoryBundleRelations from './RepositoryBundleRelations.vue';
+import RepositoryGraphRelations from './RepositoryGraphRelations.vue';
 import AtlasEvidence from './AtlasEvidence.vue';
 import GraphPreview from './GraphPreview.vue';
 import GraphExportMenu from './GraphExportMenu.vue';
@@ -17,6 +17,7 @@ const popupLayer = ref(null);
 const trigger = ref(null);
 const active = ref(false);
 const mode = ref('confirmed');
+const overview = ref(false);
 const filter = ref('');
 const filtersOpen = ref(false);
 const selected = ref(null);
@@ -85,21 +86,26 @@ function download() {
     <template v-if="active">
       <header class="atlas-header">
         <h2 :id="titleId">仓库算法与用途关系图</h2>
+        <div class="segmented-group" role="group" aria-label="仓库关系图类型">
+          <button class="button secondary compact" :aria-pressed="!overview" @click="overview=false">边捆绑图</button>
+          <button class="button secondary compact" :aria-pressed="overview" @click="overview=true">二维全景图</button>
+        </div>
         <div class="atlas-actions">
           <button class="button secondary compact" :aria-expanded="filtersOpen" @click="filtersOpen=!filtersOpen">{{ filter || relations?.filtered ? '筛选中' : '筛选' }}</button>
-          <GraphExportMenu :export-view="format => relations?.download(format)" :export-list="download" :disabled="!relations?.canExport" />
+          <GraphExportMenu :key="overview" :export-view="format => relations?.download(format)" :export-list="download" :disabled="!relations?.canExport" />
           <button class="button secondary compact" autofocus @click="close">关闭</button>
         </div>
       </header>
       <div class="atlas-body" role="region" aria-label="关系图与扫描范围" tabindex="0">
-        <RepositoryBundleRelations ref="relations" :rows="atlas.rows" :evidence-open="Boolean(selected)"
+        <RepositoryGraphRelations ref="relations" :rows="atlas.rows" :evidence-open="Boolean(selected)" :evidence-panel="evidence" :overview="overview"
           :rankings="rankings" :status="mode" :filter="filter" :filters-open="filtersOpen" :popup-target="popupLayer"
           :stamp="formatTime(result.scanned_at)+'（北京时间）'" @filter="filter=$event" @select="select" @clear-evidence="selected=null">
           <template #scope>{{ batchScope(atlas) }}（{{ label(mode) }}）</template>
           <template #help>
             <InfoTip label="图形操作与扫描范围" :popup-target="popupLayer">
-              点击仓库或算法查看关系，点击连线查看证据。滚轮缩放，拖动画布平移。颜色和线型区分用途。
-              密钥材料来自带算法标识的 PEM 密钥头。最近扫描于 {{ formatTime(result.scanned_at) }}（北京时间）。
+              <p v-if="overview">点击类别展开仓库，拖动节点调整位置。</p>
+              <p>点击连线查看证据。滚轮缩放，拖动画布平移。</p>
+              <p>完整核验：所有候选文件完成扫描和适用的跨文件核验。</p>
             </InfoTip>
           </template>
           <template #evidence>
@@ -109,7 +115,7 @@ function download() {
                 :status="mode" :task-id="result.task_id" />
             </aside>
           </template>
-        </RepositoryBundleRelations>
+        </RepositoryGraphRelations>
         <details v-if="atlas.failures.length" class="atlas-failures">
           <summary>失败或未完成仓库（{{ atlas.failed }}）</summary>
           <p v-for="f in atlas.failures" :key="f.full_name">{{ f.full_name }}：{{ f.error }}</p>
@@ -122,7 +128,7 @@ function download() {
 <style scoped>
 .atlas-actions,.preview-summary { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .preview-summary { justify-content:space-between; }
-.atlas-header { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:5px 10px; }
+.atlas-header { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:5px 10px; }
 .atlas-header .atlas-actions { align-self:start; justify-content:flex-end; }
 .atlas-dialog[open] { gap:4px; }
 .atlas-body { flex:1; display:flex; flex-direction:column; gap:8px; min-height:0; overflow:auto; overscroll-behavior:contain; }
@@ -134,6 +140,9 @@ function download() {
 .atlas-failures summary { cursor:pointer; }
 .close-evidence { margin-bottom:8px; }
 @media(max-width:760px) {
+  .atlas-header { grid-template-columns:minmax(0,1fr) auto; }
+  .atlas-header > .segmented-group { grid-row:2; grid-column:1/-1; }
+  .atlas-actions { grid-row:1; grid-column:2; }
   .atlas-dialog h2 { font-size:16px; }
 }
 @media(max-width:520px) {

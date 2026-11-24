@@ -35,12 +35,13 @@ export function flowRecords(assets) {
   return { nodes: [...nodes.values()], links: [...links.values()] };
 }
 
-export function wrapDiagramText(text, width, limit = 3, font = 14) {
+export function wrapDiagramText(text, width, limit = 3, font = 14, measure) {
   const lines = [''];
   let used = 0;
   const chars = [...String(text || '')];
   for (let i = 0; i < chars.length; i++) {
-    const char = chars[i], size = /[^\u0000-\u00ff]/.test(char) ? font : font * .59;
+    const char = chars[i];
+    const size = measure ? measure(char) : /[^\u0000-\u00ff]/.test(char) ? font : font * .59;
     if (used + size > width && lines.at(-1)) {
       if (lines.length === limit) {
         lines[limit - 1] = lines.at(-1).slice(0, -1) + '…';

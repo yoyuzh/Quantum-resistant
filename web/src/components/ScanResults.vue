@@ -24,17 +24,12 @@ const deepStatus = computed(() => {
   if (deep.value?.status === 'cancelled') return '跨文件核验已取消。';
   if (deep.value?.status === 'failed') return '跨文件核验失败。';
   if (!deep.value?.work_completed) return '跨文件核验未完成。';
-  return deep.value.coverage?.parsed?.count ? '可解析的 Python 文件已完成核验。' : '没有可核验的 Python 文件。';
+  return deep.value.coverage?.parsed?.count ? '可解析文件已核验。' : '无可核验的 Python 文件。';
 });
 const deepFileCount = computed(() => {
   const coverage = deep.value?.coverage;
   if (!coverage?.parsed) return '';
-  return `${coverage.parsed.count} / ${coverage.selected?.total ?? coverage.parsed.total ?? '未知'} 个 Python 文件已解析。`;
-});
-const syntaxGap = computed(() => {
-  const errors = deep.value?.diagnostics?.filter(note => note.code === 'parse_failed') || [];
-  if (errors.length !== 1) return '';
-  return result.value.sources.find(source => source.source_id === errors[0].location?.source_id)?.file_name || '';
+  return `已解析 ${coverage.parsed.count} / ${coverage.selected?.total ?? coverage.parsed.total ?? '未知'} 个 Python 文件。`;
 });
 const scopeDiagnostics = computed(() => {
   const notes = result.value.diagnostics || [];
@@ -72,8 +67,7 @@ async function clearFilters() {
     </div>
     <div v-if="!result.coverage || result.coverage.partial || scopeDiagnostics.length || deepIncomplete" class="result-coverage">
       <p v-if="deepIncomplete" class="deep-status" role="status">
-        {{ deepStatus }}{{ deepFileCount }}已产出 {{ deep.operations?.length || 0 }} 项操作的证据。
-        <template v-if="syntaxGap">{{ syntaxGap }} 有语法错误。</template>
+        {{ deepStatus }}{{ deepFileCount }}
       </p>
       <CoverageNotice :coverage="result.coverage" :diagnostics="scopeDiagnostics" compact />
     </div>

@@ -28,8 +28,7 @@ defineEmits(['select']);
 .finding-row + .finding-row { border-top: 1px solid var(--border-light); }
 .finding-row:hover { background: var(--control-hover); }
 .finding-row:active { background: var(--control-pressed); }
-.finding-row.selected { background: var(--control-selected); box-shadow: inset 3px 0 var(--accent); }
-.finding-row:focus-visible { outline-offset: -3px; }
+.finding-row.selected { background: var(--control-selected); }
 .finding-row > span { min-width: 0; }
 strong, small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 strong { font-size: 13px; font-weight: 500; line-height: 19px; }
@@ -41,7 +40,7 @@ code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: now
 .row-arrow { color: var(--accent-dim); }
 @media (forced-colors: active) {
   .finding-row + .finding-row { border-top-color: CanvasText; }
-  .finding-row.selected { outline: 2px solid Highlight; outline-offset: -2px; }
+  .finding-row.selected strong { text-decoration: underline; }
 }
 @media (max-width: 600px) {
   .finding-row { grid-template-columns: 65px minmax(0, 1fr) 12px; gap: 8px; height: auto; min-height: 68px; }

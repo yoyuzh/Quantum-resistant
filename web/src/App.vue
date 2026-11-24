@@ -102,9 +102,7 @@ function toggleInput() {
               tabindex="0"
               aria-label="扫描输入内容"
             >
-              <p v-if="current.restored" class="notice">
-                {{ current.busy ? '已恢复后台任务。' : '已恢复结果。重新扫描前请确认输入。' }}
-              </p>
+              <p v-if="current.restored && !current.busy" class="notice">重新扫描前请核对输入。</p>
               <SnippetInput
                 v-if="mode === 'snippet' && !(current.restored && current.busy)"
                 v-model:filename="drafts.snippet.filename"

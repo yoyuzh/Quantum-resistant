@@ -16,7 +16,7 @@ const history = computed(() => activityHistory(props.progress));
     </div>
     <p v-if="progress?.recovery" class="activity-wait" role="status">自动重试<span v-if="progress.recovery.retry_at_elapsed > progress.elapsed">，{{ Math.ceil(progress.recovery.retry_at_elapsed-progress.elapsed) }} 秒后继续</span></p>
     <DisclosurePanel v-if="activity?.action || history.length" title="任务记录">
-      <p v-if="activity?.action">{{ activity.action }}<template v-if="activity.files?.length">，{{ activity.files.join('、') }}</template></p>
+      <p v-if="activity?.action">{{ activity.action }}</p>
       <ol v-if="history.length" class="activity-history" aria-label="最近任务记录">
         <li v-for="(item,i) in history" :key="`${item.elapsed}:${i}`" :title="item.files?.join('、')">{{ item.action }}<template v-if="item.files?.length">，{{ item.files.join('、') }}</template></li>
       </ol>

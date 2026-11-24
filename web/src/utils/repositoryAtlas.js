@@ -7,6 +7,13 @@ export const purposeName = group => purposeLabels[group.purpose] || '用途待�
 export const originName = group => ({ static: '静态', ai: 'AI', unknown: '未知' })[group.origin] || '未知';
 export const coverageName = repo => !repo.coverage ? '范围未知' : repo.coverage.partial ? '部分扫描' : '扫描完成';
 
+export function fullyVerifiedRepository(repo) {
+  const coverage = repo.coverage;
+  return Boolean(coverage && Number.isInteger(coverage.candidate_files) && coverage.candidate_files === coverage.scanned_files &&
+    !coverage.partial && !coverage.skipped_files && !coverage.degraded_files &&
+    repo.algorithm_inventory?.basis === 'integrated' && repo.algorithm_inventory.stages?.pending === 'completed');
+}
+
 function rowModel(repo) {
   const inventory = repo.algorithm_inventory;
   const groups = inventory?.groups || [];

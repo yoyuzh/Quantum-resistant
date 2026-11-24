@@ -220,10 +220,6 @@ onUnmounted(() => {
   opacity: 0.55;
   cursor: not-allowed;
 }
-.select-trigger:focus-visible {
-  outline: none;
-  box-shadow: inset 0 -2px var(--accent);
-}
 .select-value {
   flex: 1;
   min-width: 0;

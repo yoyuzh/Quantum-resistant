@@ -68,12 +68,16 @@ export function renderScene(ctx, scene, colors, focus) {
     ctx.globalAlpha = .045 + active * .075;
     ctx.fillStyle = kindColors[node.kind];
     ctx.fill(shape); ctx.globalAlpha = 1;
+    if (active > 0) {
+      ctx.globalAlpha = active * .13;
+      ctx.fillStyle = colors.accent;
+      ctx.fill(shape); ctx.globalAlpha = 1;
+    }
     ctx.strokeStyle = colors.border;
     ctx.lineWidth = 1;
     ctx.setLineDash(node.status === 'ai_assessed' ? [8, 4] : node.status === 'pending' ? [3, 4] : []);
     ctx.stroke(shape);
-    ctx.globalAlpha = active; ctx.strokeStyle = colors.accent; ctx.lineWidth = 1.8; ctx.stroke(shape);
-    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    ctx.setLineDash([]);
     ctx.save(); ctx.clip(shape);
     const decoration = nodeDecoration(node);
     if (decoration) {

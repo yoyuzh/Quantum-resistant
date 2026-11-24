@@ -31,15 +31,14 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-summary:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -3px;
+:where(button, a, input, select, textarea, summary, dialog, [tabindex]):focus {
+  outline: none;
+}
+:root[data-keyboard] :where(button, input, select, textarea, summary, [tabindex]:not(svg *)):focus-visible {
+  box-shadow: inset 0 -2px var(--accent);
+}
+:root[data-keyboard] a:focus-visible {
+  text-decoration: underline 2px;
 }
 input:focus,
 textarea:focus,
@@ -47,9 +46,6 @@ select:focus {
   outline: none;
   background: var(--bg-input);
 }
-input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; box-shadow: none; }
-:root[data-keyboard] input:focus-visible, :root[data-keyboard] textarea:focus-visible,
-:root[data-keyboard] select:focus-visible { box-shadow: inset 0 -2px var(--accent); }
 label:has(input:focus, textarea:focus, select:focus) {
   color: var(--accent-dim);
 }
@@ -168,16 +164,7 @@ input {
   flex-direction: column;
   min-height: 0;
 }
-.welcome-body {
-  flex: 1;
-  justify-content: space-between;
-}
-.welcome-body .empty {
-  margin-block: auto;
-}
-.panel-body:focus-visible {
-  outline-offset: -4px;
-}
+.welcome-body { flex: 1; }
 .stack {
   display: flex;
   flex-direction: column;
@@ -247,12 +234,6 @@ input {
   text-decoration-color: currentColor;
 }
 .button.text-action:active:not(:disabled) { opacity: 0.78; }
-button:focus:not(:focus-visible),
-summary:focus:not(:focus-visible),
-[role='button']:focus:not(:focus-visible),
-[tabindex='-1']:focus:not(:focus-visible) {
-  outline: none;
-}
 summary {
   display: flex;
   align-items: center;
@@ -373,8 +354,11 @@ summary:active { opacity: 0.78; }
 }
 @media (forced-colors: active) {
   .button, summary, .select-trigger { border: 1px solid ButtonText; }
-  .button.active, .repo-row.selected { outline: 2px solid Highlight; }
-  input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: Highlight; }
+  .button.active, .repo-row.selected { text-decoration: underline 2px; }
+  :root[data-keyboard] :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 .analysis-card {
   padding: 1rem;
@@ -416,5 +400,3 @@ summary:active { opacity: 0.78; }
 
 .segmented-group { display:flex;align-items:center;gap:6px;flex-wrap:wrap; }
 .segmented-group .button[aria-pressed='true'] { background:var(--control-selected);color:var(--accent-dim);font-weight:650; }
-:root[data-keyboard] button:focus-visible,:root[data-keyboard] [role='button']:focus-visible,
-:root[data-keyboard] [role='combobox']:focus-visible { outline:none;box-shadow:inset 0 -2px var(--accent); }

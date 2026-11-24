@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { repositoryAtlas } from '../src/utils/repositoryAtlas.js';
 import { inventoryFilename, inventoryMarkdown } from '../src/utils/repositoryInventory.js';
+import { repositoryVerificationNotice } from '../src/utils/repositoryScan.js';
 
 const base = { algorithm: 'RSA', purpose: 'sign', origin: 'static', status: 'confirmed',
   count: 21, example: { path: 'auth/cfg|sign.py', line: 3, source_id: 'a' } };
@@ -45,4 +46,15 @@ test('all failures retain their scope and have no algorithm denominator', () => 
   assert.equal(atlas.requested, 1);
   assert.deepEqual(atlas.rankings.confirmed, []);
   assert.match(inventoryMarkdown(atlas), /无可用仓库结果/);
+});
+
+test('repository results distinguish verified files from interrupted verification', () => {
+  assert.equal(repositoryVerificationNotice({
+    deep_status: 'partial', deep_work_completed: true, deep_python: { count: 5, total: 6 },
+    deep_gaps: ['parse_failed'],
+  }), '可解析 Python 文件已核验，已解析 5 / 6 个已采集的 Python 文件，Python 语法解析失败');
+  assert.match(repositoryVerificationNotice({
+    deep_status: 'partial', deep_work_completed: false, deep_gaps: ['context_limit'],
+  }), /跨文件核验部分完成.*调用上下文上限/);
+  assert.equal(repositoryVerificationNotice({ deep_status: 'completed' }), '');
 });

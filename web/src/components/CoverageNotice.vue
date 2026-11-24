@@ -8,11 +8,12 @@ const skipped = computed(() => repositorySkipReasons(props.coverage));
 const caption = computed(() => {
   const c = props.coverage;
   const label = !c ? '扫描范围未知' : c.partial ? '部分扫描' : '扫描范围';
-  return [label, c && `已分析 ${c.scanned_files} 个文件`,
-    c && (c.candidate_files == null ? '候选总数未知' : `候选 ${c.candidate_files} 个`),
+  const files = c?.candidate_files == null ? c?.scanned_files : `${c.scanned_files} / ${c.candidate_files}`;
+  return [label, c && `已分析 ${files} 个文件`,
+    c && c.candidate_files == null && '候选总数未知',
     c?.skipped_files && `跳过 ${c.skipped_files} 个`,
     c?.degraded_files && `${c.degraded_files} 个降级分析`,
-    props.diagnostics.length && `扫描异常（${props.diagnostics.length} 条诊断）`].filter(Boolean).join('，');
+    props.diagnostics.length && `${props.diagnostics.length} 条诊断`].filter(Boolean).join('，');
 });
 </script>
 

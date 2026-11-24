@@ -38,9 +38,9 @@ export function inventoryMarkdown(atlas) {
   const library = batch.schema_version === 1;
   const lines = [library ? '# 仓库资料库清单' : '# 多仓库密码算法清单', '', '抗量子密码风险检测与迁移辅助软件', '', library ? '## 资料库范围' : '## 批次概况', '',
     (library ? '最近扫描时间（北京时间） ' : '扫描时间（北京时间） ') + formatTime(batch.scanned_at), '',
-    '样本条件　' + plain(batch.meta?.query || '未知'), '', batchScope(atlas), ''];
+    ...(batch.meta?.query ? ['样本条件　' + plain(batch.meta.query), ''] : []), batchScope(atlas), ''];
   if (batch.meta?.incomplete || batch.meta?.timed_out) lines.push(rows.length ? '批次部分完成。' : '批次未完成。', '');
-  lines.push('可比较仓库数按判断来源统计。部分扫描仅计已分析文件。', '', '## 算法覆盖', '');
+  lines.push('## 算法覆盖', '', '部分扫描按已分析文件统计。', '');
   if (atlas.algorithms.length) {
     const summary = atlas.modes.flatMap(mode => atlas.rankings[mode].map(r =>
       [r.algorithm, label(mode), r.hits + ' / ' + r.eligible, r.partial,
@@ -73,7 +73,7 @@ export function inventoryMarkdown(atlas) {
         continue;
       }
       lines.push(statuses.map(s => label(s) + '：' + stageText(row, s)).join('，'), '');
-      if (!row.groups.length) { lines.push('已评估范围内零发现。', ''); continue; }
+      if (!row.groups.length) { lines.push('本次未检出。', ''); continue; }
       const uses = new Map();
       for (const group of row.groups) {
         const key = JSON.stringify([group.algorithm, group.purpose, group.origin]);
@@ -83,7 +83,7 @@ export function inventoryMarkdown(atlas) {
         const location = group.example ? group.example.path + ':' + group.example.line : '不可用';
         use.examples.push(label(group.status) + ' ' + location);
       }
-      table(lines, ['算法', '用途', '用途来源', ...statuses.map(label), '代表位置（每个非空判断分组至多一处）'],
+      table(lines, ['算法', '用途', '用途来源', ...statuses.map(label), '代表位置'],
         [...uses.values()].map(({group, counts, examples}) => [
           group.algorithm, purposeName(group), originName(group),
           ...statuses.map(s => counts[s] ?? (row.count(group.algorithm, s) === null ? '未知' : 0)), examples.join('；')

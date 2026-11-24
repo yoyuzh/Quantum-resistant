@@ -1,7 +1,6 @@
 import { hierarchy } from 'd3-hierarchy';
 import { purposeName } from './repositoryAtlas.js';
 
-export const BUNDLE_PAGE_SIZE = 48;
 export const bundlePurposeLabel = purpose => purpose === 'unrecorded' ? '历史用途未记录' : purposeName({ purpose });
 
 export function linkedRepositoryNames(groups, flows) {
@@ -86,15 +85,13 @@ export function layoutRepositoryBundle(groups, flows, names, viewportWidth, view
   const active = flows.filter(flow => selectedNames.has(flow.repo));
   const algorithms = [...new Set(active.map(flow => flow.algorithm))].sort();
   const labels = [Array.from(selectedNames), algorithms].map(keys => new Map(keys.map(name => [name, labelBlock(name, measure)])));
-  const columnWidths = labels.map(column => Math.max(24, ...[...column.values()].map(block => block.width)));
-  const columnHeights = labels.map(column => [...column.values()].reduce((sum, block) => sum + block.height + labelGap, 0));
-  const arcHeight = 1.72;
-  const naturalRadius = Math.max(160, Math.max(...columnHeights) / arcHeight);
-  const width = Math.max(650, viewportWidth, columnWidths[0] + columnWidths[1] + 56 + 2 * naturalRadius);
-  const radius = Math.min(Math.max(naturalRadius, (viewportHeight - 36) / 2), (width - columnWidths[0] - columnWidths[1] - 56) / 2);
-  const height = Math.max(viewportHeight, 2 * radius + 36, ...columnHeights.map(h => h + 36));
-  const center = { x:(width + columnWidths[0] - columnWidths[1]) / 2, y:height / 2 };
-  let leftEdge = center.x - radius, rightEdge = center.x + radius;
+  const spans = labels.map(column => [...column.values()].reduce((sum, block) => sum + block.height + labelGap, 0));
+  const total = spans[0] + spans[1];
+  const gap = total ? Math.min(28, .75 * total / (selectedNames.size + algorithms.length)) : 0;
+  const radians = 2 * Math.PI / Math.max(1, total + 2 * gap);
+  const radius = Math.max(165, 1.07 / radians, Math.min(viewportWidth, viewportHeight) / 3.15);
+  const center = { x:0, y:0 };
+  let left = -radius, right = radius, top = -radius, bottom = radius;
   const ringPoint = (angle, depth = 1) => ({
     x:center.x + radius * depth * Math.cos(angle), y:center.y + radius * depth * Math.sin(angle),
   });
@@ -110,25 +107,27 @@ export function layoutRepositoryBundle(groups, flows, names, viewportWidth, view
   ] });
   const endpoints = new Map();
   for (const branch of tree.children) {
-    const left = branch.data.side === 'repo';
+    const repo = branch.data.side === 'repo';
     const leaves = branch.leaves().filter(leaf => leaf.data.id);
-    const column = left ? 0 : 1;
-    const extent = columnHeights[column] - labelGap;
-    const extra = leaves.length > 1 ? Math.max(0, radius * arcHeight - extent) / (leaves.length - 1) : 0;
-    let top = center.y - (extent + Math.max(0, leaves.length - 1) * extra) / 2;
+    const column = repo ? 0 : 1;
+    let start = (repo ? spans[1] / 2 + gap : -spans[1] / 2) * radians;
     for (const leaf of leaves) {
       leaf.block = labels[column].get(leaf.data.key);
-      leaf.labelY = top + leaf.block.height / 2;
-      const dy = leaf.labelY - center.y;
-      const angle = Math.asin(dy / radius);
-      leaf.angle = left ? Math.PI - angle : angle;
+      const step = (leaf.block.height + labelGap) * radians;
+      leaf.angle = start + step / 2;
+      start += step;
       leaf.point = ringPoint(leaf.angle);
-      const closest = Math.max(0, Math.abs(dy) - leaf.block.height / 2);
-      const outside = Math.sqrt(radius ** 2 - closest ** 2) + 13;
-      leaf.labelX = center.x + (left ? -outside : outside);
-      if (left) leftEdge = Math.min(leftEdge, leaf.labelX - leaf.block.width);
-      else rightEdge = Math.max(rightEdge, leaf.labelX + leaf.block.width);
-      top += leaf.block.height + labelGap + extra;
+      leaf.anchor = ringPoint(leaf.angle, 1 + 13 / radius);
+      const cos = Math.cos(leaf.angle), sin = Math.sin(leaf.angle);
+      leaf.flipped = cos < 0;
+      for (const length of [0, leaf.block.width + 4]) {
+        for (const offset of [-leaf.block.height / 2, leaf.block.height / 2]) {
+          const x = leaf.anchor.x + length * cos - offset * sin;
+          const y = leaf.anchor.y + length * sin + offset * cos;
+          left = Math.min(left,x); right = Math.max(right,x);
+          top = Math.min(top,y); bottom = Math.max(bottom,y);
+        }
+      }
       endpoints.set(leaf.data.id, leaf);
     }
     branch.eachAfter(node => {
@@ -137,6 +136,14 @@ export function layoutRepositoryBundle(groups, flows, names, viewportWidth, view
       node.point = ringPoint(node.angle, node.depth === 1 ? .21 : .62);
     });
   }
+  const inset = 18;
+  const width = Math.max(viewportWidth, right - left + 2 * inset);
+  const height = Math.max(viewportHeight, bottom - top + 2 * inset);
+  center.x = (width - left - right) / 2;
+  center.y = (height - top - bottom) / 2;
+  tree.each(node => {
+    if (node.point) node.point = { x:node.point.x + center.x, y:node.point.y + center.y };
+  });
   tree.point = center;
   const counts = new Map();
   const links = active.map(flow => {
@@ -156,14 +163,17 @@ export function layoutRepositoryBundle(groups, flows, names, viewportWidth, view
         y: bundling * node.point.y + (1 - bundling) * (source.point.y + t * (target.point.y - source.point.y)) + offset,
       };
     });
-    return { ...flow, id: JSON.stringify([flow.repo, flow.algorithm, flow.purpose]), path: smoothPath(points),
+    return { ...flow, id: JSON.stringify([flow.repo, flow.algorithm, flow.purpose]), source: source.data.id,
+      target: target.data.id, path: smoothPath(points),
       width: Math.min(5.5, 1 + Math.log2(1 + flow.count) * .43), ...bundleStyle(flow.purpose) };
   });
   const nodes = [...endpoints.values()].map(leaf => ({
-    ...leaf.data, ...leaf.point, labelY:leaf.labelY, labelX:leaf.labelX, labelLines:leaf.block.lines,
+    ...leaf.data, ...leaf.point, labelX:leaf.anchor.x + center.x, labelY:leaf.anchor.y + center.y,
+    anchor:leaf.flipped ? 'end' : 'start', rotation:(leaf.angle * 180 / Math.PI + (leaf.flipped ? 180 : 0)) % 360,
+    labelLines:leaf.block.lines,
     count:counts.get(leaf.data.id) || 0,
   }));
-  const exportBounds = { x:leftEdge - 12, y:center.y - radius - 16,
-    width:rightEdge - leftEdge + 24, height:2 * radius + 32 };
+  const exportBounds = { x:center.x + left - inset, y:center.y + top - inset,
+    width:right - left + 2 * inset, height:bottom - top + 2 * inset };
   return { width, height, center, radius, exportBounds, nodes, links };
 }

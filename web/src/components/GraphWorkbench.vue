@@ -103,7 +103,7 @@ onBeforeUnmount(()=>{disposeLayout();dialog.value?.close();});
       </div>
     </header>
     <div v-show="filtersOpen" class="workbench-filters"><label>搜索文件／API<input v-model="query" type="search" placeholder="文件路径、API或算法" /></label><SelectControl v-model="algorithm" label="算法" :options="algorithms" :popup-target="dialog" /><SelectControl v-model="purpose" label="用途" :options="purposes" :popup-target="dialog" /><SelectControl v-model="status" label="状态" :options="statusOptions" :popup-target="dialog" /><SelectControl v-model="source" label="来源" :options="sources" :popup-target="dialog" /></div>
-    <div class="workbench-summary"><span role="status">{{ busy?'正在生成关系图…':`${graph.files || 0} 个文件、${graph.nodes.length} 个节点、${graph.links.length} 条关系` }}</span><InfoTip label="关系图操作">滚轮缩放，拖动画布平移。搜索覆盖全部记录。线型含义见图例。</InfoTip></div>
+    <div class="workbench-summary"><span role="status">{{ busy?'正在生成关系图…':`${graph.files || 0} 个文件、${graph.nodes.length} 个节点、${graph.links.length} 条关系` }}</span><InfoTip label="关系图操作">滚轮缩放，拖动平移，点击节点查看证据。</InfoTip></div>
     <p v-if="error" class="notice error" role="alert">{{ error }}<button class="button secondary compact" @click="layout">重试布局</button></p>
     <div v-if="open" class="workbench-body" :aria-busy="busy" :inert="busy || undefined">
       <WorkbenchCanvas ref="canvas" :graph="graph" :selected="selected" @select="inspectNode" @stats="renderStats=$event" />

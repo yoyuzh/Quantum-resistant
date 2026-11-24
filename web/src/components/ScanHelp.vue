@@ -10,7 +10,7 @@ defineProps({ mode: String });
       <template v-if="mode === 'files'">上传请求上限 {{ scanLimits.max_upload_bytes / 1048576 }} MiB（含表单开销）。</template>
     </p>
     <p>基础扫描最多 {{ scanLimits.scan_timeout_seconds / 60 }} 分钟，跨文件核验另有 {{ scanLimits.deep_timeout_seconds / 60 }} 分钟。
-      <template v-if="mode === 'github'">GitHub 公开仓库按默认分支的固定提交扫描。</template>
+      <template v-if="mode === 'github'">扫描公开仓库的默认分支。</template>
       <template v-if="mode === 'pypi'">PyPI 优先扫描源码发行包，备选 wheel。</template>
     </p>
     <p>任务结束后，源码与结果在本机最多保留 15 分钟。服务重启后需重新扫描。</p>

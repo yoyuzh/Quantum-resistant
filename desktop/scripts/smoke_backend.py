@@ -53,8 +53,9 @@ def check(command: list[str]) -> None:
             assert request('/api/popular/results')[0] == 404
             status, body, _ = request('/api/repository-library')
             library = json.loads(body)
-            assert status == 200 and library['schema_version'] == 1 and library['repos']
-            assert all(r['revision'] and r['coverage']['scanned_files'] for r in library['repos'])
+            seed_path = Path(__file__).resolve().parents[2] / 'web/repository-seed.json'
+            seed = json.loads(seed_path.read_text(encoding='utf-8'))
+            assert status == 200 and seed['repos'] and library == seed
             assert request('/api/repository-library/import', library)[0] == 200
             assert request('/api/tasks/library/discover', {},
                            {'X-Request-ID': 'desktop-library-route-check'})[0] == 422
@@ -87,7 +88,7 @@ def check(command: list[str]) -> None:
             process.stdin.flush()
             assert process.wait(timeout=12) == 0
             assert not list((root / 'cache/scans').glob('session-*'))
-            print('PASS: authenticated pages/API, static isolation, synthetic snippet/upload, four reports, shutdown cleanup')
+            print('PASS: authenticated pages/API, bundled repository library, static isolation, synthetic snippet/upload, four reports, shutdown cleanup')
         finally:
             if process.poll() is None:
                 process.kill()

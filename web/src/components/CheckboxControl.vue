@@ -15,4 +15,5 @@ const labelId = useId();
 input { flex:none;width:20px;height:20px;min-height:20px;margin:0;padding:0;accent-color:var(--accent);cursor:pointer; }
 span { min-width:0;cursor:default; }
 input:disabled { cursor:not-allowed; }
+:global(:root[data-keyboard] .checkbox-control input:focus-visible + span) { text-decoration:underline 2px; text-underline-offset:4px; }
 </style>

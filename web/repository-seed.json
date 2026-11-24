@@ -2,64 +2,843 @@
   "schema_version": 1,
   "repos": [
     {
-      "full_name": "certifi/python-certifi",
-      "scanned_at": "2026-11-18T10:52:39+08:00",
-      "revision": "ca446ca404ff3b962a0193f36e03d1eabb231968",
-      "rules_version": "crypto-rules-4",
+      "full_name": "ahopkins/sanic-jwt",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 14,
-        "candidate_files": 14,
-        "file_limit": 350,
+        "scanned_files": 101,
+        "candidate_files": 101,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/resources/ec-test-key.pem",
+              "line": 4,
+              "source_id": "src_292bbfdd386a",
+              "finding_id": "rule-0ae45ac4e905d0b5ebac07ff"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/test_endpoints_jwt_cryptography.py",
+              "line": 115,
+              "source_id": "src_bfae7dbe2a6e",
+              "finding_id": "rule-8bd5bd723b1ec697ee7526f4"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 13,
+            "example": {
+              "path": "example/basic_with_certs.py",
+              "line": 60,
+              "source_id": "src_2c6dde72d781",
+              "finding_id": "rule-2f43665ef76a23478e07bf0d"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "pending",
+            "count": 20,
+            "example": {
+              "path": "tests/test_async_options.py",
+              "line": 75,
+              "source_id": "src_85c36db5719b",
+              "finding_id": "operation-fc41ab155d8de59f130d5ef7"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "sign",
+            "origin": "static",
+            "status": "pending",
+            "count": 2,
+            "example": {
+              "path": "example/jwt_as_refresh_token.py",
+              "line": 50,
+              "source_id": "src_64b2c06c2bd6",
+              "finding_id": "operation-768296f6acdc7081774e0a66"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "AntonKueltz/fastecdsa",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 136,
+        "candidate_files": 136,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 70,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/test_whitespace_parsing.py",
+              "line": 14,
+              "source_id": "src_d08796837b3f",
+              "finding_id": "rule-d1059c02f480b51e0ddaee83"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "awslabs/StsSamlDriver",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 9,
+        "candidate_files": 9,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "backbone-hq/pqcrypto",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 15,
+        "candidate_files": 15,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "badkeys/badkeys",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 66,
+        "candidate_files": 67,
+        "file_limit": 5000,
+        "skipped_files": 1,
+        "degraded_files": 0,
+        "partial": true,
+        "skip_reasons": {
+          "encoding": 1
+        }
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "partial",
+          "pending": "partial"
+        },
+        "groups": [
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "badkeys/dkim.py",
+              "line": 71,
+              "source_id": "src_caf2701de7fd",
+              "finding_id": "rule-ee759a6c5cec32dc5fb6c02f"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/data/jwk-rsa-rfc7517.json",
+              "line": 5,
+              "source_id": "src_001af4d880d0",
+              "finding_id": "rule-a5f088992dc8abe0029a2b77"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "badkeys/rsakeys/rsarecover.py",
+              "line": 19,
+              "source_id": "src_c043fcb08dff",
+              "finding_id": "rule-837ed4d0ccaf6c6fd7b4e995"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 2,
+            "example": {
+              "path": "badkeys/checks.py",
+              "line": 225,
+              "source_id": "src_9794ea07000a",
+              "finding_id": "operation-c618a511d648d23e85bc9a72"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "blacklanternsecurity/badsecrets",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 103,
+        "candidate_files": 103,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 80,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/ltpa_active_test.py",
+              "line": 191,
+              "source_id": "src_47a69145d565",
+              "finding_id": "rule-9a192f651a41f51426eac4e7"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "badsecrets/modules/active/ltpa_token.py",
+              "line": 86,
+              "source_id": "src_9c2c0a69487b",
+              "finding_id": "rule-6e107b6ae87f00187908eb66"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "certifi/python-certifi",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 14,
+        "candidate_files": 14,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "Coldcard/firmware",
+      "scanned_at": "2026-11-23T16:25:21+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 454,
+        "candidate_files": 454,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 45,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "partial",
+          "pending": "partial",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "stm32/keys/00.pem",
+              "line": 1,
+              "source_id": "src_c4794cabb17c",
+              "finding_id": "rule-eea1e9594557c8daca834f25"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "dajiaji/pyseto",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 116,
+        "candidate_files": 116,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "pyseto/key_nist.py",
+              "line": 335,
+              "source_id": "src_d5d13675ab85",
+              "finding_id": "rule-0a0de9d22c18aa0e4333a011"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "pyseto/key.py",
+              "line": 188,
+              "source_id": "src_9568f2bc92ae",
+              "finding_id": "rule-e485b34ae5cddde6c115e25d"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 9,
+            "example": {
+              "path": "tests/keys/private_key_ecdsa_p384.pem",
+              "line": 1,
+              "source_id": "src_f89cb6908d12",
+              "finding_id": "rule-0c035d7bbf558a2cef48affa"
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "pyseto/key_nist.py",
+              "line": 340,
+              "source_id": "src_d5d13675ab85",
+              "finding_id": "rule-83ddd62cdbba822bec06a1ed"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "pyseto/versions/v3.py",
+              "line": 296,
+              "source_id": "src_c7c493d19d9f",
+              "finding_id": "rule-0baae4d828d126997e9c19b4"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 8,
+            "example": {
+              "path": "pyseto/key.py",
+              "line": 172,
+              "source_id": "src_9568f2bc92ae",
+              "finding_id": "rule-954f400a63edef9b6dc77eee"
+            }
+          },
+          {
+            "algorithm": "EdDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/keys/public_key_ed25519.json",
+              "line": 7,
+              "source_id": "src_6efffdb84475",
+              "finding_id": "rule-e85dc7feeb7c8b2395ef696e"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/keys/private_key_rsa.json",
+              "line": 11,
+              "source_id": "src_5b3f57211349",
+              "finding_id": "rule-cd52cc91fa08b5dbe7993073"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/test_key.py",
+              "line": 177,
+              "source_id": "src_2882e66b5d60",
+              "finding_id": "rule-7e103271b2849182d1c9fe3c"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/test_key.py",
+              "line": 662,
+              "source_id": "src_2882e66b5d60",
+              "finding_id": "rule-677c0a91c6f7589fa1884782"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 11,
+            "example": {
+              "path": "tests/keys/private_key_rsa_2.pem",
+              "line": 1,
+              "source_id": "src_9c0927bf8d92",
+              "finding_id": "rule-723ba2fec03a93bc1ecc2712"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "pyseto/key_sodium.py",
+              "line": 365,
+              "source_id": "src_dc2d1c5fb8ea",
+              "finding_id": "rule-936433fc2b14d9f43e60e9f8"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "pyseto/key_sodium.py",
+              "line": 364,
+              "source_id": "src_dc2d1c5fb8ea",
+              "finding_id": "rule-09cbd1553acc5545baea59a8"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "data61/python-paillier",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 29,
+        "candidate_files": 29,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "ecies/py",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 45,
+        "candidate_files": 45,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "encode/httpx",
-      "scanned_at": "2026-11-18T11:37:31+08:00",
-      "revision": "7cff5f79bc78649bbcd3fd9aa7a74c86e0f63016",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 98,
-        "file_limit": 350,
         "candidate_files": 98,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "tests/conftest.py",
+              "line": 210,
+              "source_id": "src_863320c3f35c",
+              "finding_id": "operation-0144122be3f9cbba4e9fa3e7"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "ethereum/eth-keyfile",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 17,
+        "candidate_files": 17,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
-      "full_name": "googleapis/google-auth-library-python",
-      "scanned_at": "2026-11-18T11:38:16+08:00",
-      "revision": "2ea24b03436765fa3cf279ce148482ff6332136b",
+      "full_name": "ethereum/eth-keys",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 302,
-        "file_limit": 350,
-        "candidate_files": 302,
+        "scanned_files": 40,
+        "candidate_files": 40,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "fangli/django-saml2-auth",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 5,
+        "candidate_files": 5,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "gattjoe/OCSPChecker",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 16,
+        "candidate_files": 16,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "GehirnInc/python-jwt",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 29,
+        "candidate_files": 29,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/testdata/dsa_privkey.pem",
+              "line": 1,
+              "source_id": "src_0e707f74e574",
+              "finding_id": "rule-4c8414f7c87075b3c17d0004"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/test_jws.py",
+              "line": 57,
+              "source_id": "src_78ab49ccf0ac",
+              "finding_id": "rule-c1cc37a5724bb264bef6831a"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "jwt/jwk.py",
+              "line": 257,
+              "source_id": "src_94d01cbcb604",
+              "finding_id": "rule-06a2d90a45bdfe4e1ff07860"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "googleapis/google-auth-library-python",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 302,
+        "candidate_files": 302,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -71,8 +850,8 @@
             "example": {
               "path": "tests/data/es256_privatekey.pem",
               "line": 1,
-              "source_id": "src_e936b3641b4b",
-              "finding_id": ""
+              "source_id": "src_61de11226385",
+              "finding_id": "rule-9bc5908dfb20f3ca4d94c5d5"
             }
           },
           {
@@ -84,8 +863,8 @@
             "example": {
               "path": "google/auth/crypt/es.py",
               "line": 98,
-              "source_id": "src_ededbccd818a",
-              "finding_id": ""
+              "source_id": "src_a0ac66501bce",
+              "finding_id": "rule-495a72ca77c7c7d1c7ef051c"
             }
           },
           {
@@ -97,8 +876,8 @@
             "example": {
               "path": "google/auth/jwt.py",
               "line": 101,
-              "source_id": "src_b38fe5e35628",
-              "finding_id": ""
+              "source_id": "src_0e94525e2a0a",
+              "finding_id": "rule-4287fe1f564b557ea4156107"
             }
           },
           {
@@ -110,30 +889,186 @@
             "example": {
               "path": "tests/data/impersonated_service_account_service_account_source.json",
               "line": 10,
-              "source_id": "src_0ee8f684a38a",
-              "finding_id": ""
+              "source_id": "src_98b89077004f",
+              "finding_id": "rule-19fd72c857b08d2487aed183"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 2,
+            "example": {
+              "path": "tests/crypt/test_rsa.py",
+              "line": 45,
+              "source_id": "src_2787a12a3860",
+              "finding_id": "operation-81128383651465f6b79b931c"
             }
           }
         ]
       }
     },
     {
+      "full_name": "HathorNetwork/hathor-core",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 1198,
+        "candidate_files": 1198,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 15,
+            "example": {
+              "path": "hathor/wallet/keypair.py",
+              "line": 112,
+              "source_id": "src_c7f7365d772d",
+              "finding_id": "rule-bff341f5bef3d2200ca203f7"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "hathorlib/hathorlib/utils/address.py",
+              "line": 161,
+              "source_id": "src_9880a17b498d",
+              "finding_id": "rule-728d1af21fef69a0f00e44d0"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 29,
+            "example": {
+              "path": "hathor/consensus/poa/poa.py",
+              "line": 89,
+              "source_id": "src_b6cecaca170f",
+              "finding_id": "rule-04d8356eebc45ebd98020cb5"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "hathor/p2p/peer.py",
+              "line": 470,
+              "source_id": "src_06907d1b27a2",
+              "finding_id": "rule-d6cf85219d26cac4b9a2e0b4"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "hathor/p2p/utils.py",
+              "line": 97,
+              "source_id": "src_d9de613bc39d",
+              "finding_id": "operation-62c8caa139b8f53bd2a9afca"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "hdwallet-io/python-hdwallet",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 695,
+        "candidate_files": 695,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "huashengdun/webssh",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 31,
+        "candidate_files": 31,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
       "full_name": "hynek/pem",
-      "scanned_at": "2026-11-18T10:53:08+08:00",
-      "revision": "19c12d91fb0f1931e9a50b23c59522fd5b54b962",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 33,
         "candidate_files": 33,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -145,8 +1080,8 @@
             "example": {
               "path": "tests/data.py",
               "line": 294,
-              "source_id": "src_7a538c09fea1",
-              "finding_id": ""
+              "source_id": "src_df459226ea1c",
+              "finding_id": "rule-b8ba9106cb5b5e1089260425"
             }
           },
           {
@@ -158,8 +1093,8 @@
             "example": {
               "path": "tests/data.py",
               "line": 270,
-              "source_id": "src_7a538c09fea1",
-              "finding_id": ""
+              "source_id": "src_df459226ea1c",
+              "finding_id": "rule-0dfd0a573aec7910d3f08759"
             }
           },
           {
@@ -171,8 +1106,262 @@
             "example": {
               "path": "tests/data.py",
               "line": 58,
-              "source_id": "src_7a538c09fea1",
-              "finding_id": ""
+              "source_id": "src_df459226ea1c",
+              "finding_id": "rule-e78a7d547f41733f40fd239c"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "tests/test_core.py",
+              "line": 411,
+              "source_id": "src_1b7e03891440",
+              "finding_id": "operation-653b2064021fbe96e92a48a5"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "IdentityPython/pyeleven",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 20,
+        "candidate_files": 20,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "jazzband/djangorestframework-simplejwt",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 67,
+        "candidate_files": 67,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/keys.py",
+              "line": 115,
+              "source_id": "src_e7329fbfed1f",
+              "finding_id": "rule-0012bc2b661194d0f6a188a8"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "tests/test_backends.py",
+              "line": 280,
+              "source_id": "src_a31eb9707236",
+              "finding_id": "rule-fdfba709ac1857c06ff91e3a"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/keys.py",
+              "line": 2,
+              "source_id": "src_e7329fbfed1f",
+              "finding_id": "rule-d8fb259c2713ee52a58057fe"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "jeremyschulman/netbox-plugin-auth-saml2",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 7,
+        "candidate_files": 7,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "JHUISI/charm",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 312,
+        "candidate_files": 312,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "jkolezyn/cert_tree",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 2,
+        "candidate_files": 2,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "joaojacome/bitwarden-ssh-agent",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 8,
+        "candidate_files": 8,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "jpadilla/django-jwt-auth",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 24,
+        "candidate_files": 24,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "算法待确认",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "jwt_auth/utils.py",
+              "line": 49,
+              "source_id": "src_94a20fba53dc",
+              "finding_id": "operation-15cbcb67ea7bddcc5b335252"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "sign",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "jwt_auth/utils.py",
+              "line": 35,
+              "source_id": "src_94a20fba53dc",
+              "finding_id": "operation-d897a9f795700a6af54ffe8e"
             }
           }
         ]
@@ -180,21 +1369,24 @@
     },
     {
       "full_name": "jpadilla/pyjwt",
-      "scanned_at": "2026-11-18T10:52:30+08:00",
-      "revision": "16231abfd1d8eab4953e8779b3017b859c88565e",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 68,
         "candidate_files": 68,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -205,9 +1397,9 @@
             "count": 3,
             "example": {
               "path": "jwt/algorithms.py",
-              "line": 889,
-              "source_id": "src_f72e1105f92d",
-              "finding_id": ""
+              "line": 894,
+              "source_id": "src_73a719a70fdb",
+              "finding_id": "rule-c0cf43bd6228a4c5f0a7d837"
             }
           },
           {
@@ -219,8 +1411,8 @@
             "example": {
               "path": "tests/test_advisory.py",
               "line": 17,
-              "source_id": "src_4c01c565f6d9",
-              "finding_id": ""
+              "source_id": "src_3416d09f0ad2",
+              "finding_id": "rule-eb431ae50c1c63e117492b9b"
             }
           },
           {
@@ -231,9 +1423,9 @@
             "count": 19,
             "example": {
               "path": "jwt/algorithms.py",
-              "line": 761,
-              "source_id": "src_f72e1105f92d",
-              "finding_id": ""
+              "line": 766,
+              "source_id": "src_73a719a70fdb",
+              "finding_id": "rule-d49aa74beedc66cdecf7fc77"
             }
           },
           {
@@ -244,9 +1436,9 @@
             "count": 2,
             "example": {
               "path": "jwt/algorithms.py",
-              "line": 1104,
-              "source_id": "src_f72e1105f92d",
-              "finding_id": ""
+              "line": 1109,
+              "source_id": "src_73a719a70fdb",
+              "finding_id": "rule-60f446ad007d2ba2f43ca079"
             }
           },
           {
@@ -257,9 +1449,9 @@
             "count": 2,
             "example": {
               "path": "jwt/algorithms.py",
-              "line": 1105,
-              "source_id": "src_f72e1105f92d",
-              "finding_id": ""
+              "line": 1110,
+              "source_id": "src_73a719a70fdb",
+              "finding_id": "rule-59aa9b9bba8e74ea087b4069"
             }
           },
           {
@@ -271,8 +1463,8 @@
             "example": {
               "path": "jwt/api_jwk.py",
               "line": 62,
-              "source_id": "src_af7163b469b9",
-              "finding_id": ""
+              "source_id": "src_149b6e262da5",
+              "finding_id": "rule-51844828913063fa429a75e0"
             }
           },
           {
@@ -284,8 +1476,8 @@
             "example": {
               "path": "jwt/api_jwk.py",
               "line": 55,
-              "source_id": "src_af7163b469b9",
-              "finding_id": ""
+              "source_id": "src_149b6e262da5",
+              "finding_id": "rule-2f6ff1712e1dadfc0c679f79"
             }
           },
           {
@@ -296,9 +1488,9 @@
             "count": 4,
             "example": {
               "path": "tests/test_algorithms.py",
-              "line": 1755,
-              "source_id": "src_1bca51fcdcff",
-              "finding_id": ""
+              "line": 1774,
+              "source_id": "src_9881cfd93e69",
+              "finding_id": "rule-3d28bcda07288b3edf6ff130"
             }
           },
           {
@@ -310,8 +1502,8 @@
             "example": {
               "path": "jwt/algorithms.py",
               "line": 641,
-              "source_id": "src_f72e1105f92d",
-              "finding_id": ""
+              "source_id": "src_73a719a70fdb",
+              "finding_id": "rule-584f93d23af0bfeaf297f080"
             }
           },
           {
@@ -323,30 +1515,135 @@
             "example": {
               "path": "tests/keys/testkey_pkcs1.pub.pem",
               "line": 1,
-              "source_id": "src_ec36b73b198f",
-              "finding_id": ""
+              "source_id": "src_f3ec09f4db52",
+              "finding_id": "rule-fdc2d2cd3efdb44e3178b537"
             }
           }
         ]
       }
     },
     {
-      "full_name": "Legrandin/pycryptodome",
-      "scanned_at": "2026-11-18T15:19:48+08:00",
-      "revision": "61746f3288be64f3aab0e69e7a980d8d198e33cc",
+      "full_name": "kurtbrose/pyjks",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 701,
-        "candidate_files": 703,
+        "scanned_files": 35,
+        "candidate_files": 35,
         "file_limit": 5000,
-        "skipped_files": 2,
-        "partial": true
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "labd/django-cognito-jwt",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 20,
+        "candidate_files": 20,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "src/django_cognito_jwt/validator.py",
+              "line": 66,
+              "source_id": "src_a03ba43d69e2",
+              "finding_id": "rule-83a3b628d5e6b61de32cfe39"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "sign",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/utils.py",
+              "line": 12,
+              "source_id": "src_8f4aaad6bb1b",
+              "finding_id": "rule-6415e2aa28e2a37a69dd2423"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "lc6chang/ecc-pycrypto",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 14,
+        "candidate_files": 14,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "Legrandin/pycryptodome",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 732,
+        "candidate_files": 732,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -358,8 +1655,8 @@
             "example": {
               "path": "lib/Crypto/SelfTest/PublicKey/test_import_DSA.py",
               "line": 238,
-              "source_id": "src_da4c849b224c",
-              "finding_id": ""
+              "source_id": "src_801d1856c242",
+              "finding_id": "rule-55e6ca0d3f9e3e02f49853b4"
             }
           },
           {
@@ -367,12 +1664,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 1,
+            "count": 4,
             "example": {
               "path": "lib/Crypto/SelfTest/IO/test_PKCS8.py",
               "line": 539,
-              "source_id": "src_d86545a038e5",
-              "finding_id": ""
+              "source_id": "src_5d4853d40d1b",
+              "finding_id": "rule-8dc3e67d9da31675de264ac7"
             }
           },
           {
@@ -380,12 +1677,12 @@
             "purpose": "key_import",
             "origin": "static",
             "status": "confirmed",
-            "count": 37,
+            "count": 46,
             "example": {
               "path": "lib/Crypto/SelfTest/PublicKey/test_import_DSA.py",
               "line": 68,
-              "source_id": "src_da4c849b224c",
-              "finding_id": ""
+              "source_id": "src_801d1856c242",
+              "finding_id": "rule-3f4dbe81d3e0098b3f461ebd"
             }
           },
           {
@@ -397,21 +1694,8 @@
             "example": {
               "path": "lib/Crypto/SelfTest/PublicKey/test_import_DSA.py",
               "line": 145,
-              "source_id": "src_da4c849b224c",
-              "finding_id": ""
-            }
-          },
-          {
-            "algorithm": "DSA",
-            "purpose": "unknown",
-            "origin": "unknown",
-            "status": "confirmed",
-            "count": 11,
-            "example": {
-              "path": "lib/Crypto/SelfTest/PublicKey/test_import_passphrase.py",
-              "line": 49,
-              "source_id": "src_b6c651008d5f",
-              "finding_id": ""
+              "source_id": "src_801d1856c242",
+              "finding_id": "rule-2af9223c5cfc009e32a9721d"
             }
           },
           {
@@ -419,12 +1703,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 98,
+            "count": 123,
             "example": {
               "path": "lib/Crypto/Protocol/HPKE.py",
               "line": 183,
-              "source_id": "src_78b052bfd977",
-              "finding_id": ""
+              "source_id": "src_b2c0d3f999d8",
+              "finding_id": "rule-2c22a5cc72f3f4f9476f69c4"
             }
           },
           {
@@ -432,12 +1716,12 @@
             "purpose": "key_import",
             "origin": "static",
             "status": "confirmed",
-            "count": 442,
+            "count": 461,
             "example": {
               "path": "lib/Crypto/Protocol/DH.py",
               "line": 44,
-              "source_id": "src_07825a596d05",
-              "finding_id": ""
+              "source_id": "src_4c5e22d028e9",
+              "finding_id": "rule-0ab3ff2faf2989bb863f1f43"
             }
           },
           {
@@ -448,22 +1732,9 @@
             "count": 44,
             "example": {
               "path": "lib/Crypto/SelfTest/PublicKey/test_import_ECC.py",
-              "line": 1116,
-              "source_id": "src_0817536a2664",
-              "finding_id": ""
-            }
-          },
-          {
-            "algorithm": "ECC",
-            "purpose": "unknown",
-            "origin": "unknown",
-            "status": "confirmed",
-            "count": 39,
-            "example": {
-              "path": "lib/Crypto/SelfTest/PublicKey/test_import_passphrase.py",
-              "line": 50,
-              "source_id": "src_b6c651008d5f",
-              "finding_id": ""
+              "line": 1143,
+              "source_id": "src_bbe965811014",
+              "finding_id": "rule-e44b240e6c386bd4a4b34963"
             }
           },
           {
@@ -474,9 +1745,9 @@
             "count": 1,
             "example": {
               "path": "lib/Crypto/PublicKey/ECC.py",
-              "line": 1125,
-              "source_id": "src_952b7b967349",
-              "finding_id": ""
+              "line": 1130,
+              "source_id": "src_28cdc633d3ca",
+              "finding_id": "rule-2c26ad550c8ce08bb38c2756"
             }
           },
           {
@@ -488,8 +1759,8 @@
             "example": {
               "path": "test_vectors/pycryptodome_test_vectors/Signature/wycheproof/rsa_pkcs1_1024_sig_gen_test.json",
               "line": 243,
-              "source_id": "src_d64423858aa4",
-              "finding_id": ""
+              "source_id": "src_f854c3aabd8e",
+              "finding_id": "rule-23e086992660bfa250c0d3ad"
             }
           },
           {
@@ -497,12 +1768,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 15,
+            "count": 17,
             "example": {
               "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
-              "line": 53,
-              "source_id": "src_485e12d2beca",
-              "finding_id": ""
+              "line": 54,
+              "source_id": "src_3148d77cffd4",
+              "finding_id": "rule-d76bf9cb5fd84aabf657ceae"
             }
           },
           {
@@ -510,12 +1781,12 @@
             "purpose": "key_import",
             "origin": "static",
             "status": "confirmed",
-            "count": 86,
+            "count": 92,
             "example": {
               "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
-              "line": 108,
-              "source_id": "src_485e12d2beca",
-              "finding_id": ""
+              "line": 109,
+              "source_id": "src_3148d77cffd4",
+              "finding_id": "rule-848c0381f00b6c72e9a64a42"
             }
           },
           {
@@ -526,22 +1797,9 @@
             "count": 32,
             "example": {
               "path": "lib/Crypto/SelfTest/Cipher/test_pkcs1_15.py",
-              "line": 68,
-              "source_id": "src_485e12d2beca",
-              "finding_id": ""
-            }
-          },
-          {
-            "algorithm": "RSA",
-            "purpose": "unknown",
-            "origin": "unknown",
-            "status": "confirmed",
-            "count": 5,
-            "example": {
-              "path": "lib/Crypto/SelfTest/PublicKey/test_import_passphrase.py",
-              "line": 48,
-              "source_id": "src_b6c651008d5f",
-              "finding_id": ""
+              "line": 69,
+              "source_id": "src_3148d77cffd4",
+              "finding_id": "rule-c2ba7c6032af2db25314374d"
             }
           }
         ]
@@ -549,21 +1807,24 @@
     },
     {
       "full_name": "lepture/authlib",
-      "scanned_at": "2026-11-18T15:19:37+08:00",
-      "revision": "2c7ec262f6fdf530b5f78042c0d3b8d08317cdcf",
+      "scanned_at": "2026-11-25T01:05:07+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 434,
-        "candidate_files": 434,
+        "scanned_files": 435,
+        "candidate_files": 435,
         "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "partial",
+          "pending": "partial"
         },
         "groups": [
           {
@@ -575,8 +1836,8 @@
             "example": {
               "path": "authlib/jose/rfc7518/ec_key.py",
               "line": 102,
-              "source_id": "src_b00932247681",
-              "finding_id": ""
+              "source_id": "src_7f8b1c136972",
+              "finding_id": "rule-15d60f0d4b37e7d454b9c870"
             }
           },
           {
@@ -588,8 +1849,8 @@
             "example": {
               "path": "authlib/jose/rfc7518/ec_key.py",
               "line": 62,
-              "source_id": "src_b00932247681",
-              "finding_id": ""
+              "source_id": "src_7f8b1c136972",
+              "finding_id": "rule-1e97e558002b03fdbca83c30"
             }
           },
           {
@@ -601,8 +1862,8 @@
             "example": {
               "path": "authlib/jose/rfc7518/ec_key.py",
               "line": 50,
-              "source_id": "src_b00932247681",
-              "finding_id": ""
+              "source_id": "src_7f8b1c136972",
+              "finding_id": "rule-9f296de30ff0b59295100bff"
             }
           },
           {
@@ -610,12 +1871,12 @@
             "purpose": "configuration",
             "origin": "static",
             "status": "confirmed",
-            "count": 20,
+            "count": 23,
             "example": {
               "path": "authlib/jose/rfc7518/jws_algs.py",
               "line": 133,
-              "source_id": "src_db32938f49a6",
-              "finding_id": ""
+              "source_id": "src_1d0cf0b37ac5",
+              "finding_id": "rule-358d38bc0c0b62e4415b8016"
             }
           },
           {
@@ -623,12 +1884,12 @@
             "purpose": "configuration",
             "origin": "static",
             "status": "confirmed",
-            "count": 3,
+            "count": 4,
             "example": {
-              "path": "tests/core/test_oauth2/test_rfc9728.py",
-              "line": 580,
-              "source_id": "src_8e5b77f37354",
-              "finding_id": ""
+              "path": "authlib/oauth2/rfc7523/client.py",
+              "line": 286,
+              "source_id": "src_f3f422b3e80e",
+              "finding_id": "rule-0d11927ca904c23f0223d113"
             }
           },
           {
@@ -640,8 +1901,21 @@
             "example": {
               "path": "tests/jose/test_jwt.py",
               "line": 61,
-              "source_id": "src_2017813810ad",
-              "finding_id": ""
+              "source_id": "src_bd8965dfd240",
+              "finding_id": "rule-3f27518b857c3194f9351028"
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "authlib/oauth2/rfc7523/client.py",
+              "line": 287,
+              "source_id": "src_f3f422b3e80e",
+              "finding_id": "rule-9fe14a73cecbce8375db57be"
             }
           },
           {
@@ -649,12 +1923,12 @@
             "purpose": "configuration",
             "origin": "static",
             "status": "confirmed",
-            "count": 2,
+            "count": 3,
             "example": {
-              "path": "tests/jose/test_rfc8037.py",
-              "line": 6,
-              "source_id": "src_3e2b6bb54737",
-              "finding_id": ""
+              "path": "authlib/oauth2/rfc7523/client.py",
+              "line": 288,
+              "source_id": "src_f3f422b3e80e",
+              "finding_id": "rule-7d1317cd3d29062cc8c9a0c7"
             }
           },
           {
@@ -662,12 +1936,12 @@
             "purpose": "configuration",
             "origin": "static",
             "status": "confirmed",
-            "count": 122,
+            "count": 131,
             "example": {
               "path": "authlib/oauth2/rfc7523/auth.py",
               "line": 117,
-              "source_id": "src_bfd519bad1c0",
-              "finding_id": ""
+              "source_id": "src_e51296f8e381",
+              "finding_id": "rule-feb297711bc79b48e941057e"
             }
           },
           {
@@ -678,9 +1952,9 @@
             "count": 2,
             "example": {
               "path": "authlib/jose/rfc7518/rsa_key.py",
-              "line": 95,
-              "source_id": "src_ebbefe5579a7",
-              "finding_id": ""
+              "line": 78,
+              "source_id": "src_6c4e3b9771f4",
+              "finding_id": "rule-4f16481c8216c5a89843eeea"
             }
           },
           {
@@ -688,12 +1962,12 @@
             "purpose": "key_import",
             "origin": "static",
             "status": "confirmed",
-            "count": 4,
+            "count": 3,
             "example": {
               "path": "authlib/jose/rfc7518/rsa_key.py",
-              "line": 54,
-              "source_id": "src_ebbefe5579a7",
-              "finding_id": ""
+              "line": 50,
+              "source_id": "src_6c4e3b9771f4",
+              "finding_id": "rule-9da0a7c266d5a90ad2597b2a"
             }
           },
           {
@@ -705,8 +1979,423 @@
             "example": {
               "path": "tests/clients/keys/rsa_private.pem",
               "line": 1,
-              "source_id": "src_67ecfcd216b3",
-              "finding_id": ""
+              "source_id": "src_d798121066fb",
+              "finding_id": "rule-b2bdbcf91e0c46ceafa522ae"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 8,
+            "example": {
+              "path": "authlib/jose/rfc7517/_cryptography_key.py",
+              "line": 17,
+              "source_id": "src_d43d8b7c28c3",
+              "finding_id": "operation-87d6e98279df2ed066385ff3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "m32/endesive",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 173,
+        "candidate_files": 173,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "examples/make-cert-ca.py",
+              "line": 76,
+              "source_id": "src_e581af675378",
+              "finding_id": "rule-b4d70d3bdd8d46f57b404c44"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "examples/ca/demo2_user3.key.pem",
+              "line": 1,
+              "source_id": "src_7270f4d89121",
+              "finding_id": "rule-d708a92fcd0894ccd47e5ac7"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "endesive/signer.py",
+              "line": 675,
+              "source_id": "src_996b5d4df03c",
+              "finding_id": "rule-13a3a23a80b48aa014ff21fe"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "tests/test_security_signer.py",
+              "line": 123,
+              "source_id": "src_c280e09741c6",
+              "finding_id": "rule-f0bb04adfaa3bac6381b96e6"
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/test_security_signer.py",
+              "line": 158,
+              "source_id": "src_c280e09741c6",
+              "finding_id": "rule-f7b6717918e8cfbc7a0de23d"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 22,
+            "example": {
+              "path": "examples/make-cert-ca.py",
+              "line": 71,
+              "source_id": "src_e581af675378",
+              "finding_id": "rule-d502ff99ba70cd72a17db0f3"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "examples/make-cert-hsm.py",
+              "line": 83,
+              "source_id": "src_bcb0dc405622",
+              "finding_id": "rule-df5cccdba320a118b966145b"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "examples/ca/demo2_ca.root.key.pem",
+              "line": 1,
+              "source_id": "src_270ac9bc11e2",
+              "finding_id": "rule-cc75b2dd1fe41cab80bbc364"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "mathiasertl/django-ca",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 556,
+        "candidate_files": 557,
+        "file_limit": 5000,
+        "skipped_files": 1,
+        "degraded_files": 0,
+        "partial": true,
+        "skip_reasons": {
+          "encoding": 1
+        }
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "partial",
+          "pending": "partial"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 8,
+            "example": {
+              "path": "ca/django_ca/constants.py",
+              "line": 642,
+              "source_id": "src_ca16330fa78a",
+              "finding_id": "rule-a4d45e05b683bb1b0a036cd4"
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "ca/django_ca/utils.py",
+              "line": 529,
+              "source_id": "src_e7aeea52cd68",
+              "finding_id": "rule-763a45847a9f3b225714d809"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "ca/django_ca/utils.py",
+              "line": 535,
+              "source_id": "src_e7aeea52cd68",
+              "finding_id": "rule-06caa79fa1228bce7a58ac20"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 14,
+            "example": {
+              "path": "ca/django_ca/models.py",
+              "line": 980,
+              "source_id": "src_8c89edf0cbf3",
+              "finding_id": "rule-f791b01f882a6de5b4ddbfcd"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 11,
+            "example": {
+              "path": "ca/django_ca/constants.py",
+              "line": 642,
+              "source_id": "src_ca16330fa78a",
+              "finding_id": "rule-5fa37a4b8d8a7dd25b6e1e39"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "ca/django_ca/utils.py",
+              "line": 538,
+              "source_id": "src_e7aeea52cd68",
+              "finding_id": "rule-69afec3d06b77b41522c05bf"
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "ca/django_ca/constants.py",
+              "line": 642,
+              "source_id": "src_ca16330fa78a",
+              "finding_id": "rule-4012b7ccdb431489446d87c0"
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "ca/django_ca/utils.py",
+              "line": 541,
+              "source_id": "src_e7aeea52cd68",
+              "finding_id": "rule-dadcfc926216a06526e19b0d"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "ca/django_ca/tests/acme/views/test_key_change.py",
+              "line": 304,
+              "source_id": "src_aa1b7115ac2d",
+              "finding_id": "rule-69a25f780e3d0dbad7834c67"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 7,
+            "example": {
+              "path": "ca/django_ca/tests/admin/test_extra_views.py",
+              "line": 94,
+              "source_id": "src_902d9a6d5124",
+              "finding_id": "rule-c8669131976e87942d11d4fb"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "ca/django_ca/tests/base/fixtures.py",
+              "line": 565,
+              "source_id": "src_e9aa3b453c7b",
+              "finding_id": "rule-99706c36ed7a5ffbee91a517"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "microsoft/did-x509",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 25,
+        "candidate_files": 25,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "test_mapping_errors.py",
+              "line": 120,
+              "source_id": "src_edfc5d87e155",
+              "finding_id": "rule-dd32c784496d9712290a63b1"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "MoebiusSolutions/certs-installer",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 8,
+        "candidate_files": 8,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "mozilla/PyFxA",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 35,
+        "candidate_files": 35,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "fxa/oauth.py",
+              "line": 209,
+              "source_id": "src_8ec66d4634e0",
+              "finding_id": "rule-eddb19e4da93f96ec4889b0a"
             }
           }
         ]
@@ -714,21 +2403,25 @@
     },
     {
       "full_name": "mpdavis/python-jose",
-      "scanned_at": "2026-11-18T10:53:06+08:00",
-      "revision": "018b310ddb8b50dcfd09a0c152117835a21dd656",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 50,
         "candidate_files": 50,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -740,8 +2433,8 @@
             "example": {
               "path": "jose/backends/cryptography_backend.py",
               "line": 98,
-              "source_id": "src_22c75274501b",
-              "finding_id": ""
+              "source_id": "src_1e7ce478b3c4",
+              "finding_id": "rule-f1ad97c50bbf9fb4efc66105"
             }
           },
           {
@@ -753,8 +2446,8 @@
             "example": {
               "path": "tests/algorithms/test_EC.py",
               "line": 29,
-              "source_id": "src_e5ebc4df0655",
-              "finding_id": ""
+              "source_id": "src_4fb3d60e6cac",
+              "finding_id": "rule-e1fc3778b61ada9c43fcf612"
             }
           },
           {
@@ -766,8 +2459,8 @@
             "example": {
               "path": "jose/backends/cryptography_backend.py",
               "line": 139,
-              "source_id": "src_22c75274501b",
-              "finding_id": ""
+              "source_id": "src_1e7ce478b3c4",
+              "finding_id": "rule-5925077b4f1d2e042e7804ea"
             }
           },
           {
@@ -779,8 +2472,8 @@
             "example": {
               "path": "tests/algorithms/test_HMAC.py",
               "line": 28,
-              "source_id": "src_c072edc537ed",
-              "finding_id": ""
+              "source_id": "src_a4eb3d1a2fac",
+              "finding_id": "rule-7e482ffa0d10180c4c40bd8b"
             }
           },
           {
@@ -792,8 +2485,8 @@
             "example": {
               "path": "jose/backends/cryptography_backend.py",
               "line": 265,
-              "source_id": "src_22c75274501b",
-              "finding_id": ""
+              "source_id": "src_1e7ce478b3c4",
+              "finding_id": "rule-4919d1b457eabf614c60c5cc"
             }
           },
           {
@@ -805,8 +2498,175 @@
             "example": {
               "path": "tests/algorithms/test_RSA.py",
               "line": 29,
-              "source_id": "src_ef8b6d85b1a5",
-              "finding_id": ""
+              "source_id": "src_fef910dce4b7",
+              "finding_id": "rule-39ca821f60de730c70eb9409"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "msetina/PKCS11-card-management",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 19,
+        "candidate_files": 19,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "mx-moth/flask-saml2",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 60,
+        "candidate_files": 60,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "tests/idp/test_signing.py",
+              "line": 34,
+              "source_id": "src_57c2695aa199",
+              "finding_id": "rule-453e4e258886422ab75eef68"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "NillionNetwork/tinysig",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 12,
+        "candidate_files": 12,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 45,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "src/tinysig/setup.py",
+              "line": 46,
+              "source_id": "src_cfc7253644f4",
+              "finding_id": "rule-602e3cab197768276f37e1c3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "nucypher/nucypher",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 351,
+        "candidate_files": 351,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "nucypher/crypto/tls.py",
+              "line": 40,
+              "source_id": "src_b20eeaa2963e",
+              "finding_id": "rule-12eb59f6212733c966670010"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "nucypher/policy/conditions/jwt.py",
+              "line": 22,
+              "source_id": "src_cc9b762e77a1",
+              "finding_id": "rule-4edf65dd35d686acd0b20f33"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "nucypher/policy/conditions/jwt.py",
+              "line": 23,
+              "source_id": "src_cc9b762e77a1",
+              "finding_id": "rule-1488269de299889a243a74cb"
             }
           }
         ]
@@ -814,21 +2674,24 @@
     },
     {
       "full_name": "oauthlib/oauthlib",
-      "scanned_at": "2026-11-18T11:38:15+08:00",
-      "revision": "179287a5f9067aac7b1c0d71c4c5e083ccbf58f2",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 176,
-        "file_limit": 350,
         "candidate_files": 176,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -840,8 +2703,8 @@
             "example": {
               "path": "oauthlib/common.py",
               "line": 286,
-              "source_id": "src_5944f0109f10",
-              "finding_id": ""
+              "source_id": "src_715016f25786",
+              "finding_id": "rule-aa42e70898c5a1d2c079ae4e"
             }
           },
           {
@@ -853,8 +2716,21 @@
             "example": {
               "path": "tests/oauth1/rfc5849/test_client.py",
               "line": 109,
-              "source_id": "src_0db96d99b459",
-              "finding_id": ""
+              "source_id": "src_dd7099e1ca7e",
+              "finding_id": "rule-c6da153bb59e0a69208df832"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "sign",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "oauthlib/common.py",
+              "line": 277,
+              "source_id": "src_715016f25786",
+              "finding_id": "operation-a39a9728a4994b36449b445d"
             }
           }
         ]
@@ -862,42 +2738,127 @@
     },
     {
       "full_name": "open-quantum-safe/liboqs-python",
-      "scanned_at": "2026-11-18T11:37:36+08:00",
-      "revision": "7bda58456fc155ab5b7a1dc62d204035345de9ba",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 24,
-        "file_limit": 350,
         "candidate_files": 24,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
-      "full_name": "openssl/openssl",
-      "scanned_at": "2026-11-18T15:20:13+08:00",
-      "revision": "a1bd8501eb5d3d265285f62206742e72c7410895",
+      "full_name": "OpenMined/PySyft",
+      "scanned_at": "2026-11-23T16:25:21+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 1243,
-        "candidate_files": 1251,
+        "scanned_files": 726,
+        "candidate_files": 726,
         "file_limit": 5000,
-        "skipped_files": 8,
-        "partial": true
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "partial",
+          "pending": "partial",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "packages/syft-enclave/tests/test_attestation_https.py",
+              "line": 114,
+              "source_id": "src_5899229a2b94",
+              "finding_id": "rule-577c3f6b0038b5ecb5cbc73f"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 8,
+            "example": {
+              "path": "packages/syft-enclave/tests/test_receipt.py",
+              "line": 56,
+              "source_id": "src_75e123d2a37b",
+              "finding_id": "rule-846823738b1f121c7d5f4161"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "packages/syft-enclave/src/syft_enclaves/attestation/nonce.py",
+              "line": 82,
+              "source_id": "src_c4aef60458ad",
+              "finding_id": "rule-048e0e95c8df4e7e186526d6"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "packages/syft-enclave/src/syft_enclaves/receipt/signing_key.py",
+              "line": 25,
+              "source_id": "src_b9fe0b613453",
+              "finding_id": "operation-f6416592d4ebe40d70502f39"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "openssl/openssl",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 1251,
+        "candidate_files": 1251,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -909,8 +2870,8 @@
             "example": {
               "path": "test/recipes/30-test_evp_data/evppkey_dsa.txt",
               "line": 465,
-              "source_id": "src_d122819af5a3",
-              "finding_id": ""
+              "source_id": "src_c7f11ed84b78",
+              "finding_id": "rule-c17e003f2634d13e2b0ad892"
             }
           },
           {
@@ -922,8 +2883,8 @@
             "example": {
               "path": "apps/dsa-ca.pem",
               "line": 1,
-              "source_id": "src_4c31124939ed",
-              "finding_id": ""
+              "source_id": "src_064836260ec7",
+              "finding_id": "rule-5c734b5190a8b2ddeb68e386"
             }
           },
           {
@@ -935,8 +2896,8 @@
             "example": {
               "path": "test/certs/ct-server-key.pem",
               "line": 1,
-              "source_id": "src_cb3f2023164b",
-              "finding_id": ""
+              "source_id": "src_98054b291bb0",
+              "finding_id": "rule-c7ae2b6cb5a840fbe59938e5"
             }
           },
           {
@@ -948,8 +2909,8 @@
             "example": {
               "path": "apps/client.pem",
               "line": 26,
-              "source_id": "src_5dae8c1c7cc5",
-              "finding_id": ""
+              "source_id": "src_2382d9123ed2",
+              "finding_id": "rule-d109042c9d3c48e99036f7e2"
             }
           },
           {
@@ -961,8 +2922,8 @@
             "example": {
               "path": "test/recipes/30-test_evp_data/evppkey_ecx.txt",
               "line": 1033,
-              "source_id": "src_b099d6b56089",
-              "finding_id": ""
+              "source_id": "src_2b956221f72b",
+              "finding_id": "rule-4cef99c91357f318344fc296"
             }
           },
           {
@@ -974,51 +2935,109 @@
             "example": {
               "path": "test/recipes/30-test_evp_data/evppkey_ecx.txt",
               "line": 1047,
-              "source_id": "src_b099d6b56089",
-              "finding_id": ""
+              "source_id": "src_2b956221f72b",
+              "finding_id": "rule-7c4ea5177fb1732fb1429f40"
             }
           }
         ]
       }
     },
     {
-      "full_name": "pallets/itsdangerous",
-      "scanned_at": "2026-11-18T11:37:26+08:00",
-      "revision": "672971d66a2ef9f85151e53283113f33d642dabd",
-      "rules_version": "crypto-rules-4",
+      "full_name": "opentimestamps/opentimestamps-client",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 29,
-        "file_limit": 350,
-        "candidate_files": 29,
+        "scanned_files": 33,
+        "candidate_files": 33,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "p11-glue/pkcs11-json",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 3,
+        "candidate_files": 3,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "pallets/itsdangerous",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 29,
+        "candidate_files": 29,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "paramiko/paramiko",
-      "scanned_at": "2026-11-18T10:52:30+08:00",
-      "revision": "0e9ccb91e0f9a68f2587233d523ad7fe46e730fe",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 84,
         "candidate_files": 84,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -1030,8 +3049,8 @@
             "example": {
               "path": "paramiko/ecdsakey.py",
               "line": 268,
-              "source_id": "src_172d8d66924d",
-              "finding_id": ""
+              "source_id": "src_400b76e7aca9",
+              "finding_id": "rule-ac7b2d754f3360dbc78679f4"
             }
           },
           {
@@ -1043,8 +3062,8 @@
             "example": {
               "path": "paramiko/ecdsakey.py",
               "line": 167,
-              "source_id": "src_172d8d66924d",
-              "finding_id": ""
+              "source_id": "src_400b76e7aca9",
+              "finding_id": "rule-7d56c1f8aea7a714cb8bfa2d"
             }
           },
           {
@@ -1056,8 +3075,8 @@
             "example": {
               "path": "tests/test_pkey.py",
               "line": 87,
-              "source_id": "src_41102f08f3ff",
-              "finding_id": ""
+              "source_id": "src_fe36f88bb879",
+              "finding_id": "rule-efed3a1b805541a9249309e8"
             }
           },
           {
@@ -1069,8 +3088,8 @@
             "example": {
               "path": "paramiko/kex_ecdh_nist.py",
               "line": 71,
-              "source_id": "src_d4a8439d829f",
-              "finding_id": ""
+              "source_id": "src_f42af42df084",
+              "finding_id": "rule-92e657704d0d693a202693ec"
             }
           },
           {
@@ -1082,8 +3101,8 @@
             "example": {
               "path": "paramiko/ecdsakey.py",
               "line": 224,
-              "source_id": "src_172d8d66924d",
-              "finding_id": ""
+              "source_id": "src_400b76e7aca9",
+              "finding_id": "rule-56c0c898bd5ad35bf2b9b491"
             }
           },
           {
@@ -1095,8 +3114,8 @@
             "example": {
               "path": "paramiko/ed25519key.py",
               "line": 55,
-              "source_id": "src_754c61480727",
-              "finding_id": ""
+              "source_id": "src_ebc1cd2580eb",
+              "finding_id": "rule-8aafea0e61d328af9a3471ec"
             }
           },
           {
@@ -1108,8 +3127,8 @@
             "example": {
               "path": "paramiko/rsakey.py",
               "line": 76,
-              "source_id": "src_e3624de40a78",
-              "finding_id": ""
+              "source_id": "src_c3e038192b64",
+              "finding_id": "rule-db205c0db756897dc568f238"
             }
           },
           {
@@ -1121,8 +3140,8 @@
             "example": {
               "path": "paramiko/rsakey.py",
               "line": 188,
-              "source_id": "src_e3624de40a78",
-              "finding_id": ""
+              "source_id": "src_c3e038192b64",
+              "finding_id": "rule-a6c602618a27fc0bd5b5f6c0"
             }
           },
           {
@@ -1134,8 +3153,8 @@
             "example": {
               "path": "paramiko/rsakey.py",
               "line": 78,
-              "source_id": "src_e3624de40a78",
-              "finding_id": ""
+              "source_id": "src_c3e038192b64",
+              "finding_id": "rule-39f1db0477665446a870efd1"
             }
           },
           {
@@ -1147,8 +3166,8 @@
             "example": {
               "path": "tests/test_pkey.py",
               "line": 69,
-              "source_id": "src_41102f08f3ff",
-              "finding_id": ""
+              "source_id": "src_fe36f88bb879",
+              "finding_id": "rule-f012506187237469bd5ebf03"
             }
           },
           {
@@ -1160,8 +3179,8 @@
             "example": {
               "path": "paramiko/kex_curve25519.py",
               "line": 30,
-              "source_id": "src_98510282e182",
-              "finding_id": ""
+              "source_id": "src_cd6201cfc1e7",
+              "finding_id": "rule-7b3143ebaec99bce5e5684db"
             }
           },
           {
@@ -1173,8 +3192,86 @@
             "example": {
               "path": "paramiko/kex_curve25519.py",
               "line": 71,
-              "source_id": "src_98510282e182",
-              "finding_id": ""
+              "source_id": "src_cd6201cfc1e7",
+              "finding_id": "rule-f2f0050a10b85bf379e9e7dc"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "plizonczyk/noiseprotocol",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 42,
+        "candidate_files": 42,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "noise/backends/default/diffie_hellmans.py",
+              "line": 19,
+              "source_id": "src_893885900082",
+              "finding_id": "rule-c84ffc599717d13ce2746dbc"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "noise/backends/default/keypairs.py",
+              "line": 13,
+              "source_id": "src_b63a7199cf25",
+              "finding_id": "rule-7a04156907f5d2c8a5aa9a4b"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "noise/backends/default/diffie_hellmans.py",
+              "line": 41,
+              "source_id": "src_893885900082",
+              "finding_id": "rule-8cf6285f8317c31add2469be"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "noise/backends/default/keypairs.py",
+              "line": 30,
+              "source_id": "src_b63a7199cf25",
+              "finding_id": "rule-691a20d25a67b1da7d927356"
             }
           }
         ]
@@ -1182,105 +3279,122 @@
     },
     {
       "full_name": "psf/requests",
-      "scanned_at": "2026-11-18T11:37:26+08:00",
-      "revision": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 69,
-        "file_limit": 350,
         "candidate_files": 69,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "pyasn1/pyasn1",
-      "scanned_at": "2026-11-18T11:37:17+08:00",
-      "revision": "e24fa719428229db5efeb8aee74ce6d03329df5d",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 89,
-        "file_limit": 350,
         "candidate_files": 89,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "pyauth/pyotp",
-      "scanned_at": "2026-11-18T11:37:21+08:00",
-      "revision": "98c44b5b3294d7a24fe883622ad9d1e76c0687a1",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 16,
-        "file_limit": 350,
         "candidate_files": 16,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "pyca/bcrypt",
-      "scanned_at": "2026-11-18T10:52:34+08:00",
-      "revision": "340958f3da9f168fa62ef50a73670efb8eb1727f",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 14,
-        "candidate_files": 14,
-        "file_limit": 350,
+        "scanned_files": 15,
+        "candidate_files": 15,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "pyca/cryptography",
-      "scanned_at": "2026-11-18T15:20:30+08:00",
-      "revision": "758772aa3486a0e2ad7b289dd25a97040f3bdd2d",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 885,
-        "candidate_files": 887,
+        "scanned_files": 893,
+        "candidate_files": 893,
         "file_limit": 5000,
-        "skipped_files": 2,
-        "partial": true
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -1292,8 +3406,8 @@
             "example": {
               "path": "tests/hazmat/primitives/test_dh.py",
               "line": 169,
-              "source_id": "src_a86fddd9e5f3",
-              "finding_id": ""
+              "source_id": "src_1365eb2edea5",
+              "finding_id": "rule-efb7e7fa5caab87dc3bbc368"
             }
           },
           {
@@ -1305,8 +3419,21 @@
             "example": {
               "path": "tests/hazmat/primitives/test_dh.py",
               "line": 97,
-              "source_id": "src_a86fddd9e5f3",
-              "finding_id": ""
+              "source_id": "src_1365eb2edea5",
+              "finding_id": "rule-b3a0da249af1b3deae24d4f2"
+            }
+          },
+          {
+            "algorithm": "DSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "tests/hazmat/primitives/test_dsa.py",
+              "line": 113,
+              "source_id": "src_f3b83a1848c3",
+              "finding_id": "rule-e32bdd6d1a6659acd23ff257"
             }
           },
           {
@@ -1314,12 +3441,12 @@
             "purpose": "key_import",
             "origin": "static",
             "status": "confirmed",
-            "count": 1,
+            "count": 41,
             "example": {
-              "path": "tests/hazmat/primitives/test_ssh.py",
-              "line": 1051,
-              "source_id": "src_a8b4d02e5bda",
-              "finding_id": ""
+              "path": "tests/hazmat/primitives/test_dsa.py",
+              "line": 292,
+              "source_id": "src_f3b83a1848c3",
+              "finding_id": "rule-3902171e6291123ad8f23659"
             }
           },
           {
@@ -1331,21 +3458,8 @@
             "example": {
               "path": "vectors/cryptography_vectors/asymmetric/DSA/custom/nilpotent.pem",
               "line": 1,
-              "source_id": "src_400c67d2e96e",
-              "finding_id": ""
-            }
-          },
-          {
-            "algorithm": "DSA",
-            "purpose": "unknown",
-            "origin": "unknown",
-            "status": "confirmed",
-            "count": 41,
-            "example": {
-              "path": "tests/hazmat/primitives/test_dsa.py",
-              "line": 113,
-              "source_id": "src_d9bb3808f8ce",
-              "finding_id": ""
+              "source_id": "src_48150ce5f292",
+              "finding_id": "rule-2c206a0ce9f2607e29555f76"
             }
           },
           {
@@ -1353,12 +3467,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 100,
+            "count": 117,
             "example": {
               "path": "src/cryptography/hazmat/primitives/serialization/ssh.py",
               "line": 495,
-              "source_id": "src_15be39afe339",
-              "finding_id": ""
+              "source_id": "src_435067307e6f",
+              "finding_id": "rule-38c02e7c46e2bef7d9f75985"
             }
           },
           {
@@ -1370,8 +3484,8 @@
             "example": {
               "path": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
               "line": 26,
-              "source_id": "src_2685c4e3b777",
-              "finding_id": ""
+              "source_id": "src_a1cb158c14a8",
+              "finding_id": "rule-2e36bc7ea5790b38f04f9784"
             }
           },
           {
@@ -1383,21 +3497,8 @@
             "example": {
               "path": "vectors/cryptography_vectors/asymmetric/EC/ec-missing-curve.pem",
               "line": 1,
-              "source_id": "src_4cc68cd7aa24",
-              "finding_id": ""
-            }
-          },
-          {
-            "algorithm": "ECC",
-            "purpose": "unknown",
-            "origin": "unknown",
-            "status": "confirmed",
-            "count": 1,
-            "example": {
-              "path": "tests/x509/test_x509_ext.py",
-              "line": 2053,
-              "source_id": "src_28cd124a7975",
-              "finding_id": ""
+              "source_id": "src_a68bb687ff75",
+              "finding_id": "rule-1c03c3365c97abce768d1474"
             }
           },
           {
@@ -1409,8 +3510,8 @@
             "example": {
               "path": "tests/hazmat/primitives/test_ec.py",
               "line": 107,
-              "source_id": "src_8df3df499c71",
-              "finding_id": ""
+              "source_id": "src_5ecabc8130b4",
+              "finding_id": "rule-f6d1c7a7139a06c90a4ab00e"
             }
           },
           {
@@ -1418,12 +3519,12 @@
             "purpose": "configuration",
             "origin": "static",
             "status": "confirmed",
-            "count": 31,
+            "count": 35,
             "example": {
               "path": "docs/development/custom-vectors/secp256k1/verify_secp256k1.py",
               "line": 31,
-              "source_id": "src_2685c4e3b777",
-              "finding_id": ""
+              "source_id": "src_a1cb158c14a8",
+              "finding_id": "rule-f5a9115c7f90f72f2c7f75d7"
             }
           },
           {
@@ -1431,12 +3532,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 20,
+            "count": 31,
             "example": {
               "path": "tests/hazmat/primitives/test_ed25519.py",
               "line": 93,
-              "source_id": "src_ccf8aad9f1e9",
-              "finding_id": ""
+              "source_id": "src_981138ab0651",
+              "finding_id": "rule-8c5b80364aa52888c8c5353b"
             }
           },
           {
@@ -1448,8 +3549,8 @@
             "example": {
               "path": "src/cryptography/hazmat/primitives/serialization/ssh.py",
               "line": 548,
-              "source_id": "src_15be39afe339",
-              "finding_id": ""
+              "source_id": "src_435067307e6f",
+              "finding_id": "rule-f049c8306d74fc9d6b9fd5a6"
             }
           },
           {
@@ -1457,12 +3558,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 13,
+            "count": 23,
             "example": {
               "path": "tests/hazmat/primitives/test_ed448.py",
               "line": 47,
-              "source_id": "src_57e699ecc95d",
-              "finding_id": ""
+              "source_id": "src_8f548177571f",
+              "finding_id": "rule-1f67d7d2c3c64c2d7097157b"
             }
           },
           {
@@ -1474,8 +3575,8 @@
             "example": {
               "path": "tests/hazmat/primitives/test_ed448.py",
               "line": 37,
-              "source_id": "src_57e699ecc95d",
-              "finding_id": ""
+              "source_id": "src_8f548177571f",
+              "finding_id": "rule-af345b29348a81dfe3ebb655"
             }
           },
           {
@@ -1483,12 +3584,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 1,
+            "count": 7,
             "example": {
               "path": "docs/development/custom-vectors/rsa-oaep-sha2/generate_rsa_oaep_sha2.py",
               "line": 25,
-              "source_id": "src_731d3622c55e",
-              "finding_id": ""
+              "source_id": "src_62b71e4e90a2",
+              "finding_id": "rule-2ce515588d02012afd32bfe5"
             }
           },
           {
@@ -1496,12 +3597,12 @@
             "purpose": "key_import",
             "origin": "static",
             "status": "confirmed",
-            "count": 37,
+            "count": 109,
             "example": {
               "path": "docs/development/custom-vectors/rsa-oaep-sha2/generate_rsa_oaep_sha2.py",
               "line": 53,
-              "source_id": "src_731d3622c55e",
-              "finding_id": ""
+              "source_id": "src_62b71e4e90a2",
+              "finding_id": "rule-28a0e9245d81b4718ab78e24"
             }
           },
           {
@@ -1513,21 +3614,8 @@
             "example": {
               "path": "tests/hazmat/primitives/fixtures_rsa.py",
               "line": 713,
-              "source_id": "src_c694cb44cd37",
-              "finding_id": ""
-            }
-          },
-          {
-            "algorithm": "RSA",
-            "purpose": "unknown",
-            "origin": "unknown",
-            "status": "confirmed",
-            "count": 44,
-            "example": {
-              "path": "tests/hazmat/primitives/test_rsa.py",
-              "line": 184,
-              "source_id": "src_7f1deb3fe0ed",
-              "finding_id": ""
+              "source_id": "src_c81e2e197f8a",
+              "finding_id": "rule-321f67b7f8d6d20062afe313"
             }
           },
           {
@@ -1535,12 +3623,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 43,
+            "count": 44,
             "example": {
               "path": "tests/hazmat/primitives/test_hpke.py",
               "line": 170,
-              "source_id": "src_0241b9805c87",
-              "finding_id": ""
+              "source_id": "src_008925e71882",
+              "finding_id": "rule-0fb85c85d18f1e0ee2741898"
             }
           },
           {
@@ -1552,8 +3640,8 @@
             "example": {
               "path": "tests/hazmat/primitives/test_hpke.py",
               "line": 39,
-              "source_id": "src_0241b9805c87",
-              "finding_id": ""
+              "source_id": "src_008925e71882",
+              "finding_id": "rule-4b0e06d745fe43f73061a034"
             }
           },
           {
@@ -1565,8 +3653,8 @@
             "example": {
               "path": "tests/hazmat/primitives/test_serialization.py",
               "line": 1726,
-              "source_id": "src_79519ce6eef6",
-              "finding_id": ""
+              "source_id": "src_561bb352f187",
+              "finding_id": "rule-2cf1671cc14b066a977d6b36"
             }
           },
           {
@@ -1578,8 +3666,21 @@
             "example": {
               "path": "tests/hazmat/primitives/test_x448.py",
               "line": 35,
-              "source_id": "src_b2f5a1be563a",
-              "finding_id": ""
+              "source_id": "src_93109d02ebeb",
+              "finding_id": "rule-c74ee084a297a4ff6bc5b9ce"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "docs/development/custom-vectors/secp256k1/generate_secp256k1.py",
+              "line": 51,
+              "source_id": "src_88cc3d69ff4f",
+              "finding_id": "operation-efedd867be8de6713fad99c7"
             }
           }
         ]
@@ -1587,42 +3688,49 @@
     },
     {
       "full_name": "pyca/pynacl",
-      "scanned_at": "2026-11-18T10:52:39+08:00",
-      "revision": "ca15a18eeb4d1e954b1f08066ffa3b7ebe3b71a9",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 108,
         "candidate_files": 108,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "pyca/pyopenssl",
-      "scanned_at": "2026-11-18T10:52:30+08:00",
-      "revision": "1487da3773b0db3977353c9e379ad74124002c43",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 27,
         "candidate_files": 27,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -1634,8 +3742,8 @@
             "example": {
               "path": "tests/test_crypto.py",
               "line": 652,
-              "source_id": "src_1ccf2aa33bbc",
-              "finding_id": ""
+              "source_id": "src_6c720be473ab",
+              "finding_id": "rule-aaf9a6c9f93ed7562ddde44c"
             }
           },
           {
@@ -1647,8 +3755,8 @@
             "example": {
               "path": "tests/test_ssl.py",
               "line": 236,
-              "source_id": "src_90f54b88a019",
-              "finding_id": ""
+              "source_id": "src_372b48ca028a",
+              "finding_id": "rule-19e7d17c587a5fdfcf528728"
             }
           },
           {
@@ -1660,8 +3768,8 @@
             "example": {
               "path": "tests/test_crypto.py",
               "line": 128,
-              "source_id": "src_1ccf2aa33bbc",
-              "finding_id": ""
+              "source_id": "src_6c720be473ab",
+              "finding_id": "rule-0b4d60d6094707bcabb44f8b"
             }
           }
         ]
@@ -1669,42 +3777,50 @@
     },
     {
       "full_name": "pyca/service-identity",
-      "scanned_at": "2026-11-18T10:52:46+08:00",
-      "revision": "a25f0c1b531fe6f3dea82fb8791b5ba3a368e804",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 40,
         "candidate_files": 40,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "python-otr/pure-python-otr",
-      "scanned_at": "2026-11-18T11:37:36+08:00",
-      "revision": "b2ab769482ac9f6a321d2cb540837b37b7f633f8",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 19,
-        "file_limit": 350,
         "candidate_files": 19,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 95,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -1716,8 +3832,8 @@
             "example": {
               "path": "src/potr/compatcrypto/pycrypto.py",
               "line": 130,
-              "source_id": "src_6e3c1a9f2779",
-              "finding_id": ""
+              "source_id": "src_573611f3e236",
+              "finding_id": "rule-db8d5691553375a374ae4a9c"
             }
           },
           {
@@ -1729,8 +3845,8 @@
             "example": {
               "path": "src/potr/compatcrypto/pycrypto.py",
               "line": 89,
-              "source_id": "src_6e3c1a9f2779",
-              "finding_id": ""
+              "source_id": "src_573611f3e236",
+              "finding_id": "rule-aa1528461611da520cc5941e"
             }
           }
         ]
@@ -1738,21 +3854,25 @@
     },
     {
       "full_name": "python-trio/trustme",
-      "scanned_at": "2026-11-18T10:52:34+08:00",
-      "revision": "351ba93a36fbf9fb50604a14501ffa24dcf377a6",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 20,
         "candidate_files": 20,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 80,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -1764,8 +3884,8 @@
             "example": {
               "path": "src/trustme/__init__.py",
               "line": 225,
-              "source_id": "src_3ec6e036d4e8",
-              "finding_id": ""
+              "source_id": "src_9e4cff3003f3",
+              "finding_id": "rule-c142a50ea6fedfb547fcbcb9"
             }
           },
           {
@@ -1777,30 +3897,71 @@
             "example": {
               "path": "src/trustme/__init__.py",
               "line": 223,
-              "source_id": "src_3ec6e036d4e8",
-              "finding_id": ""
+              "source_id": "src_9e4cff3003f3",
+              "finding_id": "rule-4c6b01a9a4ce51225c78ac4d"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "tests/test_trustme.py",
+              "line": 81,
+              "source_id": "src_f9563070273c",
+              "finding_id": "operation-230a4a3926e887ef851da413"
             }
           }
         ]
       }
     },
     {
+      "full_name": "rabbitmq/tls-gen",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 16,
+        "candidate_files": 16,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
       "full_name": "rthalley/dnspython",
-      "scanned_at": "2026-11-18T11:38:10+08:00",
-      "revision": "aaf79b283345d169c692b5659609093c5a6f45b1",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 286,
-        "file_limit": 350,
         "candidate_files": 286,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -1811,9 +3972,9 @@
             "count": 2,
             "example": {
               "path": "dns/dnssecalgs/dsa.py",
-              "line": 108,
-              "source_id": "src_98c1612f76f6",
-              "finding_id": ""
+              "line": 109,
+              "source_id": "src_2ebaaa570f95",
+              "finding_id": "rule-c7eae7fd68afc18c0cf15f46"
             }
           },
           {
@@ -1824,9 +3985,9 @@
             "count": 1,
             "example": {
               "path": "dns/dnssecalgs/dsa.py",
-              "line": 66,
-              "source_id": "src_98c1612f76f6",
-              "finding_id": ""
+              "line": 67,
+              "source_id": "src_2ebaaa570f95",
+              "finding_id": "rule-c3969de41aac52b067b6c8ab"
             }
           },
           {
@@ -1837,9 +3998,9 @@
             "count": 7,
             "example": {
               "path": "dns/dnssecalgs/ecdsa.py",
-              "line": 95,
-              "source_id": "src_5c0d57a4a2bc",
-              "finding_id": ""
+              "line": 96,
+              "source_id": "src_d6e1d8508940",
+              "finding_id": "rule-29ae2d02abd70bc7468ddba2"
             }
           },
           {
@@ -1850,9 +4011,9 @@
             "count": 2,
             "example": {
               "path": "dns/dnssecalgs/ecdsa.py",
-              "line": 52,
-              "source_id": "src_5c0d57a4a2bc",
-              "finding_id": ""
+              "line": 53,
+              "source_id": "src_d6e1d8508940",
+              "finding_id": "rule-93b11150d37dc3ab50afee5d"
             }
           },
           {
@@ -1864,8 +4025,8 @@
             "example": {
               "path": "dns/dnssecalgs/ecdsa.py",
               "line": 37,
-              "source_id": "src_5c0d57a4a2bc",
-              "finding_id": ""
+              "source_id": "src_d6e1d8508940",
+              "finding_id": "rule-f5e71a3101602b3bd7a15d0a"
             }
           },
           {
@@ -1873,12 +4034,12 @@
             "purpose": "key_generation",
             "origin": "static",
             "status": "confirmed",
-            "count": 11,
+            "count": 12,
             "example": {
               "path": "tests/test_dnssec.py",
-              "line": 1093,
-              "source_id": "src_4f36d54b0c01",
-              "finding_id": ""
+              "line": 1095,
+              "source_id": "src_f3492e08269a",
+              "finding_id": "rule-2e7d112db29d553332bb24ff"
             }
           },
           {
@@ -1889,9 +4050,9 @@
             "count": 1,
             "example": {
               "path": "dns/dnssecalgs/serialization.py",
-              "line": 467,
-              "source_id": "src_14eac3b16d93",
-              "finding_id": ""
+              "line": 562,
+              "source_id": "src_6bf96ac9aef2",
+              "finding_id": "rule-2d784ca50d0235714c6fe93a"
             }
           },
           {
@@ -1902,9 +4063,9 @@
             "count": 7,
             "example": {
               "path": "tests/test_dnssec.py",
-              "line": 1568,
-              "source_id": "src_4f36d54b0c01",
-              "finding_id": ""
+              "line": 1589,
+              "source_id": "src_f3492e08269a",
+              "finding_id": "rule-794c59fd7b7e85b235dcac62"
             }
           },
           {
@@ -1915,9 +4076,9 @@
             "count": 1,
             "example": {
               "path": "dns/dnssecalgs/serialization.py",
-              "line": 475,
-              "source_id": "src_14eac3b16d93",
-              "finding_id": ""
+              "line": 570,
+              "source_id": "src_6bf96ac9aef2",
+              "finding_id": "rule-fe5c6f7193423d86903217cc"
             }
           },
           {
@@ -1929,8 +4090,8 @@
             "example": {
               "path": "dns/dnssecalgs/rsa.py",
               "line": 83,
-              "source_id": "src_38200b27a654",
-              "finding_id": ""
+              "source_id": "src_b708b5d74162",
+              "finding_id": "rule-14c0713ce04c405bff1473ee"
             }
           },
           {
@@ -1942,8 +4103,8 @@
             "example": {
               "path": "dns/dnssecalgs/rsa.py",
               "line": 54,
-              "source_id": "src_38200b27a654",
-              "finding_id": ""
+              "source_id": "src_b708b5d74162",
+              "finding_id": "rule-30e11ced767b874dbf93b3e9"
             }
           },
           {
@@ -1955,8 +4116,176 @@
             "example": {
               "path": "tests/tls/private.pem",
               "line": 1,
-              "source_id": "src_c27f3d3bfc37",
-              "finding_id": ""
+              "source_id": "src_b0d182938e4c",
+              "finding_id": "rule-c8528268688aaab1f77b3e8a"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "SeanWrightSec/x509-parser",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 5,
+        "candidate_files": 5,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "secure-systems-lab/securesystemslib",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 106,
+        "candidate_files": 106,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "securesystemslib/_gpg/dsa.py",
+              "line": 63,
+              "source_id": "src_168df39ac3c1",
+              "finding_id": "rule-9577ede14973f04b2fbde70a"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "securesystemslib/signer/_crypto_signer.py",
+              "line": 406,
+              "source_id": "src_400a87f72225",
+              "finding_id": "rule-61d7e3ef1f480121f7702f0d"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "securesystemslib/signer/_azure_signer.py",
+              "line": 212,
+              "source_id": "src_f6033be214de",
+              "finding_id": "rule-1a65451e3697585161b16d34"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 11,
+            "example": {
+              "path": "securesystemslib/signer/_crypto_signer.py",
+              "line": 237,
+              "source_id": "src_400a87f72225",
+              "finding_id": "rule-93400632d9e998dbe2b610a9"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "securesystemslib/signer/_crypto_signer.py",
+              "line": 352,
+              "source_id": "src_400a87f72225",
+              "finding_id": "rule-55fe1450047f6c17f90a5af1"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "securesystemslib/_gpg/eddsa.py",
+              "line": 177,
+              "source_id": "src_d2807d7485fd",
+              "finding_id": "rule-ece5aae3e7eb3847f7911336"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "ai",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "docs/CRYPTO_SIGNER.md",
+              "line": 41,
+              "source_id": "src_65dd907d196d",
+              "finding_id": "rule-366207f6c810d039bc9b607c"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "securesystemslib/signer/_crypto_signer.py",
+              "line": 375,
+              "source_id": "src_400a87f72225",
+              "finding_id": "rule-467291cf77a420236716d9f0"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "securesystemslib/_gpg/rsa.py",
+              "line": 59,
+              "source_id": "src_10f94c4a0c9d",
+              "finding_id": "rule-c3a5f2f18a5b9894e944292a"
             }
           }
         ]
@@ -1964,21 +4293,26 @@
     },
     {
       "full_name": "SecurityInnovation/PGPy",
-      "scanned_at": "2026-11-18T15:20:22+08:00",
-      "revision": "30a757181ab02f918a94f8549f354d93639b95e6",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 44,
         "candidate_files": 45,
         "file_limit": 5000,
         "skipped_files": 1,
-        "partial": true
+        "degraded_files": 0,
+        "partial": true,
+        "skip_reasons": {
+          "encoding": 1
+        }
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "partial",
+          "pending": "partial"
         },
         "groups": [
           {
@@ -1990,8 +4324,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 1386,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-64f2b25139a0413e676977e3"
             }
           },
           {
@@ -2003,8 +4337,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 460,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-fc2b1cb3665a1844793deb35"
             }
           },
           {
@@ -2016,8 +4350,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 1486,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-75ada701750815966a2b9fa7"
             }
           },
           {
@@ -2029,8 +4363,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 563,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-26efa916eb788875bc967ec9"
             }
           },
           {
@@ -2042,8 +4376,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 1745,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-25a7a840bb644f6803cb5160"
             }
           },
           {
@@ -2055,8 +4389,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 578,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-e338bc8506c2c2c4bddf4f54"
             }
           },
           {
@@ -2068,8 +4402,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 1535,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-44fe5a619f76b7d94025c7ad"
             }
           },
           {
@@ -2081,8 +4415,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 615,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-105cf2159a7fcaa7636c60a9"
             }
           },
           {
@@ -2094,8 +4428,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 1314,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-6fc6ce86d03bf120223a29c9"
             }
           },
           {
@@ -2107,8 +4441,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 439,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-e1e26cb9be63025e00c59dfe"
             }
           },
           {
@@ -2120,8 +4454,8 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 1606,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-ab4ee8866bc5045bcb3b79c5"
             }
           },
           {
@@ -2133,8 +4467,85 @@
             "example": {
               "path": "pgpy/packet/fields.py",
               "line": 662,
-              "source_id": "src_5176c1ae592b",
-              "finding_id": ""
+              "source_id": "src_013285d7af4a",
+              "finding_id": "rule-3aa50041c69d2829fb34f540"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "serverless-ca/terraform-aws-ca",
+      "scanned_at": "2026-11-25T01:00:51+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 149,
+        "candidate_files": 149,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 14,
+            "example": {
+              "path": "modules/terraform-aws-ca-lambda/unittests/test_build_cert_expiry_details.py",
+              "line": 11,
+              "source_id": "src_9e3f11086b3b",
+              "finding_id": "rule-ef668ee3c5f0e9c21ae41333"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "modules/terraform-aws-ca-lambda/unittests/test_crypto_kms_classes.py",
+              "line": 53,
+              "source_id": "src_8efedaa7a58e",
+              "finding_id": "rule-1554692d8824e7e25d32159c"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "utils/modules/certs/crypto.py",
+              "line": 301,
+              "source_id": "src_b991951f8e1c",
+              "finding_id": "rule-d425ddad25d96d0820188b48"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "tests/test_certificate_validation.py",
+              "line": 379,
+              "source_id": "src_e3d8dd9d16e8",
+              "finding_id": "operation-575c6a1e6b41df667262c2df"
             }
           }
         ]
@@ -2142,21 +4553,25 @@
     },
     {
       "full_name": "sybrenstuvel/python-rsa",
-      "scanned_at": "2026-11-18T10:53:17+08:00",
-      "revision": "42b0e14ffbeeb9d99d1037e6440a2cc61780e4ea",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 40,
         "candidate_files": 40,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": [
           {
@@ -2168,30 +4583,237 @@
             "example": {
               "path": "tests/private.pem",
               "line": 1,
-              "source_id": "src_09d54a0a0967",
-              "finding_id": ""
+              "source_id": "src_4b5437dd8a1a",
+              "finding_id": "rule-04221a7c5358e4ca694f924a"
             }
           }
         ]
       }
     },
     {
+      "full_name": "Syndace/python-doubleratchet",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 40,
+        "candidate_files": 40,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "doubleratchet/recommended/diffie_hellman_ratchet_curve25519.py",
+              "line": 22,
+              "source_id": "src_e2391d551539",
+              "finding_id": "rule-706f902d09fd431ce0fbdc79"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "doubleratchet/recommended/diffie_hellman_ratchet_curve25519.py",
+              "line": 30,
+              "source_id": "src_e2391d551539",
+              "finding_id": "rule-4e2691dc120fb4cfd7bcea4a"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "doubleratchet/recommended/diffie_hellman_ratchet_curve448.py",
+              "line": 22,
+              "source_id": "src_24b4e6a7a16e",
+              "finding_id": "rule-fc6391db2ff8c4b22819c6bd"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "doubleratchet/recommended/diffie_hellman_ratchet_curve448.py",
+              "line": 30,
+              "source_id": "src_24b4e6a7a16e",
+              "finding_id": "rule-7d411f178337b71e6c32b097"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "Syndace/python-xeddsa",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 17,
+        "candidate_files": 17,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "TCatshoek/fastapi-nextauth-jwt",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 38,
+        "candidate_files": 38,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "the-a7k/akr-digital-signatures",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 23,
+        "candidate_files": 23,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "app/core/certificate_io.py",
+              "line": 59,
+              "source_id": "src_a8a3d311355e",
+              "finding_id": "rule-193788480cf523c035a73f25"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "resources/CertificateAuthority/ca_private_key.pem",
+              "line": 1,
+              "source_id": "src_7e35b1e0db90",
+              "finding_id": "rule-323d4ad289f58f89278cedf4"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "tink-crypto/tink-py",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 269,
+        "candidate_files": 269,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
       "full_name": "tlsfuzzer/python-ecdsa",
-      "scanned_at": "2026-11-18T10:53:13+08:00",
-      "revision": "71e3fc7240cf31584fb0e10bd58e2830f2fc5afc",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 50,
         "candidate_files": 50,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -2199,12 +4821,12 @@
             "purpose": "key_material",
             "origin": "static",
             "status": "confirmed",
-            "count": 5,
+            "count": 6,
             "example": {
-              "path": "src/ecdsa/test_keys.py",
-              "line": 144,
-              "source_id": "src_bdbf508f405f",
-              "finding_id": ""
+              "path": "src/ecdsa/test_ecdh.py",
+              "line": 305,
+              "source_id": "src_8043ccdd9fcb",
+              "finding_id": "rule-76ca1631717cadd5bae20c3c"
             }
           },
           {
@@ -2216,8 +4838,8 @@
             "example": {
               "path": "README.md",
               "line": 301,
-              "source_id": "src_7cf25e54463d",
-              "finding_id": ""
+              "source_id": "src_5e6f3d63d09b",
+              "finding_id": "rule-80b0702807c6dba8e6ec7bf8"
             }
           }
         ]
@@ -2225,21 +4847,24 @@
     },
     {
       "full_name": "tlsfuzzer/tlslite-ng",
-      "scanned_at": "2026-11-18T11:37:33+08:00",
-      "revision": "7e95ea1a86c0d42d8d931ff14134d31f01ce1d76",
+      "scanned_at": "2026-11-25T01:05:07+08:00",
+      "revision": null,
       "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 234,
-        "file_limit": 350,
         "candidate_files": 234,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 100,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": [
           {
@@ -2251,8 +4876,8 @@
             "example": {
               "path": "tests/serverDSAKey.pem",
               "line": 1,
-              "source_id": "src_bc32f4d8b780",
-              "finding_id": ""
+              "source_id": "src_38886e7bc164",
+              "finding_id": "rule-607830d58a76999e77240c87"
             }
           },
           {
@@ -2264,8 +4889,8 @@
             "example": {
               "path": "tests/serverBrainpoolP256r1ECKey.pem",
               "line": 1,
-              "source_id": "src_5c73e327a44f",
-              "finding_id": ""
+              "source_id": "src_7328eeb439f3",
+              "finding_id": "rule-3619e000753f4de157b175c2"
             }
           },
           {
@@ -2277,8 +4902,8 @@
             "example": {
               "path": "tlslite/utils/python_key.py",
               "line": 118,
-              "source_id": "src_2f996f513133",
-              "finding_id": ""
+              "source_id": "src_b2d753bef552",
+              "finding_id": "rule-66ef334fcf8f4696eb07e350"
             }
           },
           {
@@ -2290,8 +4915,8 @@
             "example": {
               "path": "tlslite/utils/python_key.py",
               "line": 120,
-              "source_id": "src_2f996f513133",
-              "finding_id": ""
+              "source_id": "src_b2d753bef552",
+              "finding_id": "rule-725e596b9a8798eb65742020"
             }
           },
           {
@@ -2303,8 +4928,8 @@
             "example": {
               "path": "tlslite/utils/pycrypto_rsakey.py",
               "line": 69,
-              "source_id": "src_cd163d6dc9c4",
-              "finding_id": ""
+              "source_id": "src_663580aee944",
+              "finding_id": "rule-98d1a29a40a6af90966e07d1"
             }
           },
           {
@@ -2316,8 +4941,8 @@
             "example": {
               "path": "tlslite/utils/pycrypto_rsakey.py",
               "line": 24,
-              "source_id": "src_cd163d6dc9c4",
-              "finding_id": ""
+              "source_id": "src_663580aee944",
+              "finding_id": "rule-158ea6a00d1f3837c0a5276d"
             }
           },
           {
@@ -2329,8 +4954,8 @@
             "example": {
               "path": "tests/clientX509Key.pem",
               "line": 1,
-              "source_id": "src_a4f6258a665d",
-              "finding_id": ""
+              "source_id": "src_cf13b7e7c17c",
+              "finding_id": "rule-7361812cb1c8196c29c0ce9f"
             }
           },
           {
@@ -2338,57 +4963,657 @@
             "purpose": "configuration",
             "origin": "static",
             "status": "confirmed",
-            "count": 2,
+            "count": 3,
             "example": {
-              "path": "unit_tests/test_tlslite_handshakesettings.py",
-              "line": 316,
-              "source_id": "src_beadca480dd6",
-              "finding_id": ""
+              "path": "tests/tlstest.py",
+              "line": 797,
+              "source_id": "src_5c6724b69a41",
+              "finding_id": "rule-bd65913e181ab8814557cb12"
             }
           }
         ]
       }
     },
     {
-      "full_name": "urllib3/urllib3",
-      "scanned_at": "2026-11-18T11:37:24+08:00",
-      "revision": "d9f9b0ad5b99247e06aa9a50b7a5747aa5c2e35d",
-      "rules_version": "crypto-rules-4",
+      "full_name": "tomtastic/tlsserial",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
-        "scanned_files": 113,
-        "file_limit": 350,
-        "candidate_files": 113,
+        "scanned_files": 8,
+        "candidate_files": 8,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "urllib3/urllib3",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 113,
+        "candidate_files": 113,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "dummyserver/socketserver.py",
+              "line": 182,
+              "source_id": "src_14bbb8377095",
+              "finding_id": "operation-fa2c8cef408c1ebbafbec2a3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "Viasat/alohomora",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 11,
+        "candidate_files": 11,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": []
+      }
+    },
+    {
+      "full_name": "vimalloc/flask-jwt-extended",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 63,
+        "candidate_files": 63,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "算法待确认",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "pending",
+            "count": 1,
+            "example": {
+              "path": "flask_jwt_extended/tokens.py",
+              "line": 91,
+              "source_id": "src_02b7c83bc37d",
+              "finding_id": "operation-ee563763cb8387faffabbacc"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "sign",
+            "origin": "static",
+            "status": "pending",
+            "count": 2,
+            "example": {
+              "path": "flask_jwt_extended/tokens.py",
+              "line": 62,
+              "source_id": "src_02b7c83bc37d",
+              "finding_id": "operation-fa2f8e81170cdd462b0cfe79"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "virgesmith/pico-crypto-key",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 26,
+        "candidate_files": 26,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 0,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
         },
         "groups": []
       }
     },
     {
       "full_name": "wbond/asn1crypto",
-      "scanned_at": "2026-11-18T10:53:14+08:00",
-      "revision": "a767d2daa8ef4549d497b67a0304561c2eb4b858",
-      "rules_version": "crypto-rules-4",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
       "coverage": {
         "scanned_files": 100,
         "candidate_files": 100,
-        "file_limit": 350,
+        "file_limit": 5000,
         "skipped_files": 0,
-        "partial": false
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
       },
       "migration_score": 0,
       "algorithm_inventory": {
-        "basis": "base",
+        "basis": "integrated",
         "stages": {
-          "confirmed": "completed"
+          "confirmed": "completed",
+          "pending": "completed"
         },
         "groups": []
+      }
+    },
+    {
+      "full_name": "wbond/oscrypto",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 128,
+        "candidate_files": 128,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 45,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "oscrypto/_win/_cng.py",
+              "line": 134,
+              "source_id": "src_bfc817acdb3d",
+              "finding_id": "rule-a60363d15cde1027302781c8"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "XiantingWu/PQCensus",
+      "scanned_at": "2026-11-25T00:57:19+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 282,
+        "candidate_files": 282,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "DH",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "benchmarks/corpus/synthetic/python-dh/app.py",
+              "line": 3,
+              "source_id": "src_8a317753fb63",
+              "finding_id": "rule-46503361213132d623c5879c"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/algorithms.py",
+              "line": 662,
+              "source_id": "src_385a5bd4791f",
+              "finding_id": "rule-976cd03077c004bd8f9ad033"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/tests/test_advisory.py",
+              "line": 17,
+              "source_id": "src_bea5ed16115e",
+              "finding_id": "rule-39abf8e1aec6b0d00a0d9666"
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "benchmarks/corpus/synthetic/python-ecdh/app.py",
+              "line": 3,
+              "source_id": "src_3880fa89f2e8",
+              "finding_id": "rule-839cc6b87b7dbff30401b2f4"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 15,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/algorithms.py",
+              "line": 530,
+              "source_id": "src_385a5bd4791f",
+              "finding_id": "rule-4031fc45f642e2840b98d226"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "benchmarks/corpus/synthetic/python-ed25519/app.py",
+              "line": 3,
+              "source_id": "src_bc58ea985a91",
+              "finding_id": "rule-ccd68da732047d454d81436f"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/algorithms.py",
+              "line": 868,
+              "source_id": "src_385a5bd4791f",
+              "finding_id": "rule-07966799dbf553db050bae18"
+            }
+          },
+          {
+            "algorithm": "Ed448",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/algorithms.py",
+              "line": 869,
+              "source_id": "src_385a5bd4791f",
+              "finding_id": "rule-cc2b788087091383cf8894ac"
+            }
+          },
+          {
+            "algorithm": "EdDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/api_jwk.py",
+              "line": 52,
+              "source_id": "src_1e8b58cb9d44",
+              "finding_id": "rule-217418e6f56a187d9cf485db"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 28,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/api_jwk.py",
+              "line": 45,
+              "source_id": "src_1e8b58cb9d44",
+              "finding_id": "rule-d2c8e498c0ddb793f9d035f4"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "benchmarks/corpus/synthetic/python-rsa-alias-unknown/app.py",
+              "line": 3,
+              "source_id": "src_be30e867797b",
+              "finding_id": "rule-a106599d7c7e5f2a4b05c862"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/jwt/algorithms.py",
+              "line": 435,
+              "source_id": "src_385a5bd4791f",
+              "finding_id": "rule-d61873ec786e1a00e7d3c797"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "benchmarks/corpus/end-to-end/PyJWT-2.10.1/tests/keys/testkey_pkcs1.pub.pem",
+              "line": 1,
+              "source_id": "src_631ee5379e38",
+              "finding_id": "rule-6b8ae407c8cbc14f4471cd9c"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 6,
+            "example": {
+              "path": "benchmarks/quantumguardbench.json",
+              "line": 54,
+              "source_id": "src_c9823815180e",
+              "finding_id": "rule-9345598e2fab9571c63ff665"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_exchange",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "benchmarks/corpus/real/pyca-x25519/test_x25519_excerpt.py",
+              "line": 18,
+              "source_id": "src_703ad7abd8ef",
+              "finding_id": "operation-2b03960ec927402dfc10ccab"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "benchmarks/corpus/synthetic/python-x25519/app.py",
+              "line": 3,
+              "source_id": "src_f367f8de6019",
+              "finding_id": "rule-02d0f43d57ffa30d619f6ecc"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "benchmarks/corpus/real/pyca-x25519/test_x25519_excerpt.py",
+              "line": 16,
+              "source_id": "src_703ad7abd8ef",
+              "finding_id": "rule-13a70c1d59e416eccbbdaa13"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "benchmarks/quantumguardbench.json",
+              "line": 185,
+              "source_id": "src_c9823815180e",
+              "finding_id": "rule-54edf563cae64b8d7311983e"
+            }
+          },
+          {
+            "algorithm": "X448",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 1,
+            "example": {
+              "path": "benchmarks/corpus/synthetic/python-x448/app.py",
+              "line": 3,
+              "source_id": "src_3c0d8715e9a9",
+              "finding_id": "rule-09a414fd76a9cdbdd0a99013"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "full_name": "Yubico/yubikey-manager",
+      "scanned_at": "2026-11-24T22:04:40+08:00",
+      "revision": null,
+      "rules_version": "crypto-rules-5",
+      "coverage": {
+        "scanned_files": 303,
+        "candidate_files": 303,
+        "file_limit": 5000,
+        "skipped_files": 0,
+        "degraded_files": 0,
+        "partial": false,
+        "skip_reasons": {}
+      },
+      "migration_score": 100,
+      "algorithm_inventory": {
+        "basis": "integrated",
+        "stages": {
+          "confirmed": "completed",
+          "pending": "completed",
+          "ai_assessed": "completed"
+        },
+        "groups": [
+          {
+            "algorithm": "ECC",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 19,
+            "example": {
+              "path": "packages/yubikit/yubikit/piv.py",
+              "line": 752,
+              "source_id": "src_d68cc5548e87",
+              "finding_id": "rule-78366303ee8db2097abeabe5"
+            }
+          },
+          {
+            "algorithm": "ECC",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 2,
+            "example": {
+              "path": "packages/yubikit/yubikit/hsmauth.py",
+              "line": 299,
+              "source_id": "src_0df6f72ffb4a",
+              "finding_id": "rule-170bfc9728635a1ea264b59d"
+            }
+          },
+          {
+            "algorithm": "ECDH",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/device/test_openpgp.py",
+              "line": 191,
+              "source_id": "src_a68f9cbcf8d4",
+              "finding_id": "rule-05d5f4307be73a424c01e85e"
+            }
+          },
+          {
+            "algorithm": "ECDSA",
+            "purpose": "configuration",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "tests/device/test_openpgp.py",
+              "line": 168,
+              "source_id": "src_a68f9cbcf8d4",
+              "finding_id": "rule-ecec7e34eef38ec7fa6d240b"
+            }
+          },
+          {
+            "algorithm": "Ed25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 4,
+            "example": {
+              "path": "packages/yubikit/yubikit/piv.py",
+              "line": 756,
+              "source_id": "src_d68cc5548e87",
+              "finding_id": "rule-e9de65d75e5d4c01e2a1c7d0"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 9,
+            "example": {
+              "path": "packages/yubikit/yubikit/piv.py",
+              "line": 750,
+              "source_id": "src_d68cc5548e87",
+              "finding_id": "rule-37db3931e2fd88259106857e"
+            }
+          },
+          {
+            "algorithm": "RSA",
+            "purpose": "key_material",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 3,
+            "example": {
+              "path": "tests/files/rsa_1024_key.pem",
+              "line": 1,
+              "source_id": "src_46c503bae821",
+              "finding_id": "rule-677062d0a0a2e3ebba49079c"
+            }
+          },
+          {
+            "algorithm": "X25519",
+            "purpose": "key_generation",
+            "origin": "static",
+            "status": "confirmed",
+            "count": 5,
+            "example": {
+              "path": "packages/yubikit/yubikit/piv.py",
+              "line": 758,
+              "source_id": "src_d68cc5548e87",
+              "finding_id": "rule-3447855c30296a22246a90c0"
+            }
+          },
+          {
+            "algorithm": "算法待确认",
+            "purpose": "key_import",
+            "origin": "static",
+            "status": "pending",
+            "count": 2,
+            "example": {
+              "path": "tests/device/test_piv.py",
+              "line": 67,
+              "source_id": "src_2f099d780a75",
+              "finding_id": "operation-79011ac77266ee8f5eb1c168"
+            }
+          }
+        ]
       }
     }
   ]

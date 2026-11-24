@@ -48,8 +48,8 @@ async function quit() {
     const { response } = await dialog.showMessageBox(window, {
       type: 'question', title: '退出扫描平台', buttons: ['继续使用', '取消任务并退出'],
       defaultId: 0, cancelId: 0,
-      message: '扫描、保存或服务状态查询尚未完成。',
-      detail: '退出将取消进行中的任务，未导出的扫描结果会丢失。',
+      message: '退出将取消任务并清除未导出的结果。',
+      detail: active === null ? '当前任务状态未知。' : '',
     });
     if (response !== 1) { closing = false; return; }
   }
@@ -138,8 +138,8 @@ async function start() {
     item.once('done', async (_event, state) => {
       downloads--;
       if (!window || window.isDestroyed() || quitting) return;
-      await dialog.showMessageBox(window, { type: state === 'interrupted' ? 'error' : 'info', title: '报告保存',
-        message: state === 'completed' ? '报告已保存。' : state === 'cancelled' ? '已取消保存，报告仍可再次下载。' : '报告保存失败，请重新选择保存位置。' });
+      await dialog.showMessageBox(window, { type: state === 'interrupted' ? 'error' : 'info', title: '文件保存',
+        message: state === 'completed' ? '已保存。' : state === 'cancelled' ? '已取消保存。' : '保存失败，请重新导出并选择保存位置。' });
     });
   });
   window = new BrowserWindow({ width: 1440, height: 960, minWidth: 900, minHeight: 600, show: false,

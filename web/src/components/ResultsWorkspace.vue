@@ -1,5 +1,4 @@
 <script setup>
-import AppIcon from './AppIcon.vue';
 import ScanLoading from './ScanLoading.vue';
 import ScanResults from './ScanResults.vue';
 import KnowledgePanel from './KnowledgePanel.vue';
@@ -21,12 +20,8 @@ defineEmits(['toggle-input', 'rescan', 'cancel']);
         class="panel-body stack welcome-body workspace-surface"
         role="region"
         tabindex="0"
-        aria-label="扫描等待与迁移参考"
+        aria-label="迁移参考"
       >
-        <div class="empty">
-          <span class="empty-mark"><AppIcon name="scan" :size="28" /></span>
-          <h2>等待扫描</h2>
-        </div>
         <KnowledgePanel />
       </div>
     </Transition>
@@ -37,8 +32,4 @@ defineEmits(['toggle-input', 'rescan', 'cancel']);
 .results[aria-busy='true'] :deep(.result-layout),
 .results[aria-busy='true'] .welcome-body { display:none !important; }
 .results.has-result { background: transparent; box-shadow: none; }
-.welcome-body > .empty { padding-block: 2rem; }
-.empty-mark { width: 60px; height: 60px; border-radius: 16px; margin-bottom: 1rem; }
-.empty h2 { font-size: 18px; }
-.welcome-body > :last-child { padding-top: 8px; }
 </style>
